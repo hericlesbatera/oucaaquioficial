@@ -26,11 +26,10 @@ async def stream_zip(songs, album_title):
     Gera um ZIP em stream usando chunks. 
     Yield chunks conforme as musicas sao baixadas.
     """
-    # Buffer temporário para acumular dados
-    accumulated = io.BytesIO()
-    chunk_size = 512 * 1024  # 512KB chunks
+    # Buffer para acumular o ZIP
+    zip_buffer = io.BytesIO()
     
-    with zipfile.ZipFile(accumulated, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         async with httpx.AsyncClient(timeout=20.0) as client:
             for idx, song in enumerate(songs, 1):
                 try:
@@ -45,15 +44,6 @@ async def stream_zip(songs, album_title):
                             filename = f"{track_num:02d} - {song.get('title', 'track')}.mp3"
                             zip_file.writestr(filename, response.content)
                             print(f"[ALBUM_DOWNLOAD]   OK ({idx}/{len(songs)}): {filename}")
-                            
-                            # Fazer yield de chunks periodicamente
-                            if accumulated.tell() > chunk_size:
-                                accumulated.seek(0)
-                                data = accumulated.read()
-                                if data:
-                                    yield data
-                                accumulated.truncate(0)
-                                accumulated.seek(0)
                         else:
                             print(f"[ALBUM_DOWNLOAD]   FALHOU: status {response.status_code}")
                 except Exception as e:
@@ -62,11 +52,14 @@ async def stream_zip(songs, album_title):
                 # Dar tempo para o client processar
                 await asyncio.sleep(0)
     
-    # Enviar o resto do arquivo
-    accumulated.seek(0)
-    remaining = accumulated.read()
-    if remaining:
-        yield remaining
+    # Enviar o arquivo ZIP completo em chunks
+    zip_buffer.seek(0)
+    chunk_size = 64 * 1024  # 64KB chunks
+    while True:
+        chunk = zip_buffer.read(chunk_size)
+        if not chunk:
+            break
+        yield chunk
 
 
 @router.get("/{album_id}/download")
