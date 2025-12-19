@@ -82,19 +82,37 @@ export const recordAlbumDownload = async (albumId, songIds = []) => {
   }
 
   try {
-    // 1. Incrementar download_count do ÁLBUM
-    await supabase
+    // 1. Obter download_count atual do álbum
+    const albumRes = await supabase
       .from('albums')
-      .update({ download_count: supabase.sql`COALESCE(download_count, 0) + 1` })
-      .eq('id', albumId);
+      .select('download_count')
+      .eq('id', albumId)
+      .single();
+    
+    if (albumRes.data) {
+      const currentCount = albumRes.data.download_count || 0;
+      await supabase
+        .from('albums')
+        .update({ download_count: currentCount + 1 })
+        .eq('id', albumId);
+    }
 
     // 2. Incrementar downloads de cada MÚSICA do álbum
     if (songIds && songIds.length > 0) {
       for (const songId of songIds) {
-        await supabase
+        const songRes = await supabase
           .from('songs')
-          .update({ downloads: supabase.sql`COALESCE(downloads, 0) + 1` })
-          .eq('id', songId);
+          .select('downloads')
+          .eq('id', songId)
+          .single();
+        
+        if (songRes.data) {
+          const currentDownloads = songRes.data.downloads || 0;
+          await supabase
+            .from('songs')
+            .update({ downloads: currentDownloads + 1 })
+            .eq('id', songId);
+        }
       }
     }
   } catch (error) {
