@@ -408,13 +408,13 @@ const MyAlbums = () => {
     const fileName = `albums/${editingAlbum.id}/cover_${Date.now()}.${fileExt}`;
 
     const {error: uploadError } = await supabase.storage
-    .from('music')
+    .from('musica')
     .upload(fileName, newCoverFile, {upsert: true });
 
     if (uploadError) throw uploadError;
 
     const {data: {publicUrl} } = supabase.storage
-    .from('music')
+    .from('musica')
     .getPublicUrl(fileName);
 
     coverUrl = publicUrl;

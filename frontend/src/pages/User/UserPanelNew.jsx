@@ -228,12 +228,12 @@ const UserPanelNew = () => {
                 const fileName = `playlists/${user.id}/${Date.now()}.${fileExt}`;
 
                 const { error: uploadError } = await supabase.storage
-                    .from('music')
+                    .from('musica')
                     .upload(fileName, newPlaylist.coverImage, { upsert: true });
 
                 if (!uploadError) {
                     const { data: { publicUrl } } = supabase.storage
-                        .from('music')
+                        .from('musica')
                         .getPublicUrl(fileName);
                     coverUrl = publicUrl;
                 }
@@ -433,12 +433,12 @@ const UserPanelNew = () => {
                 const fileName = `playlists/${user.id}/${Date.now()}.${fileExt}`;
 
                 const { error: uploadError } = await supabase.storage
-                    .from('music')
+                    .from('musica')
                     .upload(fileName, editCoverFile, { upsert: true });
 
                 if (!uploadError) {
                     const { data: { publicUrl } } = supabase.storage
-                        .from('music')
+                        .from('musica')
                         .getPublicUrl(fileName);
                     coverUrl = publicUrl;
                 }
