@@ -414,7 +414,7 @@ const LoginWhite = () => {
 
     return (
         <>
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-start md:items-center justify-center p-4 py-8 overflow-y-auto">
                 <div className="w-full max-w-md">
                     {signupStep === 1 ? (
                         // SIGNUP STEP 1 - Apenas Cadastro
@@ -547,58 +547,58 @@ const LoginWhite = () => {
                         </div>
                     ) : signupStep === 2 ? (
                         // SIGNUP STEP 2 - Artist Info
-                        <div className="bg-white rounded-lg shadow-2xl p-8 md:p-12 max-w-2xl mx-auto">
+                        <div className="bg-white rounded-lg shadow-2xl p-4 sm:p-6 md:p-8 max-w-2xl mx-auto max-h-[90vh] overflow-y-auto">
                             {/* Stepper Visual */}
-                            <div className="flex items-center justify-between mb-12">
+                            <div className="flex items-center justify-between mb-4">
                                 {/* Step 1 */}
-                                <div className="flex flex-col items-center gap-2">
-                                    <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center font-bold text-sm">
+                                <div className="flex flex-col items-center gap-1">
+                                    <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center font-bold text-xs">
                                         ✓
                                     </div>
-                                    <p className="text-xs text-gray-600 text-center max-w-[80px]">Informações<br />Básicas</p>
+                                    <p className="text-[10px] text-gray-600 text-center">Básicas</p>
                                 </div>
 
                                 {/* Linha 1 */}
-                                <div className="flex-1 h-1 bg-red-600 mx-4 mb-6"></div>
+                                <div className="flex-1 h-0.5 bg-red-600 mx-2"></div>
 
                                 {/* Step 2 */}
-                                <div className="flex flex-col items-center gap-2">
-                                    <div className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-sm">
+                                <div className="flex flex-col items-center gap-1">
+                                    <div className="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-xs">
                                         2
                                     </div>
-                                    <p className="text-xs text-gray-600 text-center max-w-[80px]">Informações do<br />Artista</p>
+                                    <p className="text-[10px] text-gray-600 text-center">Artista</p>
                                 </div>
 
                                 {/* Linha 2 */}
-                                <div className="flex-1 h-1 bg-gray-300 mx-4 mb-6"></div>
+                                <div className="flex-1 h-0.5 bg-gray-300 mx-2"></div>
 
                                 {/* Step 3 */}
-                                <div className="flex flex-col items-center gap-2">
-                                    <div className="w-10 h-10 rounded-full bg-gray-300 text-white flex items-center justify-center font-bold text-sm">
+                                <div className="flex flex-col items-center gap-1">
+                                    <div className="w-8 h-8 rounded-full bg-gray-300 text-white flex items-center justify-center font-bold text-xs">
                                         3
                                     </div>
-                                    <p className="text-xs text-gray-600 text-center max-w-[80px]">Cadastro<br />Finalizado</p>
+                                    <p className="text-[10px] text-gray-600 text-center">Finalizado</p>
                                 </div>
                             </div>
 
-                            <h2 className="text-2xl font-bold text-gray-900 mb-8">Informações do Artista</h2>
+                            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6">Informações do Artista</h2>
 
-                            <form onSubmit={handleSignupStep2} className="space-y-4">
+                            <form onSubmit={handleSignupStep2} className="space-y-3 md:space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome (Artista/Banda)</label>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">Nome (Artista/Banda)</label>
                                     <input
                                         type="text"
                                         placeholder="Nome do artista ou banda"
                                         value={artistName}
                                         onChange={(e) => handleArtistNameChange(e.target.value)}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 placeholder-gray-400 text-sm"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 placeholder-gray-400 text-sm"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">URL do Perfil</label>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">URL do Perfil</label>
                                     <div className="flex items-center gap-1">
-                                        <span className="text-gray-600 text-sm whitespace-nowrap">https://oucaaqui.com/</span>
+                                        <span className="text-gray-600 text-xs whitespace-nowrap">oucaaqui.com/</span>
                                         <input
                                             type="text"
                                             placeholder="seuartista"
@@ -607,36 +607,36 @@ const LoginWhite = () => {
                                                 setArtistSlug(slugify(e.target.value));
                                                 setArtistSlugError('');
                                             }}
-                                            className={`flex-1 px-4 py-3 border rounded-lg focus:outline-none placeholder-gray-400 text-sm ${
+                                            className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none placeholder-gray-400 text-sm ${
                                                 artistSlugError ? 'border-red-500 focus:border-red-600' : 'border-gray-300 focus:border-red-600'
                                             }`}
                                         />
                                     </div>
                                     {artistSlugError && <p className="text-red-500 text-xs mt-1">{artistSlugError}</p>}
                                     {artistSlug && !artistSlugError && (
-                                        <p className="text-green-600 text-xs mt-1">https://oucaaqui.com/{artistSlug}</p>
+                                        <p className="text-green-600 text-xs mt-1">oucaaqui.com/{artistSlug}</p>
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Cidade</label>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Cidade</label>
                                         <input
                                             type="text"
                                             placeholder="Sua cidade"
                                             value={artistCidade}
                                             onChange={(e) => setArtistCidade(e.target.value)}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 placeholder-gray-400 text-sm"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 placeholder-gray-400 text-sm"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Estado</label>
                                         <select
                                             value={artistEstado}
                                             onChange={(e) => setArtistEstado(e.target.value)}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 text-sm"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 text-sm"
                                         >
-                                            <option value="">Selecione um estado</option>
+                                            <option value="">Selecione</option>
                                             {estadosBrasil.map((estado) => (
                                                 <option key={estado.value} value={estado.value}>
                                                     {estado.label}
@@ -646,26 +646,27 @@ const LoginWhite = () => {
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Gênero</label>
-                                    <select
-                                        value={artistGenero}
-                                        onChange={(e) => setArtistGenero(e.target.value)}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 text-sm"
-                                    >
-                                        <option value="">Selecione</option>
-                                        <option value="masculino">Masculino</option>
-                                        <option value="feminino">Feminino</option>
-                                    </select>
-                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Gênero</label>
+                                        <select
+                                            value={artistGenero}
+                                            onChange={(e) => setArtistGenero(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 text-sm"
+                                        >
+                                            <option value="">Selecione</option>
+                                            <option value="masculino">Masculino</option>
+                                            <option value="feminino">Feminino</option>
+                                        </select>
+                                    </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Estilo Musical</label>
-                                    <select
-                                        value={artistEstiloMusical}
-                                        onChange={(e) => setArtistEstiloMusical(e.target.value)}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 text-sm"
-                                    >
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Estilo Musical</label>
+                                        <select
+                                            value={artistEstiloMusical}
+                                            onChange={(e) => setArtistEstiloMusical(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 text-sm"
+                                        >
                                         <option value="">Selecione</option>
                                         <option value="forro">Forró</option>
                                         <option value="arrocha">Arrocha</option>
@@ -690,6 +691,7 @@ const LoginWhite = () => {
                                         <option value="trap">Trap</option>
                                         <option value="frevo">Frevo</option>
                                     </select>
+                                    </div>
                                 </div>
 
                                 <div className="flex items-start gap-2">
@@ -718,18 +720,18 @@ const LoginWhite = () => {
                                     </label>
                                 </div>
 
-                                <div className="flex gap-4 mt-6">
+                                <div className="flex gap-3 mt-4">
                                     <button
                                         type="button"
                                         onClick={() => setSignupStep(1)}
-                                        className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 font-bold py-3 rounded-full transition-colors"
+                                        className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 font-bold py-2 rounded-full transition-colors text-sm"
                                     >
                                         VOLTAR
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={loadingSignup}
-                                        className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-full transition-colors flex items-center justify-center gap-2 text-sm"
+                                        className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-2 rounded-full transition-colors flex items-center justify-center gap-2 text-sm"
                                     >
                                         {loadingSignup && <Loader2 className="w-4 h-4 animate-spin" />}
                                         CADASTRAR
