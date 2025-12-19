@@ -121,12 +121,68 @@ export const PlayerProvider = ({ children }) => {
   }, [currentSong]);
 
   useEffect(() => {
-    if (isPlaying) {
-      audioRef.current.play().catch(err => console.error('Error playing audio:', err));
-    } else {
-      audioRef.current.pause();
+     if (isPlaying) {
+       audioRef.current.play().catch(err => console.error('Error playing audio:', err));
+     } else {
+       audioRef.current.pause();
+     }
+   }, [isPlaying]);
+
+  // Media Session API - Controles de mídia do sistema (lock screen, notificação, etc)
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    
+    const mediaSession = navigator.mediaSession;
+    
+    if (currentSong) {
+      mediaSession.metadata = new MediaMetadata({
+        title: currentSong.title || 'Unknown',
+        artist: currentSong.artist || 'Unknown Artist',
+        album: currentSong.album || 'Unknown Album',
+        artwork: currentSong.image ? [
+          {
+            src: currentSong.image,
+            sizes: '256x256',
+            type: 'image/jpeg'
+          }
+        ] : []
+      });
+
+      mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
     }
-  }, [isPlaying]);
+
+    mediaSession.setActionHandler('play', () => {
+      setIsPlaying(true);
+    });
+
+    mediaSession.setActionHandler('pause', () => {
+      setIsPlaying(false);
+    });
+
+    mediaSession.setActionHandler('previoustrack', () => {
+      handlePrevious();
+    });
+
+    mediaSession.setActionHandler('nexttrack', () => {
+      if (handleNextRef.current) {
+        handleNextRef.current();
+      }
+    });
+
+    mediaSession.setActionHandler('seekto', (event) => {
+      if (event.time !== undefined) {
+        seekTo(event.time);
+      }
+    });
+
+    return () => {
+      mediaSession.setActionHandler('play', null);
+      mediaSession.setActionHandler('pause', null);
+      mediaSession.setActionHandler('previoustrack', null);
+      mediaSession.setActionHandler('nexttrack', null);
+      mediaSession.setActionHandler('seekto', null);
+    };
+  }, [currentSong, isPlaying, handleNext]);
 
   const playSong = async (song, songQueue = [], playlistId = null) => {
    setCurrentSong(song);
