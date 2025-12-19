@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 from routes.albums import router as albums_router
 from routes.album_upload import router as album_upload_router
 from routes.upload_progress import router as upload_progress_router
@@ -35,3 +37,8 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+# Serve static files from public directory (frontend build)
+public_path = Path(__file__).parent / "public"
+if public_path.exists():
+    app.mount("/", StaticFiles(directory=str(public_path), html=True), name="static")
