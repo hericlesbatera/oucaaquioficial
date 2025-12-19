@@ -446,42 +446,56 @@ const AlbumPage = () => {
     };
 
     const handleDownloadAlbum = async () => {
-        if (album.archiveUrl) {
+        if (!album.id) {
             toast({
-                title: 'Download Iniciado',
-                description: `Baixando ${album.title}...`
+                title: 'Erro',
+                description: 'Album ID nao disponivel',
+                variant: 'destructive'
             });
-            try {
-                // Registrar download (incrementa albums.download_count e songs.downloads)
-                if (album.id) {
-                    const songIds = albumSongs.map(s => s.id);
-                    recordAlbumDownload(album.id, songIds);
-                    setAlbum(prev => ({ ...prev, download_count: (prev.download_count || 0) + 1 }));
-                }
+            return;
+        }
 
-                const response = await fetch(album.archiveUrl);
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                const extension = album.archiveUrl.includes('.rar') ? 'rar' : 'zip';
-                link.download = `${album.title}.${extension}`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(url);
-            } catch (error) {
-                console.error('Download error:', error);
-                toast({
-                    title: 'Erro no Download',
-                    description: 'Não foi possível baixar o arquivo',
-                    variant: 'destructive'
-                });
+        toast({
+            title: 'Download Iniciado',
+            description: `Preparando download de ${album.title}...`
+        });
+        try {
+            // Registrar download
+            const songIds = albumSongs.map(s => s.id);
+            recordAlbumDownload(album.id, songIds);
+            setAlbum(prev => ({ ...prev, download_count: (prev.download_count || 0) + 1 }));
+
+            // Usar archive_url se existir, senao usar endpoint dinamico
+            let downloadUrl = album.archiveUrl;
+            if (!downloadUrl) {
+                downloadUrl = `/api/albums/${album.id}/download`;
             }
-        } else {
+
+            const response = await fetch(downloadUrl);
+            if (!response.ok) {
+                throw new Error(`Erro HTTP: ${response.status}`);
+            }
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            const extension = downloadUrl.includes('.rar') ? 'rar' : 'zip';
+            link.download = `${album.title}.${extension}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
             toast({
-                title: 'Download Indisponível',
-                description: 'O arquivo do álbum não está disponível',
+                title: 'Sucesso',
+                description: 'Download concluido'
+            });
+        } catch (error) {
+            console.error('Download error:', error);
+            toast({
+                title: 'Erro no Download',
+                description: 'Nao foi possivel baixar o arquivo',
                 variant: 'destructive'
             });
         }
