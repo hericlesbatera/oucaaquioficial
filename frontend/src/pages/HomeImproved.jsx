@@ -664,7 +664,7 @@ const HomeImproved = () => {
                     {/* Desktop - Carrossel */}
                     <div
                         ref={topCdsRef}
-                        className="hidden md:flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
+                        className="hidden md:flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth w-full"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {topCdsAlbums.length === 0 ? (
@@ -674,7 +674,7 @@ const HomeImproved = () => {
                                 <div
                                     key={`${album.id}-${topCdsFilter}`}
                                     className="flex-shrink-0"
-                                    style={{ width: 'calc((100% - 80px) / 6)' }}
+                                    style={{ minWidth: 'calc((100% - 80px) / 6)', width: 'calc((100% - 80px) / 6)' }}
                                 >
                                     <Link
                                         to={`/${album.artistSlug}/${album.slug || album.id}`}
