@@ -1022,129 +1022,113 @@ const AuthModal = ({ isOpen, onClose }) => {
                         </div>
                     ) : signupStep === 2 ? (
                         // SIGNUP STEP 2 - Artist Info
-                        <div className="bg-white p-8 md:p-12 min-h-auto max-w-2xl mx-auto">
-                            {/* Stepper Visual */}
-                            <div className="flex items-center justify-between mb-12">
-                                {/* Step 1 */}
-                                <div className="flex flex-col items-center gap-2">
-                                    <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center font-bold text-sm">
-                                        ✓
-                                    </div>
-                                    <p className="text-xs text-gray-600 text-center max-w-[80px]">Informações<br />Básicas</p>
+                        <div className="bg-white p-4 sm:p-6 min-h-auto max-w-2xl mx-auto max-h-[80vh] overflow-y-auto">
+                            {/* Stepper Visual - Compacto */}
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex flex-col items-center gap-1">
+                                    <div className="w-7 h-7 rounded-full bg-green-500 text-white flex items-center justify-center font-bold text-xs">✓</div>
+                                    <p className="text-[10px] text-gray-600 text-center">Básicas</p>
                                 </div>
-
-                                {/* Linha 1 */}
-                                <div className="flex-1 h-1 bg-red-600 mx-4 mb-6"></div>
-
-                                {/* Step 2 */}
-                                <div className="flex flex-col items-center gap-2">
-                                    <div className={`w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-sm ${
-                                        signupStep >= 2 ? 'bg-green-500' : 'bg-red-600'
-                                    }`}>
+                                <div className="flex-1 h-0.5 bg-red-600 mx-2"></div>
+                                <div className="flex flex-col items-center gap-1">
+                                    <div className={`w-7 h-7 rounded-full text-white flex items-center justify-center font-bold text-xs ${signupStep >= 2 ? 'bg-green-500' : 'bg-red-600'}`}>
                                         {signupStep >= 3 ? '✓' : '2'}
                                     </div>
-                                    <p className="text-xs text-gray-600 text-center max-w-[80px]">Informações do<br />Artista</p>
+                                    <p className="text-[10px] text-gray-600 text-center">Artista</p>
                                 </div>
-
-                                {/* Linha 2 */}
-                                <div className={`flex-1 h-1 mx-4 mb-6 ${signupStep >= 3 ? 'bg-red-600' : 'bg-gray-300'}`}></div>
-
-                                {/* Step 3 */}
-                                <div className="flex flex-col items-center gap-2">
-                                    <div className={`w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-sm ${
-                                        signupStep >= 3 ? 'bg-green-500' : 'bg-gray-300'
-                                    }`}>
+                                <div className={`flex-1 h-0.5 mx-2 ${signupStep >= 3 ? 'bg-red-600' : 'bg-gray-300'}`}></div>
+                                <div className="flex flex-col items-center gap-1">
+                                    <div className={`w-7 h-7 rounded-full text-white flex items-center justify-center font-bold text-xs ${signupStep >= 3 ? 'bg-green-500' : 'bg-gray-300'}`}>
                                         {signupStep >= 3 ? '✓' : '3'}
                                     </div>
-                                    <p className="text-xs text-gray-600 text-center max-w-[80px]">Cadastro<br />Finalizado</p>
+                                    <p className="text-[10px] text-gray-600 text-center">Finalizado</p>
                                 </div>
                             </div>
 
-                            {/* Título */}
-                            <h2 className="text-2xl font-bold text-gray-900 mb-8">Informações do Artista</h2>
+                            <h2 className="text-lg font-bold text-gray-900 mb-3">Informações do Artista</h2>
 
-                                <form onSubmit={handleSignupStep2} className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nome (Artista/Banda)</label>
+                            <form onSubmit={handleSignupStep2} className="space-y-2">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">Nome (Artista/Banda)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Nome do artista ou banda"
+                                        value={artistName}
+                                        onChange={(e) => handleArtistNameChange(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 placeholder-gray-400 text-sm"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">URL do Perfil</label>
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-gray-600 text-xs whitespace-nowrap">oucaaqui.com/</span>
                                         <input
                                             type="text"
-                                            placeholder="Nome do artista ou banda"
-                                            value={artistName}
-                                            onChange={(e) => handleArtistNameChange(e.target.value)}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 placeholder-gray-400 text-sm"
+                                            placeholder="seuartista"
+                                            value={artistSlug}
+                                            onChange={(e) => {
+                                                setArtistSlug(slugify(e.target.value));
+                                                setArtistSlugError('');
+                                            }}
+                                            className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none placeholder-gray-400 text-sm ${
+                                                artistSlugError ? 'border-red-500 focus:border-red-600' : 'border-gray-300 focus:border-red-600'
+                                            }`}
                                         />
                                     </div>
+                                    {artistSlugError && <p className="text-red-500 text-xs mt-1">{artistSlugError}</p>}
+                                    {artistSlug && !artistSlugError && (
+                                        <p className="text-green-600 text-xs mt-1">oucaaqui.com/{artistSlug}</p>
+                                    )}
+                                </div>
 
+                                <div className="grid grid-cols-2 gap-2">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">URL do Perfil</label>
-                                        <div className="flex items-center gap-1">
-                                            <span className="text-gray-600 text-sm whitespace-nowrap">https://oucaaqui.com/</span>
-                                            <input
-                                                type="text"
-                                                placeholder="seuartista"
-                                                value={artistSlug}
-                                                onChange={(e) => {
-                                                    setArtistSlug(slugify(e.target.value));
-                                                    setArtistSlugError('');
-                                                }}
-                                                className={`flex-1 px-4 py-3 border rounded-lg focus:outline-none placeholder-gray-400 text-sm ${
-                                                    artistSlugError ? 'border-red-500 focus:border-red-600' : 'border-gray-300 focus:border-red-600'
-                                                }`}
-                                            />
-                                        </div>
-                                        {artistSlugError && <p className="text-red-500 text-xs mt-1">{artistSlugError}</p>}
-                                        {artistSlug && !artistSlugError && (
-                                            <p className="text-green-600 text-xs mt-1">https://oucaaqui.com/{artistSlug}</p>
-                                        )}
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Cidade</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Sua cidade"
+                                            value={artistCidade}
+                                            onChange={(e) => setArtistCidade(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 placeholder-gray-400 text-sm"
+                                        />
                                     </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Cidade</label>
-                                            <input
-                                                type="text"
-                                                placeholder="Sua cidade"
-                                                value={artistCidade}
-                                                onChange={(e) => setArtistCidade(e.target.value)}
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 placeholder-gray-400 text-sm"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                                            <select
-                                                value={artistEstado}
-                                                onChange={(e) => setArtistEstado(e.target.value)}
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 text-sm"
-                                            >
-                                                <option value="">Selecione um estado</option>
-                                                {estadosBrasil.map((estado) => (
-                                                    <option key={estado.value} value={estado.value}>
-                                                        {estado.label}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Gênero</label>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Estado</label>
+                                        <select
+                                            value={artistEstado}
+                                            onChange={(e) => setArtistEstado(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 text-sm"
+                                        >
+                                            <option value="">Selecione</option>
+                                            {estadosBrasil.map((estado) => (
+                                                <option key={estado.value} value={estado.value}>
+                                                    {estado.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Gênero</label>
                                         <select
                                             value={artistGenero}
                                             onChange={(e) => setArtistGenero(e.target.value)}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 text-sm"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 text-sm"
                                         >
                                             <option value="">Selecione</option>
                                             <option value="masculino">Masculino</option>
                                             <option value="feminino">Feminino</option>
                                         </select>
                                     </div>
-
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Estilo Musical</label>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Estilo Musical</label>
                                         <select
                                             value={artistEstiloMusical}
                                             onChange={(e) => setArtistEstiloMusical(e.target.value)}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 text-sm"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 text-sm"
                                         >
                                             <option value="">Selecione</option>
                                             <option value="forro">Forró</option>
@@ -1171,51 +1155,52 @@ const AuthModal = ({ isOpen, onClose }) => {
                                             <option value="frevo">Frevo</option>
                                         </select>
                                     </div>
+                                </div>
 
-                                    <div className="flex items-start gap-2">
-                                        <input
-                                            type="checkbox"
-                                            id="acceptTermsArtist"
-                                            checked={acceptTermsArtist}
-                                            onChange={(e) => {
-                                                if (!termsReadByArtist) {
-                                                    openTermsModal('artist');
-                                                } else {
-                                                    setAcceptTermsArtist(e.target.checked);
-                                                }
-                                            }}
-                                            className="mt-1 cursor-pointer"
-                                        />
-                                        <label htmlFor="acceptTermsArtist" className="text-xs text-gray-700">
-                                            Li e aceito os{' '}
-                                            <span 
-                                                className="text-red-600 underline cursor-pointer hover:text-red-700"
-                                                onClick={() => openTermsModal('artist')}
-                                            >
-                                                termos de uso
-                                            </span>
-                                            {!termsReadByArtist && <span className="text-gray-500 text-xs ml-1">(Abra para ler)</span>}
-                                        </label>
-                                    </div>
+                                <div className="flex items-start gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="acceptTermsArtist"
+                                        checked={acceptTermsArtist}
+                                        onChange={(e) => {
+                                            if (!termsReadByArtist) {
+                                                openTermsModal('artist');
+                                            } else {
+                                                setAcceptTermsArtist(e.target.checked);
+                                            }
+                                        }}
+                                        className="mt-1 cursor-pointer"
+                                    />
+                                    <label htmlFor="acceptTermsArtist" className="text-xs text-gray-700">
+                                        Li e aceito os{' '}
+                                        <span 
+                                            className="text-red-600 underline cursor-pointer hover:text-red-700"
+                                            onClick={() => openTermsModal('artist')}
+                                        >
+                                            termos de uso
+                                        </span>
+                                        {!termsReadByArtist && <span className="text-gray-500 text-xs ml-1">(Abra para ler)</span>}
+                                    </label>
+                                </div>
 
-                                    <div className="flex gap-4 mt-6">
-                                         <button
-                                             type="button"
-                                             onClick={() => setSignupStep(1)}
-                                             className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 font-bold py-3 rounded-full transition-colors"
-                                         >
-                                             VOLTAR
-                                         </button>
-                                         <button
-                                             type="submit"
-                                             disabled={loadingSignup}
-                                             className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-full transition-colors flex items-center justify-center gap-2 text-sm"
-                                         >
-                                             {loadingSignup && <Loader2 className="w-4 h-4 animate-spin" />}
-                                             CADASTRAR
-                                         </button>
-                                     </div>
-                                    </form>
+                                <div className="flex gap-3 mt-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSignupStep(1)}
+                                        className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 font-bold py-2 rounded-full transition-colors text-sm"
+                                    >
+                                        VOLTAR
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loadingSignup}
+                                        className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-2 rounded-full transition-colors flex items-center justify-center gap-2 text-sm"
+                                    >
+                                        {loadingSignup && <Loader2 className="w-4 h-4 animate-spin" />}
+                                        CADASTRAR
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     ) : signupStep === 3 ? (
                         // SIGNUP STEP 3 - Success
