@@ -117,9 +117,9 @@ const HeroSlider = () => {
                     </div>
                 </div>
 
-                {/* Thumbnails on the right - scrollable if more than 5 */}
+                {/* Thumbnails on the right - max 5 for desktop */}
                 <div className="hidden lg:flex flex-col gap-2 w-48 overflow-y-auto">
-                    {slides.map((slide, index) => (
+                    {slides.slice(0, 5).map((slide, index) => (
                         <button
                             key={slide.id}
                             onClick={() => goToSlide(index)}
@@ -174,9 +174,9 @@ const HeroSlider = () => {
                     </div>
                 </div>
 
-                {/* Thumbnails - 2 colunas abaixo - max 5 items */}
-                <div className="grid grid-cols-2 gap-3 max-h-[440px] overflow-y-auto">
-                    {slides.slice(0, 5).map((slide, index) => (
+                {/* Thumbnails - 2 colunas abaixo - max 9 items (scrollable) */}
+                <div className="grid grid-cols-2 gap-3 max-h-[540px] overflow-y-auto">
+                    {slides.slice(0, 9).map((slide, index) => (
                         <button
                             key={slide.id}
                             onClick={() => goToSlide(index)}
