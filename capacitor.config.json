@@ -1,0 +1,13 @@
+{
+  "appId": "com.musicasua.app",
+  "appName": "Musicasua",
+  "webDir": "frontend/build",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}
