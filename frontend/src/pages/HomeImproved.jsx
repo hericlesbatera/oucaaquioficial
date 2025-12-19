@@ -645,14 +645,17 @@ const HomeImproved = () => {
                     </div>
                     <div
                         ref={topCdsRef}
-                        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
+                        className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {topCdsAlbums.length === 0 ? (
-                            <p className="text-gray-500 py-8 col-span-full">Nenhum CD disponível para este período.</p>
+                            <p className="text-gray-500 py-8 w-full">Nenhum CD disponível para este período.</p>
                         ) : (
                             topCdsAlbums.map((album, index) => (
                                 <div
                                     key={`${album.id}-${topCdsFilter}`}
+                                    className="flex-shrink-0"
+                                    style={{ width: 'calc((100% - 80px) / 6)' }}
                                 >
                                     <Link
                                         to={`/${album.artistSlug}/${album.slug || album.id}`}
