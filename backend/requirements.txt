@@ -7,3 +7,4 @@ pydub==0.25.1
 mutagen==1.46.0
 rarfile==4.1
 httpx==0.25.2
+PyJWT==2.8.0
