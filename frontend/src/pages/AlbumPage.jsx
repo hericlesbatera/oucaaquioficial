@@ -5,7 +5,9 @@ import { mockAlbums, mockSongs, formatDuration } from '../mock';
 import { usePlayer } from '../context/PlayerContext';
 import { useAuth } from '../context/AuthContext';
 import { useTrackPageView } from '../hooks/useTrackPageView';
+import { useCapacitorDownloads } from '../hooks/useCapacitorDownloads';
 import { recordAlbumDownload } from '../lib/statsHelper';
+import { handleDownload, isMobileApp } from '../lib/downloadHelper';
 import { Play, Heart, Share2, Download, Plus, BadgeCheck, Copy, X, Disc, ThumbsUp, Video } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { toast } from '../hooks/use-toast';
@@ -27,6 +29,7 @@ const AlbumPage = () => {
      const navigate = useNavigate();
      const { playSong, currentSong, isPlaying, togglePlay, setIsFullPlayerOpen } = usePlayer();
      const { user, isPremium } = useAuth();
+     const { downloadAlbum, downloadProgress } = useCapacitorDownloads();
      const [isFavorite, setIsFavorite] = useState(false);
      const [album, setAlbum] = useState(null);
      const [albumSongs, setAlbumSongs] = useState([]);
@@ -463,95 +466,110 @@ const AlbumPage = () => {
             recordAlbumDownload(album.id, songIds);
             setAlbum(prev => ({ ...prev, download_count: (prev.download_count || 0) + 1 }));
 
-            // Usar archive_url se existir (pré-gerado), senão usar endpoint dinâmico
-            let downloadUrl = album.archiveUrl;
-            if (!downloadUrl) {
-                downloadUrl = `/api/albums/${album.id}/download`;
-            }
-
-            // Mostrar notificação IMEDIATAMENTE quando o download inicia
-            toast({
-                title: 'Download Iniciado',
-                description: `${album.title} está sendo baixado...`
-            });
-
-            // Fetch com streaming imediato (não espera completar antes de baixar)
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutos
-            
-            try {
-                const response = await fetch(downloadUrl, {
-                    signal: controller.signal,
-                    credentials: 'include'
-                });
-                
-                clearTimeout(timeoutId);
-                
-                if (!response.ok) {
-                    throw new Error(`Erro HTTP: ${response.status}`);
-                }
-
-                // Determinar extensão
-                const extension = downloadUrl.includes('.rar') ? 'rar' : 'zip';
-                const filename = `${album.title}.${extension}`;
-                
-                // Método 1: Usar stream para download imediato (compatível com navegadores modernos)
-                if (response.body && typeof response.body.getReader === 'function') {
-                    const reader = response.body.getReader();
-                    const chunks = [];
-                    let receivedLength = 0;
-
-                    try {
-                        while (true) {
-                            const { done, value } = await reader.read();
-                            if (done) break;
-                            chunks.push(value);
-                            receivedLength += value.length;
-                        }
-                        
-                        const blob = new Blob(chunks);
-                        const url = window.URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = filename;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        window.URL.revokeObjectURL(url);
-                    } catch (streamError) {
-                        console.error('Erro ao fazer stream:', streamError);
-                        // Fallback para blob tradicional
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = filename;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        window.URL.revokeObjectURL(url);
+            // Usar handleDownload para detectar plataforma
+            await handleDownload({
+                album,
+                albumSongs,
+                onDesktop: async () => {
+                    // Desktop: download ZIP/RAR
+                    let downloadUrl = album.archiveUrl;
+                    if (!downloadUrl) {
+                        downloadUrl = `/api/albums/${album.id}/download`;
                     }
-                } else {
-                    // Fallback para navegadores antigos
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(url);
-                }
-            } catch (fetchError) {
-                clearTimeout(timeoutId);
-                throw fetchError;
-            }
 
-            toast({
-                title: 'Sucesso',
-                description: 'Download concluído'
+                    toast({
+                        title: 'Download Iniciado',
+                        description: `${album.title} está sendo baixado...`
+                    });
+
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 120000);
+                    
+                    try {
+                        const response = await fetch(downloadUrl, {
+                            signal: controller.signal,
+                            credentials: 'include'
+                        });
+                        
+                        clearTimeout(timeoutId);
+                        
+                        if (!response.ok) {
+                            throw new Error(`Erro HTTP: ${response.status}`);
+                        }
+
+                        const extension = downloadUrl.includes('.rar') ? 'rar' : 'zip';
+                        const filename = `${album.title}.${extension}`;
+                        
+                        if (response.body && typeof response.body.getReader === 'function') {
+                            const reader = response.body.getReader();
+                            const chunks = [];
+
+                            try {
+                                while (true) {
+                                    const { done, value } = await reader.read();
+                                    if (done) break;
+                                    chunks.push(value);
+                                }
+                                
+                                const blob = new Blob(chunks);
+                                const url = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = filename;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                window.URL.revokeObjectURL(url);
+                            } catch (streamError) {
+                                const blob = await response.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = filename;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                window.URL.revokeObjectURL(url);
+                            }
+                        } else {
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = filename;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            window.URL.revokeObjectURL(url);
+                        }
+
+                        toast({
+                            title: 'Sucesso',
+                            description: 'Download concluído'
+                        });
+                    } catch (fetchError) {
+                        clearTimeout(timeoutId);
+                        throw fetchError;
+                    }
+                },
+                onMobile: async ({ album: albumData, albumSongs: songs, onProgress }) => {
+                    // Mobile: download MP3s individuais com Capacitor
+                    toast({
+                        title: '⏳ Aguarde',
+                        description: `Baixando ${songs.length} músicas...`
+                    });
+
+                    const result = await downloadAlbum(albumData, songs);
+
+                    toast({
+                        title: '✅ Sucesso',
+                        description: `${albumData.title} adicionado aos downloads!`
+                    });
+
+                    return result;
+                }
             });
+
         } catch (error) {
             console.error('Download error:', error);
             toast({

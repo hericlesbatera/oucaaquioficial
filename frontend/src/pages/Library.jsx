@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { useAuth } from '../context/AuthContext';
 import { useTrackPageView } from '../hooks/useTrackPageView';
+import { useCapacitorDownloads } from '../hooks/useCapacitorDownloads';
 import { supabase } from '../lib/supabaseClient';
-import { Play, Heart, Download, FileText, ListMusic } from 'lucide-react';
+import { Play, Heart, Download, FileText, ListMusic, Trash2, Music } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { toast } from '../hooks/use-toast';
 
@@ -11,6 +12,7 @@ const Library = () => {
     useTrackPageView('library');
     const { playSong } = usePlayer();
     const { user } = useAuth();
+    const { downloads, loading: downloadsLoading, deleteDownloadedAlbum } = useCapacitorDownloads();
     const [activeTab, setActiveTab] = useState('favoritos');
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState({
@@ -104,7 +106,7 @@ const Library = () => {
             case 'playlists':
                 return `${data.favoritePlaylists.length + data.userPlaylists.length} playlists`;
             case 'downloads':
-                return 'Em breve';
+                return `${downloads.length} downloads`;
             default:
                 return '';
         }
@@ -319,10 +321,65 @@ const Library = () => {
                         )}
 
                         {activeTab === 'downloads' && (
-                            <div className="flex flex-col items-center justify-center py-12 text-center">
-                                <Download className="w-16 h-16 text-gray-300 mb-4" />
-                                <p className="text-gray-500 text-lg">Downloads em breve</p>
-                                <p className="text-gray-400 text-sm">Funcionalidade será implementada em breve</p>
+                            <div className="space-y-3">
+                                {downloadsLoading ? (
+                                    <div className="flex items-center justify-center py-12">
+                                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+                                    </div>
+                                ) : downloads.length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <Download className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                                        <p className="text-gray-500 text-lg">Nenhum download ainda</p>
+                                        <p className="text-gray-400 text-sm">Baixe músicas e álbuns para ouvi-los offline</p>
+                                    </div>
+                                ) : (
+                                    downloads.map((downloadedAlbum) => (
+                                        <div
+                                            key={downloadedAlbum.albumId}
+                                            className="group cursor-pointer block hover:bg-gray-50 p-3 rounded-lg transition-colors"
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <div className="relative flex-shrink-0 overflow-hidden rounded-lg shadow-md border-2 border-gray-200">
+                                                    <img
+                                                        src={downloadedAlbum.coverUrl}
+                                                        alt={downloadedAlbum.title}
+                                                        className="w-20 h-20 object-cover transform group-hover:scale-105 transition-transform duration-300"
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                                                        <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transform scale-50 group-hover:scale-100 transition-all duration-300">
+                                                            <Play className="w-4 h-4 text-white ml-0.5" fill="white" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="text-gray-900 font-semibold text-xs line-clamp-2 group-hover:text-red-600 transition-colors">
+                                                        {downloadedAlbum.title}
+                                                    </h3>
+                                                    <p className="text-gray-600 text-xs mt-0.5">{downloadedAlbum.artist}</p>
+                                                    <p className="text-gray-500 text-xs mt-1">
+                                                        {downloadedAlbum.songCount}/{downloadedAlbum.totalSongs} músicas
+                                                    </p>
+                                                    <p className="text-gray-400 text-xs mt-1">
+                                                        {new Date(downloadedAlbum.downloadedAt).toLocaleDateString('pt-BR')}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        deleteDownloadedAlbum(downloadedAlbum.albumId);
+                                                        toast({
+                                                            title: 'Deletado',
+                                                            description: `${downloadedAlbum.title} foi removido`
+                                                        });
+                                                    }}
+                                                    className="flex-shrink-0 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         )}
                     </>
