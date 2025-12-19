@@ -10,7 +10,6 @@ import { Card } from '../../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Camera, Save, Link, Settings } from 'lucide-react';
 import { toast } from '../../hooks/use-toast';
-import ArtistSidebar from '../../components/Artist/ArtistSidebar';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 const genreLabels = {

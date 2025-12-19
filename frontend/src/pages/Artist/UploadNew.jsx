@@ -11,7 +11,6 @@ import { useAuth } from '../../context/AuthContext';
 import { toast } from '../../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Clock } from 'lucide-react';
-import ArtistSidebar from '../../components/Artist/ArtistSidebar';
 import { supabase } from '../../lib/supabaseClient';
 
 const UploadNew = () => {

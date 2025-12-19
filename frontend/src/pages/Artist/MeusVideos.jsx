@@ -5,7 +5,6 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { toast } from '../../hooks/use-toast';
 import { Play, Video, Trash2, Plus, Copy, Check } from 'lucide-react';
-import ArtistSidebar from '../../components/Artist/ArtistSidebar';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 const MeusVideos = () => {

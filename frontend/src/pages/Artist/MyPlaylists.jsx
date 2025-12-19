@@ -19,7 +19,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu';
-import ArtistSidebar from '../../components/Artist/ArtistSidebar';
 import { toast } from '../../hooks/use-toast';
 import LoadingSpinner from '../../components/LoadingSpinner';
 

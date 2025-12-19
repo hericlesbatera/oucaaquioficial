@@ -5,7 +5,6 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Upload as UploadIcon, Music, AlertCircle, CheckCircle } from 'lucide-react';
-import ArtistSidebar from '../../components/Artist/ArtistSidebar';
 
 import { supabase } from '../../lib/supabaseClient';
 import { toast } from '../../hooks/use-toast';

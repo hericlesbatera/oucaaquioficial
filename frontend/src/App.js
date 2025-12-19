@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import "./App.css";
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { PlayerProvider, usePlayer } from "./context/PlayerContext";
 import { usePlayerActive } from "./hooks/usePlayerActive";
@@ -16,6 +16,7 @@ import FooterSimple from "./components/Layout/FooterSimple";
 import Player from "./components/Layout/Player";
 import MobileBottomNav from "./components/Layout/MobileBottomNav";
 import MobileLayout from "./components/Layout/MobileLayout";
+import ArtistSidebar from "./components/Artist/ArtistSidebar";
 
 // Pages
 import Login from "./pages/Login";
@@ -204,8 +205,11 @@ const ArtistLayout = ({ children }) => {
      <div className="min-h-screen flex flex-col bg-white">
        <Header />
        <HeaderMobile />
-       <main className="flex-1 pb-20 md:pb-0">
-         {children}
+       <main className="flex-1 pb-20 md:pb-0 flex">
+         <ArtistSidebar />
+         <div className="flex-1">
+           {children}
+         </div>
        </main>
        <MobileBottomNav />
        <Player />

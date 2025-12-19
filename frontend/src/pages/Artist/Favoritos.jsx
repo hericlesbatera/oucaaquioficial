@@ -14,7 +14,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu';
-import ArtistSidebar from '../../components/Artist/ArtistSidebar';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 const Favoritos = () => {
