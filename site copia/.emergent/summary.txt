@@ -1,0 +1,249 @@
+<analysis>**original_problem_statement:**
+The user wants to create a clone of the music platform Sua Música, combining it with some Spotify-like features.
+
+**PRODUCT REQUIREMENTS:**
+- **Theme:** Use red, white, and black colors initially, later switched to a predominantly white theme.
+- **Layout:**
+    - Top navigation bar instead of a sidebar for main navigation.
+    - Homepage should be accessible without login.
+    - Homepage to feature:
+        - A hero slider for sponsored albums (images only).
+        - Lançamentos Recentes (Recent Releases) section.
+        - TOP CDS section with filters for Day, Week, Month, and All-time (based on most listened). This section should have an icon and navigation arrows.
+        - Perfis em Destaque (Featured Profiles) for the most listened-to artists, with smaller images and a verified badge.
+    - A simple, clean footer that should not appear on user/artist panel pages.
+- **User Roles:**
+    - **User:** Can listen to music, follow artists, favorite albums/songs. Login is only required for these actions.
+    - **Artist:** Has a dedicated panel to upload albums, view stats, and edit their profile.
+- **Artist Panel:**
+    - A consistent layout with a sidebar for navigation: Meus Álbuns, Estatísticas, Configurações, Meu Perfil.
+    - All panel pages should have a white background and uniform design.
+    - A dropdown menu on the main site header for logged-in artists to access their panel.
+- **Album & Music:**
+    - **Album Upload:** Artists upload a single  file containing MP3s and a cover image. The platform must automatically extract the songs and create the album page. The upload should show a progress bar.
+    - **Album Page:** Display album art, song list, and a prominent red BAIXAR CD COMPLETO (Download Full CD) button.
+    - **Music Player:** Styled in red and white, with download options.
+- **Artist Profile:**
+    - Public artist profile page showing their albums, cover art, and a verified badge.
+- **Login/Register Pages:** Should have a white background, matching the rest of the site's theme.
+
+**User's preferred language**: Português (Portuguese). The next agent MUST respond in Portuguese.
+
+**what currently exists?**
+A full-stack application with a React frontend and FastAPI backend. The frontend largely mimics the Sua Música design based on user-provided images. Most of the UI is in place, including the homepage, album page, artist public profile, and artist panel. However, the frontend is NOT connected to the backend; it uses a combination of hardcoded mock data () and  to simulate functionality like album uploads and user sessions. The backend has defined models and API routes for users, artists, albums, and songs, and the database has been seeded with initial data.
+
+**Last working item**:
+- **Last item agent was working:** The agent was updating the homepage () to fetch recently uploaded albums from  and display them in the Lançamentos Recentes section. This was a direct response to the user's report that new albums weren't appearing there.
+- **Status:** IN PROGRESS
+- **Agent Testing Done:** N
+- **Which testing method agent to use?** Frontend testing agent to verify that after an artist uploads an album, it correctly appears on the homepage under Lançamentos Recentes.
+- **User Testing Done:** N
+
+**All Pending/In progress Issue list**:
+- **Issue 1 (P0):** Album upload functionality is broken and incomplete.
+- **Issue 2 (P1):** TOP CDS filtering on the homepage is not functional.
+- **Issue 3 (P2):** Artist profile settings are not being saved.
+- **Issue 4 (P3):** The layout of the artist panel breaks when navigating between sections (e.g., clicking Novo Album).
+- **Issue 5 (P4):** The standard user profile/panel has not been created.
+- **Issue 6 (P5):** The Favorites feature for users is not implemented.
+
+**Issues Detail:**
+- **Issue 1: Album Upload Broken**
+  - **Attempted fixes:** The agent implemented a frontend upload form with a progress bar that saves album metadata to . However, the core requirement of processing the  file is missing. The user reported that the uploaded album appears as sem música (no songs).
+  - **Next debug checklist:**
+    1.  Implement a backend endpoint () that accepts a file upload.
+    2.  Install a Python library on the backend (e.g.,  or ) to handle  file extraction. 
+    3.  On the backend, after upload, extract the contents of the  file (MP3s, cover image) to a persistent storage location.
+    4.  Create database entries for the album and each extracted song, linking them together.
+    5.  Modify the frontend () to make a  request to this new backend endpoint instead of saving to .
+    6.  Update the Meus Álbuns page () to fetch data from the backend.
+  - **Why fix this issue and what will be achieved with the fix?** This is the core functionality for artists and a primary requirement of the user. Fixing it will make the platform usable for content creators.
+  - **Status:** IN PROGRESS
+  - **Is recurring issue?** Y
+  - **Should Test frontend/backend/both after fix?** Both.
+  - **Blocked on other issue:** None.
+
+- **Issue 2: TOP CDS Filter Non-Functional**
+  - **Attempted fixes:** None. The UI elements (buttons for DAY, WEEK, MONTH, ALL) were created, but no logic was attached.
+  - **Next debug checklist:**
+    1.  Decide on the logic for most listened. This will likely require a play count field on the  and/or  models in the backend.
+    2.  Create a backend endpoint that increments the play count when a song is played.
+    3.  Create a backend API endpoint (e.g., ) that accepts a time period and returns a sorted list of albums based on aggregated play counts.
+    4.  In the frontend (), add  handlers to the filter buttons.
+    5.  These handlers should call the new API endpoint with the correct period and update the state to re-render the TOP CDS list.
+  - **Why fix this issue and what will be achieved with the fix?** This is a key discovery feature for users on the homepage.
+  - **Status:** NOT STARTED
+  - **Is recurring issue?** N
+  - **Should Test frontend/backend/both after fix?** Both.
+  - **Blocked on other issue:** Full backend integration.
+
+- **Issue 3: Artist Settings Not Saving**
+  - **Attempted fixes:** The agent updated the settings page () to use data from the logged-in user context. However, the save functionality still points to  and does not persist correctly or reflect in other components.
+  - **Next debug checklist:**
+    1.  Create a backend endpoint () to update artist information.
+    2.  In , on form submission, make an API call to this endpoint with the updated data.
+    3.  Ensure the  is updated with the new information upon a successful API response so the changes are reflected globally (e.g., in the Header).
+  - **Why fix this issue and what will be achieved with the fix?** Allows artists to manage their public identity on the platform.
+  - **Status:** IN PROGRESS
+  - **Is recurring issue?** Y
+  - **Should Test frontend/backend/both after fix?** Both.
+  - **Blocked on other issue:** None.
+
+- **Issue 4: Broken Artist Panel Layout**
+  - **Attempted fixes:** The agent wrapped the artist panel routes in a layout component that includes the , which partially fixed a missing header issue. However, the user reported a double panel look.
+  - **Next debug checklist:**
+    1.  Review the routing structure in  for the artist panel.
+    2.  Examine the components  and . The issue is likely a component rendering another layout component inside itself, creating a nested structure.
+    3.  Refactor the artist pages to use a single, shared layout component that renders the sidebar and the page content, ensuring no nested layouts.
+  - **Why fix this issue and what will be achieved with the fix?** Improves the user experience for artists, making the panel feel professional and bug-free.
+  - **Status:** IN PROGRESS
+  - **Is recurring issue?** Y
+  - **Should Test frontend/backend/both after fix?** Frontend.
+  - **Blocked on other issue:** None.
+
+- **Issue 5: Standard User Panel Missing**
+  - **Attempted fixes:** None.
+  - **Next debug checklist:**
+    1.  Create a user panel layout similar to the artist panel but with different menu items (e.g., Favorites, Settings, My Profile).
+    2.  The user stated it should be igual do artista. só mudar que o usuário comum não ter opção de upload de album. (the same as the artist's, just without the album upload option).
+  - **Why fix this issue and what will be achieved with the fix?** Fulfills the requirement for a logged-in user experience.
+  - **Status:** NOT STARTED
+  - **Is recurring issue?** N
+  - **Should Test frontend/backend/both after fix?** Frontend.
+  - **Blocked on other issue:** None.
+
+- **Issue 6: Favorites Feature Missing**
+  - **Attempted fixes:** None.
+  - **Next debug checklist:**
+    1.  Add backend models and endpoints for managing favorites (e.g., , ).
+    2.  Implement a Favorites page in both the user and artist panels to list favorited items.
+    3.  Add a favorite (heart) icon/button to album and song components.
+  - **Why fix this issue and what will be achieved with the fix?** This is a core social/interaction feature for the platform.
+  - **Status:** NOT STARTED
+  - **Is recurring issue?** N
+  - **Should Test frontend/backend/both after fix?** Both.
+  - **Blocked on other issue:** None.
+
+**In progress Task List**:
+- **Task 1: Backend Integration**
+  - **Where to resume:** Start by replacing a single piece of  logic with a real API call. The album upload process (Issue 1) is the most critical place to begin. Then, move to fetching data for the homepage, album pages, and artist profiles.
+  - **What will be achieved with this?** The application will become a truly dynamic, full-stack application, with data persisting in the database instead of the browser. This will fix most of the pending issues.
+  - **Status:** NOT STARTED
+  - **Should Test frontend/backend/both after fix?** Both.
+  - **Blocked on something:** None.
+
+**Upcoming and Future Tasks**
+- **Upcoming Tasks:**
+  - **P0:** Implement backend logic for  file extraction on album upload.
+  - **P1:** Implement backend logic and API for the TOP CDS feature (tracking and querying play counts).
+  - **P2:** Create the standard user panel pages (Favorites, Settings).
+- **Future Tasks:**
+  - Implement real user authentication instead of the current mocked version.
+  - Implement music streaming/playback from files stored on the server instead of mock URLs.
+
+**Completed work in this session**
+- **UI & Layout:**
+  - Pivoted from a Spotify clone to a Sua Música clone design.
+  - Implemented a top header navigation and a simple footer.
+  - Created the homepage layout with sections for Hero Slider, TOP CDS, Lançamentos Recentes, and Perfis em Destaque.
+  - Created the white-themed Album Page with a red download button.
+  - Created the public Artist Profile page.
+  - Created and styled the Login/Register pages with a white theme.
+  - Designed the Artist Panel with a consistent sidebar and page structure.
+- **Mock Functionality:**
+  - Implemented a mock authentication flow using React Context and .
+  - Created a mock album upload process that saves data to .
+  - The frontend dynamically displays data from  and  to simulate a live application.
+- **Backend:**
+  - Set up a FastAPI server.
+  - Defined Pydantic models for Users, Artists, Albums, Songs.
+  - Created API routers for all major features.
+  - Seeded the MongoDB database with initial test data.
+
+**Earlier issues found/mentioned but not fixed**
+- See **All Pending/In progress Issue list**. The main ones are the non-functional album upload ( extraction), the broken TOP CDS filters, and artist settings not saving.
+
+**Known issue recurrence from previous fork**
+- N/A
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+- **Frontend:** React, React Router, Tailwind CSS, shadcn/ui components, React Context API for state management (auth, player).
+- **Backend:** FastAPI, Pydantic, MongoDB (with Motor for async operations).
+- **Data:** Currently, the frontend heavily relies on  and a  file to simulate a database. The backend is not yet integrated.
+
+**key DB schema**
+- **artists**: {uid=0(root) gid=0(root) groups=0(root), , , , , , }
+- **albums**: {uid=0(root) gid=0(root) groups=0(root), , , , , , }
+- **songs**: {uid=0(root) gid=0(root) groups=0(root), , , , }
+- (Implicit schemas from code): , , .
+
+**changes in tech stack**
+- None.
+
+**All files of reference**
+- : Main router setup, defines which pages are rendered and their layouts.
+- : The current homepage component with the Sua Música layout.
+- : The artist album upload form. **Needs to be connected to the backend.**
+- : Page to display an artist's uploaded albums. **Needs to fetch from backend.**
+- : Manages mock user authentication state via .
+- : Main FastAPI application file, registers all API routers.
+- : Directory containing all API endpoint definitions.
+- : Pydantic models that define the database schema.
+- : Contains API contract definitions.
+
+**Areas that need refactoring**
+- The entire frontend data fetching logic needs to be refactored to remove  and  dependencies and replace them with API calls to the FastAPI backend.
+- The authentication flow in  is entirely mocked and needs to be replaced with a real JWT or social login implementation that interacts with the backend.
+- The artist panel pages have duplicate layout code that could be consolidated into a single shared layout component to fix the double panel bug.
+
+**key api endpoints**
+- : Health check.
+- 
+- 
+- 
+- 
+- *Note: These are defined but not yet used by the frontend.*
+
+**Critical Info for New Agent**
+- The user is very detail-oriented and frequently provides feedback with annotated images. Refer to these images to understand the desired UI/UX.
+- The project has pivoted significantly from the initial Spotify clone to a Sua Música clone. All new development should follow the Sua Música pattern.
+- **The highest priority is to connect the frontend to the backend.** Start with the album upload feature, as it's the most critical broken piece of functionality. This involves implementing file handling ( extraction) on the backend.
+- All frontend functionality is currently simulated using . Do not be misled into thinking the features are complete. They all need to be re-wired to the backend.
+
+**documents created in this job**
+- 
+
+**Last 10 User Messages and any pending user messages**
+1.  **User (Message 223):** Reports issues: artist panel has a double panel layout bug on novo upload; album upload shows progress but doesn't publish or appear in Meus Álbuns; artist settings don't save changes; user profile page is missing.
+2.  **Agent (Message 224-247):** Acknowledges the issues and attempts to fix them by adjusting layouts, correcting sidebar links, and updating components to use a mock auth context. Claims the panel is fixed.
+3.  **User (Message 248):** Requests more changes: Login/Register pages to be white; add all music genres to the header dropdown; provides a new design for the public artist profile; provides a new verified badge image; reports that uploaded albums show no songs because the  file isn't being processed; new albums don't appear in Recent Releases; artist settings (name, location) are not editable/savable.
+4.  **Agent (Message 249-268):** Acknowledges and starts implementing the changes. Creates new white-themed login pages, a new artist profile page, updates the header with genres, and updates the settings page UI. Starts updating the Home page to load from .
+5.  **User (Message 269):** continue - Interrupts the agent.
+6.  *All subsequent messages are from the user, detailing outstanding issues that were not resolved.*
+
+The most recent user messages contain a long list of unresolved bugs and feature requests that the agent has not fully addressed. These are the highest priority.
+
+**Project Health Check:**
+- **Broken:** Album upload ( processing), TOP CDS filtering, Artist profile settings save functionality.
+- **Mocked:** The entire data persistence layer of the frontend (user auth, album lists, artist data). It all relies on  and is not connected to the database.
+
+**3rd Party Integrations**
+- None implemented.
+
+**Testing status**
+- **Testing agent used after significant changes:** NO
+- **Troubleshoot agent used after agent stuck in loop:** NO
+- **Test files created:** None.
+- **Known regressions:** The artist panel layout issue seems to be a regression introduced while trying to standardize the UI.
+
+**Credentials to test flow:**
+N/A (Authentication is mocked; no credentials are required).
+
+**What agent forgot to execute**
+- **Implement  file extraction:** The core of the album upload feature is completely missing from the backend.
+- **Implement TOP CDS logic:** The backend logic and API endpoints to filter albums by most listened were never created.
+- **Create the standard user panel:** The user requested a panel for regular users, which was never built.
+- **Connect Frontend to Backend:** The agent built a backend and a frontend but never performed the crucial step of integrating them. All data-related user complaints stem from this omission.</analysis>
