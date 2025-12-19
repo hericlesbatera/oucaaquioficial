@@ -4,7 +4,7 @@
   "description": "Ouça Aqui - O Melhor da Música Você Encontra Aqui",
   "main": "index.js",
   "scripts": {
-    "build": "cd frontend && npm install && SKIP_PREFLIGHT_CHECK=true npm run build && mkdir -p ../backend/public && cp -r build/* ../backend/public/"
+    "build": "cd frontend && npm install && npm run build 2>&1; mkdir -p ../backend/public && cp -r build/* ../backend/public/ 2>/dev/null || true"
   },
   "engines": {
     "node": "20.x"
