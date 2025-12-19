@@ -1,1 +1,1 @@
-web: cd backend && /app/venv/bin/uvicorn server:app --host 0.0.0.0 --port $PORT
+web: bash build.sh && cd backend && /app/venv/bin/uvicorn server:app --host 0.0.0.0 --port $PORT
