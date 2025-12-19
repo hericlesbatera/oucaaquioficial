@@ -155,10 +155,12 @@ const MyPlaylists = () => {
           .upload(fileName, newPlaylist.coverImage, { upsert: true });
 
         if (!uploadError) {
-          const { data: { publicUrl } } = supabase.storage
+          const { data } = supabase.storage
             .from('musica')
             .getPublicUrl(fileName);
-          coverUrl = publicUrl;
+          if (data && data.publicUrl) {
+            coverUrl = data.publicUrl;
+          }
         }
       }
 
@@ -371,10 +373,12 @@ const MyPlaylists = () => {
           .upload(fileName, editCoverFile, { upsert: true });
 
         if (!uploadError) {
-          const { data: { publicUrl } } = supabase.storage
+          const { data } = supabase.storage
             .from('musica')
             .getPublicUrl(fileName);
-          coverUrl = publicUrl;
+          if (data && data.publicUrl) {
+            coverUrl = data.publicUrl;
+          }
         }
       }
 

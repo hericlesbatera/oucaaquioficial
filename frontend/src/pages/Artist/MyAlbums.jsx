@@ -405,20 +405,27 @@ const MyAlbums = () => {
 
     if (newCoverFile) {
                 const fileExt = newCoverFile.name.split('.').pop();
-    const fileName = `albums/${editingAlbum.id}/cover_${Date.now()}.${fileExt}`;
+     const fileName = `albums/${editingAlbum.id}/cover_${Date.now()}.${fileExt}`;
 
-    const {error: uploadError } = await supabase.storage
-    .from('musica')
-    .upload(fileName, newCoverFile, {upsert: true });
+     const {error: uploadError } = await supabase.storage
+     .from('musica')
+     .upload(fileName, newCoverFile, {upsert: true });
 
-    if (uploadError) throw uploadError;
+     if (uploadError) {
+         console.error('Upload error:', uploadError);
+         throw uploadError;
+     }
 
-    const {data: {publicUrl} } = supabase.storage
-    .from('musica')
-    .getPublicUrl(fileName);
+     const { data } = supabase.storage
+     .from('musica')
+     .getPublicUrl(fileName);
 
-    coverUrl = publicUrl;
-            }
+     if (data && data.publicUrl) {
+         coverUrl = data.publicUrl;
+     } else {
+         throw new Error('Failed to get public URL');
+     }
+             }
 
     const {error} = await supabase
     .from('albums')
