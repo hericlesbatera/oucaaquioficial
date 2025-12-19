@@ -124,8 +124,8 @@ const HeroSlider = () => {
                 </div>
 
                 {/* Thumbnails on the right - scrollable if more than 5 */}
-                <div className="hidden lg:flex flex-col gap-2 w-48 overflow-y-auto">
-                    {slides.map((slide, index) => (
+                <div className="hidden lg:flex flex-col gap-2 w-48 overflow-y-auto max-h-[510px]">
+                    {slides.slice(0, 5).map((slide, index) => (
                         <button
                             key={slide.id}
                             onClick={() => goToSlide(index)}
