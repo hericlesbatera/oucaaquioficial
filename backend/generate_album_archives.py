@@ -43,23 +43,26 @@ def create_album_zip(album_id, album_title, songs):
     try:
         zip_buffer = io.BytesIO()
         
-        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            for song in songs:
+        # Usar ZIP_STORED (sem compressão) para ser mais rápido
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_STORED) as zip_file:
+            for idx, song in enumerate(songs, 1):
                 try:
                     if song.get('audio_url'):
-                        print(f"    Baixando: {song.get('title')[:40]}", end=' ... ', flush=True)
+                        title = song.get('title', f'track_{idx}')[:40]
+                        print(f"    Baixando: {title}", end=' ... ', flush=True)
                         response = requests.get(song['audio_url'], timeout=30)
                         if response.status_code == 200:
                             track_num = song.get('track_number', 0)
                             filename = f"{track_num:02d} - {song.get('title', 'track')}.mp3"
                             zip_file.writestr(filename, response.content)
-                            print("[OK]")
+                            size_kb = len(response.content) // 1024
+                            print(f"[OK - {size_kb}KB]")
                         else:
                             print(f"[{response.status_code}]")
                 except requests.Timeout:
                     print("[TIMEOUT]")
                 except Exception as e:
-                    print(f"[ERRO]")
+                    print(f"[ERRO: {str(e)[:20]}]")
         
         zip_buffer.seek(0)
         return zip_buffer.getvalue()

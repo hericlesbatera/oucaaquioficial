@@ -53,6 +53,14 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
+dependencies {
+    // Kotlin Coroutines (MUST be after capacitor.build.gradle)
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.20'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.9.20'
+}
+
 try {
     def servicesJSON = file('google-services.json')
     if (servicesJSON.text) {

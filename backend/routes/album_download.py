@@ -150,20 +150,30 @@ async def stream_zip(songs, album_title):
 @router.get("/{album_id}/download")
 async def download_album(album_id: str):
     """
-    Retorna um arquivo ZIP em stream contendo todas as musicas de um album.
-    Streams chunks conforme as musicas sao baixadas (melhor para mobile).
+    Retorna um arquivo ZIP contendo todas as musicas de um album.
+    Se archive_url existe, faz redirect. Senão, gera em tempo real com streaming.
     """
     try:
         logger.info(f"Iniciando download do album: {album_id}")
         
         # Buscar album
-        album_result = supabase.table("albums").select("id, title").eq("id", album_id).single().execute()
+        album_result = supabase.table("albums").select("id, title, archive_url").eq("id", album_id).single().execute()
         
         if not album_result.data:
             raise HTTPException(status_code=404, detail="Album nao encontrado")
         
         album = album_result.data
         album_title = album.get("title", f"album_{album_id}")
+        archive_url = album.get("archive_url")
+        
+        # Se já tem archive pre-gerado, redireciona para ele (instantâneo)
+        if archive_url:
+            logger.info(f"✅ Usando archive pre-gerado: {archive_url[:50]}...")
+            from fastapi.responses import RedirectResponse
+            return RedirectResponse(url=archive_url)
+        
+        # Senão, gera em tempo real
+        logger.info(f"⏱️  Archive não existe, gerando em tempo real...")
         
         # Buscar todas as musicas do album
         songs_result = supabase.table("songs").select("id, title, audio_url, track_number").eq("album_id", album_id).order("track_number", desc=False).execute()
