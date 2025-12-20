@@ -478,12 +478,13 @@ const AlbumPage = () => {
                     }
 
                     toast({
-                        title: 'Download Iniciado',
-                        description: `${album.title} está sendo baixado...`
+                        title: '⏳ Preparando Download',
+                        description: `Aguarde, estamos preparando ${albumSongs.length} músicas...`,
+                        duration: 60000
                     });
 
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 120000);
+                    const timeoutId = setTimeout(() => controller.abort(), 300000);
                     
                     try {
                         const response = await fetch(downloadUrl, {
@@ -497,55 +498,28 @@ const AlbumPage = () => {
                             throw new Error(`Erro HTTP: ${response.status}`);
                         }
 
+                        toast({
+                            title: '📥 Baixando...',
+                            description: 'O arquivo está sendo transferido para seu computador',
+                            duration: 30000
+                        });
+
                         const extension = downloadUrl.includes('.rar') ? 'rar' : 'zip';
                         const filename = `${album.title}.${extension}`;
                         
-                        if (response.body && typeof response.body.getReader === 'function') {
-                            const reader = response.body.getReader();
-                            const chunks = [];
-
-                            try {
-                                while (true) {
-                                    const { done, value } = await reader.read();
-                                    if (done) break;
-                                    chunks.push(value);
-                                }
-                                
-                                const blob = new Blob(chunks);
-                                const url = window.URL.createObjectURL(blob);
-                                const link = document.createElement('a');
-                                link.href = url;
-                                link.download = filename;
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                                window.URL.revokeObjectURL(url);
-                            } catch (streamError) {
-                                const blob = await response.blob();
-                                const url = window.URL.createObjectURL(blob);
-                                const link = document.createElement('a');
-                                link.href = url;
-                                link.download = filename;
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                                window.URL.revokeObjectURL(url);
-                            }
-                        } else {
-                            const blob = await response.blob();
-                            const url = window.URL.createObjectURL(blob);
-                            const link = document.createElement('a');
-                            link.href = url;
-                            link.download = filename;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            window.URL.revokeObjectURL(url);
-                        }
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
 
                         toast({
-                            title: 'Sucesso',
-                            description: 'Download concluído'
+                            title: '✅ Download Concluído!',
+                            description: `${album.title} foi baixado com sucesso`
                         });
                     } catch (fetchError) {
                         clearTimeout(timeoutId);
