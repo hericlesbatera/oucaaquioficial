@@ -55,60 +55,23 @@ async def stream_zip(songs, album_title):
     Gera um ZIP baixando músicas em PARALELO (muito mais rápido).
     """
     print(f"[ALBUM_DOWNLOAD] Iniciando download PARALELO de {len(songs)} músicas")
-    
     async with httpx.AsyncClient(timeout=60.0, limits=httpx.Limits(max_connections=10)) as client:
         tasks = [download_single_song(client, song, idx) for idx, song in enumerate(songs, 1)]
         results = await asyncio.gather(*tasks)
-    
+
     downloaded_files = [r for r in results if r is not None]
-    
+
     if not downloaded_files:
         print("[ALBUM_DOWNLOAD] ❌ Nenhuma música baixada!")
         yield b"Erro: Nenhuma musica encontrada"
         return
-    
-    print(f"[ALBUM_DOWNLOAD] ✅ {len(downloaded_files)} músicas baixadas, criando ZIP...")
 
-    # Sempre usar ZipStream para streaming real
-    print("[ALBUM_DOWNLOAD] Using ZipStream for true streaming (forçado)")
-    file_dict = {}
-    downloaded_count = 0
-    for idx, song in enumerate(songs, 1):
-        try:
-            if song.get('audio_url'):
-                title = song.get('title', 'track')[:40]
-                print(f"[ALBUM_DOWNLOAD] Baixando musica {idx}/{len(songs)}: {title}")
-                try:
-                    response = await client.get(song['audio_url'], follow_redirects=True, timeout=30.0)
-                    if response.status_code == 200:
-                        track_num = song.get('track_number', idx)
-                        filename = f"{track_num:02d} - {song.get('title', 'track')}.mp3"
-                        file_dict[filename] = response.content
-                        downloaded_count += 1
-                        print(f"[ALBUM_DOWNLOAD]   OK ({downloaded_count}/{len(songs)}): {filename}")
-                    else:
-                        print(f"[ALBUM_DOWNLOAD]   FALHOU: status {response.status_code}")
-                except asyncio.TimeoutError:
-                    print(f"[ALBUM_DOWNLOAD]   TIMEOUT: {title}")
-                except Exception as e:
-                    print(f"[ALBUM_DOWNLOAD]   ERRO: {str(e)[:50]}")
-        except Exception as e:
-            print(f"[ALBUM_DOWNLOAD]   ERRO GERAL: {str(e)[:50]}")
-        await asyncio.sleep(0)
+    print(f"[ALBUM_DOWNLOAD] ✅ {len(downloaded_files)} músicas baixadas, criando ZIP...")
+    file_dict = {filename: content for filename, content in downloaded_files}
+    print(f"[ALBUM_DOWNLOAD] Using ZipStream for true streaming (forçado)")
     zs = ZipStream(file_dict, compression=zipfile.ZIP_DEFLATED, chunksize=262144)
     for chunk in zs:
         yield chunk
-    
-    print(f"[ALBUM_DOWNLOAD] 📦 ZIP criado: {zip_buffer.tell()//1024}KB")
-    
-    zip_buffer.seek(0)
-    while True:
-        chunk = zip_buffer.read(65536)
-        if not chunk:
-            break
-        yield chunk
-    
-    zip_buffer.close()
 
 
 @router.get("/{album_id}/download")
