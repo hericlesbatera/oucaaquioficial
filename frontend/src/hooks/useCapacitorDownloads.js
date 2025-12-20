@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Filesystem, Directory, Encoding, FilesystemDirectory } from '@capacitor/filesystem';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
-import { Http } from '@capacitor-community/http';
+import { CapacitorHttp } from '@capacitor/core';
 
 const DOWNLOADS_DIR = 'downloads';
 const METADATA_KEY = 'downloads_metadata';
@@ -87,60 +87,61 @@ const downloadFile = async (url, fileName, albumDir) => {
         console.log(`🌐 Iniciando download: ${fileName}`);
         console.log(`   URL: ${url}`);
 
-        // Adicionar timeout no fetch também (30 segundos)
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-        // Tentar via Http.downloadFile primeiro (nativo)
-        if (Http && typeof Http.downloadFile === 'function') {
+        // Usar CapacitorHttp nativo (ignora CORS)
+        let base64Data;
+        
+        try {
+            console.log(`   Usando CapacitorHttp (nativo)...`);
+            const response = await CapacitorHttp.get({
+                url: url,
+                responseType: 'blob',
+                headers: {
+                    'Accept': 'audio/mpeg,audio/*,*/*'
+                }
+            });
+            
+            if (response.status !== 200) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            // CapacitorHttp retorna data como base64 quando responseType é blob
+            base64Data = response.data;
+            console.log(`   ✅ CapacitorHttp OK - ${(base64Data?.length || 0)} chars`);
+            
+        } catch (nativeError) {
+            console.warn(`   CapacitorHttp falhou: ${nativeError.message}, tentando fetch...`);
+            
+            // Fallback para fetch normal
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 120000);
+            
             try {
-                const albumPath = `${DOWNLOADS_DIR}/${albumDir}`;
-                try { await Filesystem.mkdir({ path: albumPath, directory: Directory.Data, recursive: true }); } catch {}
-                const filePath = `${albumPath}/${fileName}`;
-                const res = await Http.downloadFile({
-                    url,
-                    filePath,
-                    fileDirectory: FilesystemDirectory.Data,
+                const response = await fetch(url, {
                     method: 'GET',
-                    headers: { 'Accept': 'audio/mpeg,*/*' }
+                    signal: controller.signal
                 });
-                console.log('Http.downloadFile OK:', JSON.stringify(res));
-                return true;
-            } catch (e) {
-                console.warn('Http.downloadFile falhou, caindo para fetch->blob:', e.message);
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const blob = await response.blob();
+                if (blob.size === 0) {
+                    throw new Error('Arquivo vazio');
+                }
+                
+                base64Data = await blobToBase64(blob);
+                console.log(`   ✅ Fetch OK - ${blob.size} bytes`);
+                
+            } catch (fetchError) {
+                clearTimeout(timeoutId);
+                throw new Error(`Download falhou: ${fetchError.message}`);
             }
         }
 
-        let response;
-        try {
-            response = await fetch(url, {
-                method: 'GET',
-                cache: 'no-store',
-                referrerPolicy: 'no-referrer',
-                headers: { 'Accept': 'audio/mpeg,*/*' },
-                signal: controller.signal
-            });
-        } finally {
-            clearTimeout(timeoutId);
-        }
-
-        if (!response.ok) {
-            throw new Error(`❌ Erro HTTP ${response.status} ao baixar ${fileName}`);
-        }
-
-        console.log(`📥 Recebido blob para ${fileName}`);
-        const blob = await response.blob();
-        const fileSizeMB = (blob.size / 1024 / 1024).toFixed(2);
-        console.log(`   Tamanho: ${blob.size} bytes (${fileSizeMB}MB)`);
-
-        if (blob.size === 0) {
-            throw new Error(`❌ Arquivo vazio: ${fileName}`);
-        }
-
-        const base64Data = await blobToBase64(blob);
-
         // Remove o prefixo data:audio/mpeg;base64, se existir
-        const cleanBase64 = base64Data.includes(',')
+        const cleanBase64 = base64Data?.includes?.(',')
             ? base64Data.split(',')[1]
             : base64Data;
 
