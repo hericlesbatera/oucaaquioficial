@@ -29,71 +29,61 @@ router = APIRouter(prefix="/api/albums", tags=["album_download"])
 
 async def stream_zip(songs, album_title):
     """
-    Gera um ZIP em memória e envia.
-    Método mais simples e confiável.
+    Gera um ZIP com streaming para economizar memória.
+    Baixa uma música por vez e adiciona ao ZIP incrementalmente.
     """
     print(f"[ALBUM_DOWNLOAD] Iniciando download de {len(songs)} músicas para '{album_title}'")
     
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        zip_buffer = io.BytesIO()
-        
-        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            downloaded_count = 0
+    zip_buffer = io.BytesIO()
+    downloaded_count = 0
+    
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_STORED) as zip_file:
+        for idx, song in enumerate(songs, 1):
+            audio_url = song.get('audio_url')
+            title = song.get('title', f'track_{idx}')[:50]
             
-            for idx, song in enumerate(songs, 1):
-                audio_url = song.get('audio_url')
-                title = song.get('title', f'track_{idx}')[:50]
-                
-                if not audio_url:
-                    print(f"[ALBUM_DOWNLOAD] ❌ Música {idx} sem URL: {title}")
-                    continue
-                
-                print(f"[ALBUM_DOWNLOAD] ⏳ Baixando {idx}/{len(songs)}: {title}")
-                print(f"[ALBUM_DOWNLOAD]    URL: {audio_url[:80]}...")
-                
-                try:
-                    response = await client.get(audio_url, follow_redirects=True, timeout=60.0)
+            if not audio_url:
+                print(f"[ALBUM_DOWNLOAD] ❌ Música {idx} sem URL: {title}")
+                continue
+            
+            print(f"[ALBUM_DOWNLOAD] ⏳ Baixando {idx}/{len(songs)}: {title}")
+            
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.get(audio_url, follow_redirects=True)
                     
-                    if response.status_code == 200:
-                        content_type = response.headers.get('content-type', '')
-                        content_length = len(response.content)
-                        
-                        print(f"[ALBUM_DOWNLOAD]    Content-Type: {content_type}, Size: {content_length} bytes")
-                        
-                        if content_length < 1000:
-                            print(f"[ALBUM_DOWNLOAD] ⚠️ Arquivo muito pequeno, pode ser erro")
-                            continue
-                        
+                    if response.status_code == 200 and len(response.content) > 1000:
                         track_num = song.get('track_number') or idx
                         safe_title = "".join(c for c in title if c.isalnum() or c in ' -_').strip()
                         filename = f"{track_num:02d} - {safe_title}.mp3"
                         
                         zip_file.writestr(filename, response.content)
                         downloaded_count += 1
-                        print(f"[ALBUM_DOWNLOAD] ✅ OK ({downloaded_count}/{len(songs)}): {filename}")
+                        print(f"[ALBUM_DOWNLOAD] ✅ OK: {filename} ({len(response.content)} bytes)")
                     else:
-                        print(f"[ALBUM_DOWNLOAD] ❌ HTTP {response.status_code}: {title}")
+                        print(f"[ALBUM_DOWNLOAD] ❌ Falhou: {title} (status: {response.status_code})")
                         
-                except asyncio.TimeoutError:
-                    print(f"[ALBUM_DOWNLOAD] ❌ TIMEOUT: {title}")
-                except Exception as e:
-                    print(f"[ALBUM_DOWNLOAD] ❌ ERRO: {title} - {str(e)[:100]}")
-                
-                await asyncio.sleep(0.1)
-        
-        if downloaded_count == 0:
-            print("[ALBUM_DOWNLOAD] ❌ Nenhuma música baixada!")
-            error_content = f"Erro: Não foi possível baixar nenhuma música do álbum '{album_title}'."
-            yield error_content.encode('utf-8')
-            return
-        
-        print(f"[ALBUM_DOWNLOAD] ✅ ZIP criado com {downloaded_count} músicas")
-        
-        # Enviar ZIP completo
-        zip_buffer.seek(0)
-        zip_data = zip_buffer.read()
-        print(f"[ALBUM_DOWNLOAD] 📦 Tamanho do ZIP: {len(zip_data)} bytes")
-        yield zip_data
+            except Exception as e:
+                print(f"[ALBUM_DOWNLOAD] ❌ ERRO: {title} - {str(e)[:50]}")
+            
+            await asyncio.sleep(0.05)
+    
+    if downloaded_count == 0:
+        print("[ALBUM_DOWNLOAD] ❌ Nenhuma música baixada!")
+        yield b"Erro: Nenhuma musica encontrada"
+        return
+    
+    print(f"[ALBUM_DOWNLOAD] ✅ ZIP criado com {downloaded_count} músicas")
+    
+    zip_buffer.seek(0)
+    
+    while True:
+        chunk = zip_buffer.read(65536)
+        if not chunk:
+            break
+        yield chunk
+    
+    zip_buffer.close()
 
 
 @router.get("/{album_id}/download")
