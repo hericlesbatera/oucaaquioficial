@@ -63,15 +63,15 @@ const AlbumPage = () => {
                 setIsFavorite(false);
                 setImageError(false);
                 setDownloadInProgress(false);
-            
-            // Verificar se artistSlug é um artista válido (não aceita "album" como slug)
-            if (artistSlug === 'album') {
-                if (isMounted) {
-                    setNotFound(true);
-                    setLoading(false);
+                
+                // Verificar se artistSlug é um artista válido (não aceita "album" como slug)
+                if (artistSlug === 'album') {
+                    if (isMounted) {
+                        setNotFound(true);
+                        setLoading(false);
+                    }
+                    return;
                 }
-                return;
-            }
 
             // Buscar álbum primeiro (mais importante)
             let { data: supabaseAlbum } = await supabase
@@ -92,13 +92,13 @@ const AlbumPage = () => {
                 supabaseAlbum = albumById;
             }
             
-             if (!supabaseAlbum) {
-                 if (isMounted) {
-                     setNotFound(true);
-                     setLoading(false);
-                 }
-                 return;
-             }
+            if (!supabaseAlbum) {
+                if (isMounted) {
+                    setNotFound(true);
+                    setLoading(false);
+                }
+                return;
+            }
              
             // Buscar artista em paralelo enquanto processa o álbum
             const artistPromise = (async () => {
@@ -195,110 +195,110 @@ const AlbumPage = () => {
                 profile_image: artistData?.profile_image
             });
 
-             if (!artistData) {
-                 console.warn('Artista não encontrado, mas prosseguindo com álbum');
-             }
+            if (!artistData) {
+                console.warn('Artista não encontrado, mas prosseguindo com álbum');
+            }
             
-             // Verificar se o álbum é privado e o usuário não é o dono (admin pode ver tudo)
-             if (supabaseAlbum.is_private && user?.id !== supabaseAlbum.artist_id && !user?.isAdmin) {
-                 if (isMounted) {
-                     console.warn('Álbum privado e usuário não é o dono');
-                     setNotFound(true);
-                     setLoading(false);
-                 }
-                 return;
-             }
+            // Verificar se o álbum é privado e o usuário não é o dono (admin pode ver tudo)
+            if (supabaseAlbum.is_private && user?.id !== supabaseAlbum.artist_id && !user?.isAdmin) {
+                if (isMounted) {
+                    console.warn('Álbum privado e usuário não é o dono');
+                    setNotFound(true);
+                    setLoading(false);
+                }
+                return;
+            }
             
-             if (!isMounted) return;
+            if (!isMounted) return;
               // Usar dados do artista se encontrado, senão usar dados do álbum
               setArtist(artistData || { id: supabaseAlbum.artist_id, name: supabaseAlbum.artist_name });
 
-             setAlbum({
-                 id: supabaseAlbum.id,
-                 slug: supabaseAlbum.slug,
-                 title: supabaseAlbum.title,
-                 artistName: supabaseAlbum.artist_name,
-                 artistId: supabaseAlbum.artist_id,
-                 coverImage: supabaseAlbum.cover_url || '/images/default-album.png',
-                 releaseYear: supabaseAlbum.release_year,
-                 description: supabaseAlbum.description,
-                 genre: supabaseAlbum.genre,
-                 archiveUrl: supabaseAlbum.archive_url,
-                 download_count: supabaseAlbum.download_count || 0,
-                 play_count: supabaseAlbum.play_count || 0
-             });
+              setAlbum({
+                  id: supabaseAlbum.id,
+                  slug: supabaseAlbum.slug,
+                  title: supabaseAlbum.title,
+                  artistName: supabaseAlbum.artist_name,
+                  artistId: supabaseAlbum.artist_id,
+                  coverImage: supabaseAlbum.cover_url || '/images/default-album.png',
+                  releaseYear: supabaseAlbum.release_year,
+                  description: supabaseAlbum.description,
+                  genre: supabaseAlbum.genre,
+                  archiveUrl: supabaseAlbum.archive_url,
+                  download_count: supabaseAlbum.download_count || 0,
+                  play_count: supabaseAlbum.play_count || 0
+              });
 
-             // Fazer o resto em paralelo (menos crítico)
-             const [videoResult, collabResult, favResult, recommendedResult] = await Promise.all([
-                 // Buscar vídeo
-                 supabase
-                     .from('artist_videos')
-                     .select('id, title, video_url, video_id, thumbnail')
-                     .eq('album_id', supabaseAlbum.id)
-                     .maybeSingle(),
-                 
-                 // Buscar colaboradores
-                 supabase
-                     .from('collaboration_invites')
-                     .select('invited_user_id')
-                     .eq('album_id', supabaseAlbum.id)
-                     .eq('status', 'accepted'),
-                 
-                 // Buscar favorito
-                 user?.id ? supabase
-                     .from('album_favorites')
-                     .select('id')
-                     .eq('user_id', user.id)
-                     .eq('album_id', supabaseAlbum.id)
-                     .maybeSingle() : Promise.resolve({ data: null }),
-                 
-                 // Buscar recomendados
-                 supabase
-                     .from('albums')
-                     .select('id, slug, title, artist_name, artist_id, cover_url, play_count, genre, artist:artists(slug)')
-                     .eq('is_private', false)
-                     .neq('id', supabaseAlbum.id)
-                     .order('play_count', { ascending: false })
-                     .limit(30) // Reduzir limite
-             ]);
+              // Fazer o resto em paralelo (menos crítico)
+              const [videoResult, collabResult, favResult, recommendedResult] = await Promise.all([
+                  // Buscar vídeo
+                  supabase
+                      .from('artist_videos')
+                      .select('id, title, video_url, video_id, thumbnail')
+                      .eq('album_id', supabaseAlbum.id)
+                      .maybeSingle(),
+                  
+                  // Buscar colaboradores
+                  supabase
+                      .from('collaboration_invites')
+                      .select('invited_user_id')
+                      .eq('album_id', supabaseAlbum.id)
+                      .eq('status', 'accepted'),
+                  
+                  // Buscar favorito
+                  user?.id ? supabase
+                      .from('album_favorites')
+                      .select('id')
+                      .eq('user_id', user.id)
+                      .eq('album_id', supabaseAlbum.id)
+                      .maybeSingle() : Promise.resolve({ data: null }),
+                  
+                  // Buscar recomendados
+                  supabase
+                      .from('albums')
+                      .select('id, slug, title, artist_name, artist_id, cover_url, play_count, genre, artist:artists(slug)')
+                      .eq('is_private', false)
+                      .neq('id', supabaseAlbum.id)
+                      .order('play_count', { ascending: false })
+                      .limit(30) // Reduzir limite
+              ]);
 
-             // Processar músicas
-             const { data: songs, error: songsError } = songsResult;
-             console.log('Songs query result:', {
-                 albumId: supabaseAlbum.id,
-                 songsCount: songs?.length,
-                 error: songsError,
-                 songs: songs
-             });
-             
-             if (songsError) {
-                 console.error('Erro ao carregar músicas:', songsError);
-             }
-             if (songs && songs.length > 0) {
-                 const processedSongs = songs.map(song => ({
-                     id: song.id,
-                     title: song.title,
-                     artistName: song.artist_name,
-                     artistId: song.artist_id,
-                     artistSlug: artistData?.slug,
-                     albumId: song.album_id,
-                     albumName: song.album_name,
-                     coverImage: song.cover_url || supabaseAlbum.cover_url || '/images/default-album.png',
-                     audioUrl: song.audio_url,
-                     duration: song.duration || 0,
-                     trackNumber: song.track_number,
-                     composer: song.composer,
-                     isrc: song.isrc
-                 }));
-                 setAlbumSongs(processedSongs);
-                 console.log(`Carregadas ${processedSongs.length} músicas`);
-             } else {
-                 console.warn('Nenhuma música encontrada para o álbum', {
-                     albumId: supabaseAlbum.id,
-                     songs: songs
-                 });
-                 setAlbumSongs([]);
-             }
+              // Processar músicas
+              const { data: songs, error: songsError } = songsResult;
+              console.log('Songs query result:', {
+                  albumId: supabaseAlbum.id,
+                  songsCount: songs?.length,
+                  error: songsError,
+                  songs: songs
+              });
+              
+              if (songsError) {
+                  console.error('Erro ao carregar músicas:', songsError);
+              }
+              if (songs && songs.length > 0) {
+                  const processedSongs = songs.map(song => ({
+                      id: song.id,
+                      title: song.title,
+                      artistName: song.artist_name,
+                      artistId: song.artist_id,
+                      artistSlug: artistData?.slug,
+                      albumId: song.album_id,
+                      albumName: song.album_name,
+                      coverImage: song.cover_url || supabaseAlbum.cover_url || '/images/default-album.png',
+                      audioUrl: song.audio_url,
+                      duration: song.duration || 0,
+                      trackNumber: song.track_number,
+                      composer: song.composer,
+                      isrc: song.isrc
+                  }));
+                  setAlbumSongs(processedSongs);
+                  console.log(`Carregadas ${processedSongs.length} músicas`);
+              } else {
+                  console.warn('Nenhuma música encontrada para o álbum', {
+                      albumId: supabaseAlbum.id,
+                      songs: songs
+                  });
+                  setAlbumSongs([]);
+              }
 
              // Processar vídeo
              const { data: videoData } = videoResult;
@@ -320,7 +320,7 @@ const AlbumPage = () => {
                      .from('artists')
                      .select('id, name, slug, avatar_url, is_verified')
                      .in('id', collabIds);
-            
+             
                  if (collabArtists) {
                      setCollaborators(collabArtists);
                  }
@@ -347,38 +347,38 @@ const AlbumPage = () => {
                  }
              }
 
-            if (recommendedList.length > 0) {
-                // Garantir que nunca ultrapasse 6 álbuns
-                const recommended = recommendedList
-                    .slice(0, 6)
-                    .map(recAlbum => {
-                        // Usar o slug do artista da relação (artist.slug) ou fallback para artist_id
-                        const recArtistSlug = recAlbum.artist?.slug || recAlbum.artist_id;
-                        
-                        return {
-                            id: recAlbum.id,
-                            slug: recAlbum.slug,
-                            title: recAlbum.title,
-                            artistName: recAlbum.artist_name,
-                            artistId: recAlbum.artist_id,
-                            coverImage: recAlbum.cover_url || '/images/default-album.png',
-                            playCount: recAlbum.play_count || 0,
-                            downloadCount: recAlbum.download_count || 0,
-                            artistSlug: recArtistSlug,
-                            artistVerified: false,
-                            collaborators: []
-                        };
-                    })
-                    .slice(0, 6); // Dupla verificação
-                setRecommendedAlbums(recommended);
-            } else {
-                // Garantir que está vazio se não houver recomendados
-                setRecommendedAlbums([]);
-            }
+             if (recommendedList.length > 0) {
+                 // Garantir que nunca ultrapasse 6 álbuns
+                 const recommended = recommendedList
+                     .slice(0, 6)
+                     .map(recAlbum => {
+                         // Usar o slug do artista da relação (artist.slug) ou fallback para artist_id
+                         const recArtistSlug = recAlbum.artist?.slug || recAlbum.artist_id;
+                         
+                         return {
+                             id: recAlbum.id,
+                             slug: recAlbum.slug,
+                             title: recAlbum.title,
+                             artistName: recAlbum.artist_name,
+                             artistId: recAlbum.artist_id,
+                             coverImage: recAlbum.cover_url || '/images/default-album.png',
+                             playCount: recAlbum.play_count || 0,
+                             downloadCount: recAlbum.download_count || 0,
+                             artistSlug: recArtistSlug,
+                             artistVerified: false,
+                             collaborators: []
+                         };
+                     })
+                     .slice(0, 6); // Dupla verificação
+                 setRecommendedAlbums(recommended);
+             } else {
+                 // Garantir que está vazio se não houver recomendados
+                 setRecommendedAlbums([]);
+             }
 
-            if (isMounted) {
-                setLoading(false);
-            }
+             if (isMounted) {
+                 setLoading(false);
+             }
             } catch (error) {
                 console.error('❌ Erro ao carregar álbum:', error);
                 if (isMounted) {
