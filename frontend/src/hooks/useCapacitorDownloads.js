@@ -7,15 +7,36 @@ const METADATA_KEY = 'downloads_metadata';
 
 // Verificar se está em ambiente Capacitor mobile
 export const isCapacitorAvailable = () => {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === 'undefined') {
+        console.log('[Capacitor] window undefined');
+        return false;
+    }
     
     const hasCapacitor = window.Capacitor !== undefined;
+    console.log('[Capacitor] hasCapacitor:', hasCapacitor);
+    
     if (!hasCapacitor) return false;
     
-    const platform = window.Capacitor.getPlatform?.();
-    const isNativeApp = platform === 'android' || platform === 'ios';
+    // Verificar se é função ou propriedade
+    let isNative = false;
     
-    return isNativeApp;
+    if (typeof window.Capacitor.isNativePlatform === 'function') {
+        isNative = window.Capacitor.isNativePlatform();
+        console.log('[Capacitor] isNativePlatform():', isNative);
+    } else if (window.Capacitor.isNativePlatform === true) {
+        isNative = true;
+        console.log('[Capacitor] isNativePlatform === true');
+    }
+    
+    const platform = window.Capacitor.getPlatform?.();
+    console.log('[Capacitor] platform:', platform);
+    
+    if (platform === 'android' || platform === 'ios') {
+        isNative = true;
+    }
+    
+    console.log('[Capacitor] isCapacitorAvailable RESULT:', isNative);
+    return isNative;
 };
 
 // Salvar metadados em cache local
