@@ -7,14 +7,30 @@ import httpx
 import io
 import zipfile
 import asyncio
-try:
-    from zipstream import ZipStream
-    HAS_ZIPSTREAM = True
-except ImportError:
-    HAS_ZIPSTREAM = False
-    print("WARNING: zipstream not installed, using fallback method")
+from zipstream import ZipStream
+import logging
+from datetime import datetime
+import traceback
+
 
 load_dotenv()
+
+# Configurar logging em arquivo
+LOG_DIR = "/tmp"  # Railway escreve em /tmp
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
+
+LOG_FILE = os.path.join(LOG_DIR, "album_download.log")
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+logger.info("=== Album Download Service Iniciado ===")
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
@@ -42,44 +58,62 @@ async def download_single_song(client, song, idx):
             track_num = song.get('track_number') or idx
             safe_title = "".join(c for c in title if c.isalnum() or c in ' -_').strip()
             filename = f"{track_num:02d} - {safe_title}.mp3"
-            print(f"[ALBUM_DOWNLOAD] ✅ {filename} ({len(response.content)//1024}KB)")
+            logger.info(f"✅ {filename} ({len(response.content)//1024}KB)")
             return (filename, response.content)
     except Exception as e:
-        print(f"[ALBUM_DOWNLOAD] ❌ {title}: {str(e)[:30]}")
+        logger.error(f"❌ {title}: {str(e)[:30]}")
     
     return None
 
 
 async def stream_zip(songs, album_title):
     """
-    Gera um ZIP baixando músicas em PARALELO (muito mais rápido).
+    Gera um ZIP com ZipStream - baixa e faz stream simultâneamente (download imediato).
     """
-    print(f"[ALBUM_DOWNLOAD] Iniciando download PARALELO de {len(songs)} músicas")
-    print(f"[ALBUM_DOWNLOAD] Baixando músicas do álbum '{album_title}'...")
+    logger.info(f"Iniciando download PARALELO de {len(songs)} músicas com ZipStream")
+    
+    # Baixar todas as músicas em paralelo
     async with httpx.AsyncClient(timeout=60.0, limits=httpx.Limits(max_connections=10)) as client:
         tasks = [download_single_song(client, song, idx) for idx, song in enumerate(songs, 1)]
         results = await asyncio.gather(*tasks)
 
     downloaded_files = [r for r in results if r is not None]
-    print(f"[ALBUM_DOWNLOAD] Arquivos baixados: {[f[0] for f in downloaded_files]}")
-    print(f"[ALBUM_DOWNLOAD] Total de arquivos baixados: {len(downloaded_files)}")
+    logger.info(f"Arquivos baixados: {[f[0] for f in downloaded_files]}")
+    logger.info(f"Total de arquivos baixados: {len(downloaded_files)}")
 
     if not downloaded_files:
-        print("[ALBUM_DOWNLOAD] ❌ Nenhuma música baixada!")
+        logger.error("Nenhuma música baixada!")
         yield b"Erro: Nenhuma musica encontrada"
         return
 
-    print(f"[ALBUM_DOWNLOAD] ✅ {len(downloaded_files)} músicas baixadas, criando ZIP...")
-    file_dict = {filename: content for filename, content in downloaded_files}
-    print(f"[ALBUM_DOWNLOAD] Using ZipStream for true streaming (forçado)")
-    zs = ZipStream(file_dict, compression=zipfile.ZIP_DEFLATED, chunksize=262144)
-    chunk_count = 0
-    for chunk in zs:
-        chunk_count += 1
-        if chunk_count == 1:
-            print(f"[ALBUM_DOWNLOAD] Primeiro chunk do ZIP enviado.")
-        yield chunk
-    print(f"[ALBUM_DOWNLOAD] Fim do streaming ZIP. Total de chunks enviados: {chunk_count}")
+    logger.info(f"✅ Iniciando stream do ZIP com {len(downloaded_files)} arquivos...")
+    
+    # Converter lista de tuplas para dicionário
+    files_dict = {filename: content for filename, content in downloaded_files}
+    logger.info(f"Dicionário criado: {len(files_dict)} arquivos")
+    logger.info(f"Conteúdo do dicionário: {list(files_dict.keys())}")
+    
+    # Criar ZipStream e fazer yield dos chunks
+    try:
+        logger.info(f"ZipStream version: {ZipStream.__module__}")
+        zs = ZipStream(files=files_dict, compression=zipfile.ZIP_DEFLATED, chunksize=262144)
+        chunk_count = 0
+        total_bytes = 0
+        
+        for chunk in zs:
+            if chunk:  # Garantir que chunk não é vazio
+                chunk_count += 1
+                total_bytes += len(chunk)
+                if chunk_count == 1:
+                    logger.info(f"✅ Primeiro chunk do ZIP enviado (streaming ativo) - tamanho: {len(chunk)} bytes")
+                yield chunk
+        
+        logger.info(f"✅ Fim do streaming. Total de chunks: {chunk_count}, Total de bytes: {total_bytes}")
+    except Exception as e:
+        logger.error(f"❌ Erro no ZipStream: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise
 
 
 @router.get("/{album_id}/download")
@@ -89,7 +123,7 @@ async def download_album(album_id: str):
     Streams chunks conforme as musicas sao baixadas (melhor para mobile).
     """
     try:
-        print(f"[ALBUM_DOWNLOAD] Iniciando download do album: {album_id}")
+        logger.info(f"Iniciando download do album: {album_id}")
         
         # Buscar album
         album_result = supabase.table("albums").select("id, title").eq("id", album_id).single().execute()
@@ -108,7 +142,7 @@ async def download_album(album_id: str):
         if not songs:
             raise HTTPException(status_code=404, detail="Album nao tem musicas")
         
-        print(f"[ALBUM_DOWNLOAD] Album '{album_title}' tem {len(songs)} musicas - iniciando stream...")
+        logger.info(f"Album '{album_title}' tem {len(songs)} musicas - iniciando stream...")
         
         # Retornar stream do ZIP
         return StreamingResponse(
@@ -123,10 +157,22 @@ async def download_album(album_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[ALBUM_DOWNLOAD] Erro: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"Erro: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=500,
             detail=f"Erro ao gerar download do album: {str(e)}"
         )
+
+
+@router.get("/debug/logs")
+async def get_logs():
+    """Retorna o conteúdo do arquivo de log."""
+    try:
+        with open(LOG_FILE, 'r') as f:
+            logs = f.read()
+        return {"log_file": LOG_FILE, "logs": logs}
+    except FileNotFoundError:
+        return {"error": f"Log file not found: {LOG_FILE}"}
+    except Exception as e:
+        return {"error": str(e)}
