@@ -631,6 +631,13 @@ const AlbumPage = () => {
                     }
 
                     // Senão, baixar MP3s individuais
+                    // DEBUG: mostrar URLs
+                    console.log('=== DEBUG URLs ===');
+                    songs.forEach((s, i) => {
+                        console.log(`${i+1}. ${s.title}: ${s.audioUrl || s.audio_url || 'SEM URL'}`);
+                    });
+                    console.log('=================');
+                    
                     try {
                         const result = await downloadAlbum(albumData, songs);
                         setDownloadProgress(100);
