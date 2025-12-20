@@ -44,6 +44,8 @@ router = APIRouter(prefix="/api/albums", tags=["album_download"])
 
 async def download_single_song(client, song, idx):
     """Baixa uma única música e retorna os dados."""
+    import time
+    
     audio_url = song.get('audio_url')
     title = song.get('title', f'track_{idx}')[:50]
     
@@ -51,16 +53,20 @@ async def download_single_song(client, song, idx):
         return None
     
     try:
+        start_time = time.time()
         response = await client.get(audio_url, follow_redirects=True)
+        elapsed = time.time() - start_time
         
         if response.status_code == 200 and len(response.content) > 1000:
             track_num = song.get('track_number') or idx
             safe_title = "".join(c for c in title if c.isalnum() or c in ' -_').strip()
             filename = f"{track_num:02d} - {safe_title}.mp3"
-            logger.info(f"✅ {filename} ({len(response.content)//1024}KB)")
+            size_kb = len(response.content)//1024
+            speed = size_kb / elapsed if elapsed > 0 else 0
+            logger.info(f"✅ {filename} ({size_kb}KB em {elapsed:.1f}s = {speed:.1f}KB/s)")
             return (filename, response.content)
     except Exception as e:
-        logger.error(f"❌ {title}: {str(e)[:30]}")
+        logger.error(f"❌ {title}: {str(e)[:50]}")
     
     return None
 
@@ -71,7 +77,10 @@ async def stream_zip(songs, album_title):
     Baixa, compacta e envia simultaneamente.
     Cliente recebe dados imediatamente.
     """
-    logger.info(f"Iniciando verdadeiro streaming de {len(songs)} músicas")
+    import time
+    
+    logger.info(f"=== INICIANDO DOWNLOAD DE {len(songs)} MÚSICAS ===")
+    start_total = time.time()
     
     # Baixar SEQUENCIALMENTE mas ENVIAR IMEDIATAMENTE (sem esperar tudo)
     try:
@@ -80,7 +89,9 @@ async def stream_zip(songs, album_title):
         zf = zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED)
         
         # Baixar e adicionar ao ZIP sob demanda
-        logger.info(f"Baixando e compactando músicas...")
+        logger.info(f"⏱️  Iniciando download paralelo...")
+        start_download = time.time()
+        
         async with httpx.AsyncClient(timeout=60.0, limits=httpx.Limits(max_connections=500, max_keepalive_connections=500)) as client:
             files_added = 0
             for idx, song in enumerate(songs, 1):
@@ -89,20 +100,23 @@ async def stream_zip(songs, album_title):
                     filename, content = result
                     zf.writestr(filename, content)
                     files_added += 1
-                    logger.info(f"✅ {idx}. {filename} - {len(content)//1024}KB")
+        
+        download_time = time.time() - start_download
+        logger.info(f"✅ DOWNLOAD COMPLETO: {files_added} músicas em {download_time:.1f}s ({files_added/download_time:.1f} músicas/s)")
         
         # Fechar o ZIP para completar o arquivo
         zf.close()
         
         # Agora enviar para o cliente em chunks
         zip_size = zip_buffer.tell()
-        logger.info(f"✅ ZIP finalizado: {zip_size//1024}KB com {files_added} arquivos")
+        logger.info(f"✅ ZIP criado: {zip_size//1024}KB com {files_added} arquivos")
         
         zip_buffer.seek(0)
         chunk_count = 0
         sent_bytes = 0
         
-        logger.info(f"✅ INICIANDO ENVIO PARA O CLIENTE...")
+        start_send = time.time()
+        logger.info(f"⏱️  INICIANDO ENVIO PARA O CLIENTE...")
         
         while True:
             chunk = zip_buffer.read(262144)  # 256KB chunks
@@ -113,11 +127,16 @@ async def stream_zip(songs, album_title):
             sent_bytes += len(chunk)
             
             if chunk_count == 1:
-                logger.info(f"✅ PRIMEIRO CHUNK ENVIADO! Cliente começou a receber")
+                logger.info(f"✅ PRIMEIRO CHUNK ENVIADO! ({len(chunk)} bytes)")
             
             yield chunk
         
-        logger.info(f"✅ Streaming completo: {chunk_count} chunks, {sent_bytes//1024}KB enviados")
+        send_time = time.time() - start_send
+        total_time = time.time() - start_total
+        logger.info(f"✅ STREAMING COMPLETO em {total_time:.1f}s")
+        logger.info(f"   - Download: {download_time:.1f}s")
+        logger.info(f"   - Envio: {send_time:.1f}s")
+        logger.info(f"   - {chunk_count} chunks, {sent_bytes//1024}KB enviados, {(sent_bytes/1024)/send_time:.1f}KB/s")
         
     except Exception as e:
         logger.error(f"❌ Erro: {str(e)}")
