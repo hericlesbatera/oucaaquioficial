@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Filesystem, Directory, Encoding, FilesystemDirectory } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
+import { Http } from '@capacitor-community/http';
 
 const DOWNLOADS_DIR = 'downloads';
 const METADATA_KEY = 'downloads_metadata';
@@ -93,6 +94,26 @@ const downloadFile = async (url, fileName, albumDir) => {
         // Adicionar timeout no fetch também (30 segundos)
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        // Tentar via Http.downloadFile primeiro (nativo)
+        if (Http && typeof Http.downloadFile === 'function') {
+            try {
+                const albumPath = `${DOWNLOADS_DIR}/${albumDir}`;
+                try { await Filesystem.mkdir({ path: albumPath, directory: Directory.Data, recursive: true }); } catch {}
+                const filePath = `${albumPath}/${fileName}`;
+                const res = await Http.downloadFile({
+                    url,
+                    filePath,
+                    fileDirectory: FilesystemDirectory.Data,
+                    method: 'GET',
+                    headers: { 'Accept': 'audio/mpeg,*/*' }
+                });
+                console.log('Http.downloadFile OK:', JSON.stringify(res));
+                return true;
+            } catch (e) {
+                console.warn('Http.downloadFile falhou, caindo para fetch->blob:', e.message);
+            }
+        }
 
         let response;
         try {
@@ -339,6 +360,12 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
             let successCount = 0;
             let failCount = 0;
 
+            // iniciar progresso em 0
+            setDownloadProgress(prev => ({
+                ...prev,
+                [album.id]: { current: 0, total: songs.length }
+            }));
+
             for (let i = 0; i < songs.length; i++) {
                 const song = songs[i];
 
@@ -362,11 +389,9 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                     continue;
                 }
 
-                // Atualizar progresso
-                setDownloadProgress(prev => ({
-                    ...prev,
-                    [album.id]: { current: i + 1, total: songs.length }
-                }));
+                // Atualizar progresso APÓS sucesso (não por tentativa)
+                // Mantém contagem real de arquivos gravados
+                // Progress será atualizado abaixo, depois de successCount++
 
                 // Callback para informar qual música está sendo baixada
                 if (onSongDownloadStart) {
@@ -389,6 +414,11 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
 
                     console.log(`   ✅ SUCESSO`);
                     successCount++;
+                    // Atualizar progresso real
+                    setDownloadProgress(prev => ({
+                        ...prev,
+                        [album.id]: { current: successCount, total: songs.length }
+                    }));
                 } catch (error) {
                     console.error(`   ❌ FALHA: ${error.message}`);
                     failCount++;
