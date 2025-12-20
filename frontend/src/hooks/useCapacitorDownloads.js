@@ -11,15 +11,15 @@ export const isCapacitorAvailable = () => {
         console.log('[Capacitor] window undefined');
         return false;
     }
-    
+
     const hasCapacitor = window.Capacitor !== undefined;
     console.log('[Capacitor] hasCapacitor:', hasCapacitor);
-    
+
     if (!hasCapacitor) return false;
-    
+
     // Verificar se é função ou propriedade
     let isNative = false;
-    
+
     if (typeof window.Capacitor.isNativePlatform === 'function') {
         isNative = window.Capacitor.isNativePlatform();
         console.log('[Capacitor] isNativePlatform():', isNative);
@@ -27,14 +27,14 @@ export const isCapacitorAvailable = () => {
         isNative = true;
         console.log('[Capacitor] isNativePlatform === true');
     }
-    
+
     const platform = window.Capacitor.getPlatform?.();
     console.log('[Capacitor] platform:', platform);
-    
+
     if (platform === 'android' || platform === 'ios') {
         isNative = true;
     }
-    
+
     console.log('[Capacitor] isCapacitorAvailable RESULT:', isNative);
     return isNative;
 };
@@ -81,35 +81,61 @@ const ensureDownloadsDir = async () => {
 // Converter URL para arquivo local
 const downloadFile = async (url, fileName, albumDir) => {
     try {
-        const response = await fetch(url, { 
-            credentials: 'include' 
+        if (!url) {
+            throw new Error(`❌ URL vazia para arquivo ${fileName}`);
+        }
+
+        console.log(`🌐 Iniciando download: ${fileName}`);
+        console.log(`   URL: ${url}`);
+
+        const response = await fetch(url, {
+            credentials: 'include',
+            method: 'GET'
         });
 
         if (!response.ok) {
-            throw new Error(`Erro HTTP: ${response.status}`);
+            throw new Error(`❌ Erro HTTP ${response.status} ao baixar ${fileName}`);
         }
 
+        console.log(`📥 Recebido blob para ${fileName}`);
         const blob = await response.blob();
+        console.log(`   Tamanho: ${blob.size} bytes`);
+
+        if (blob.size === 0) {
+            throw new Error(`❌ Arquivo vazio: ${fileName}`);
+        }
+
         const base64Data = await blobToBase64(blob);
-        
+
         // Remove o prefixo data:audio/mpeg;base64, se existir
-        const cleanBase64 = base64Data.includes(',') 
-            ? base64Data.split(',')[1] 
+        const cleanBase64 = base64Data.includes(',')
+            ? base64Data.split(',')[1]
             : base64Data;
+
+        if (!cleanBase64 || cleanBase64.length === 0) {
+            throw new Error(`❌ Base64 vazio para ${fileName}`);
+        }
 
         // Criar pasta do álbum
         const albumPath = `${DOWNLOADS_DIR}/${albumDir}`;
-        await Filesystem.mkdir({
-            path: albumPath,
-            directory: Directory.Documents,
-            recursive: true
-        });
+
+        try {
+            await Filesystem.mkdir({
+                path: albumPath,
+                directory: Directory.Documents,
+                recursive: true
+            });
+            console.log(`📁 Pasta criada/verificada: ${albumPath}`);
+        } catch (mkdirError) {
+            console.warn(`⚠️ Erro ao criar pasta (pode já existir): ${mkdirError.message}`);
+        }
 
         // Salvar arquivo em base64
         const filePath = `${albumPath}/${fileName}`;
-        console.log(`📝 Salvando arquivo: ${filePath}`);
-        
-        await Filesystem.writeFile({
+        console.log(`💾 Salvando arquivo: ${filePath}`);
+        console.log(`   Tamanho base64: ${cleanBase64.length} caracteres`);
+
+        const writeResult = await Filesystem.writeFile({
             path: filePath,
             data: cleanBase64,
             directory: Directory.Documents,
@@ -117,9 +143,11 @@ const downloadFile = async (url, fileName, albumDir) => {
         });
 
         console.log(`✅ Arquivo salvo com sucesso: ${filePath}`);
+        console.log(`   Resultado: ${JSON.stringify(writeResult)}`);
         return true;
     } catch (error) {
-        console.error(`Erro ao baixar arquivo ${fileName}:`, error);
+        console.error(`❌ Erro ao baixar arquivo ${fileName}:`, error);
+        console.error(`   Stack: ${error.stack}`);
         throw error;
     }
 };
@@ -127,13 +155,47 @@ const downloadFile = async (url, fileName, albumDir) => {
 // Converter Blob para Base64
 const blobToBase64 = (blob) => {
     return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const base64 = reader.result.split(',')[1];
-            resolve(base64);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
+        try {
+            const reader = new FileReader();
+
+            reader.onloadend = () => {
+                try {
+                    if (!reader.result) {
+                        throw new Error('❌ FileReader retornou resultado vazio');
+                    }
+
+                    // FileReader retorna data:audio/mpeg;base64,xxxxx
+                    const base64 = reader.result.includes(',')
+                        ? reader.result.split(',')[1]
+                        : reader.result;
+
+                    if (!base64 || base64.length === 0) {
+                        throw new Error('❌ Base64 está vazio após split');
+                    }
+
+                    console.log(`✅ Blob convertido para base64 (${base64.length} chars)`);
+                    resolve(reader.result); // Retorna com prefixo para compatibilidade
+                } catch (error) {
+                    reject(error);
+                }
+            };
+
+            reader.onerror = (error) => {
+                console.error('❌ Erro no FileReader:', error);
+                reject(new Error(`FileReader error: ${error.message}`));
+            };
+
+            reader.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const progress = (event.loaded / event.total * 100).toFixed(0);
+                    console.log(`   Progresso conversão: ${progress}%`);
+                }
+            };
+
+            reader.readAsDataURL(blob);
+        } catch (error) {
+            reject(error);
+        }
     });
 };
 
@@ -195,58 +257,105 @@ export const useCapacitorDownloads = () => {
     }, []);
 
     const downloadAlbum = useCallback(async (album, songs) => {
-        console.log('🎵 downloadAlbum chamado');
-        console.log('Album:', album);
-        console.log('Songs:', songs);
-        console.log('isCapacitorAvailable:', isCapacitorAvailable());
-        
+        console.log('==========================================');
+        console.log('🎵 INICIANDO DOWNLOAD DE ALBUM');
+        console.log('==========================================');
+        console.log('Album:', {
+            id: album?.id,
+            title: album?.title,
+            artist: album?.artist_name
+        });
+        console.log('Número de músicas:', songs?.length);
+        console.log('Capacitor disponível:', isCapacitorAvailable());
+
         if (!isCapacitorAvailable()) {
-            console.error('❌ Capacitor não disponível!');
-            throw new Error('Capacitor não disponível');
+            console.error('❌ Capacitor não disponível! Abortando download.');
+            throw new Error('Capacitor não disponível para download de arquivo');
+        }
+
+        if (!album || !album.id || !album.title) {
+            console.error('❌ Album inválido:', album);
+            throw new Error('Dados do álbum inválidos');
+        }
+
+        if (!songs || songs.length === 0) {
+            console.error('❌ Nenhuma música para baixar');
+            throw new Error('Album sem músicas');
         }
 
         try {
             const albumDir = sanitizePath(album.title);
             console.log('📁 Pasta do álbum:', albumDir);
+            console.log('==========================================');
             const downloadedSongs = [];
+            let successCount = 0;
+            let failCount = 0;
 
             for (let i = 0; i < songs.length; i++) {
                 const song = songs[i];
-                const songUrl = song.url || song.audio_url || song.audioUrl;
-                const fileName = `${String(i + 1).padStart(2, '0')} - ${sanitizePath(song.title)}.mp3`;
 
-                console.log(`⏳ Baixando ${i + 1}/${songs.length}: ${song.title}`);
-                console.log(`   URL: ${songUrl}`);
-
-                if (!songUrl) {
-                    console.error(`❌ URL não encontrada para: ${song.title}`);
+                if (!song) {
+                    console.warn(`⚠️ Música ${i + 1} é inválida (null/undefined)`);
+                    failCount++;
                     continue;
                 }
 
+                const songUrl = song.audioUrl || song.audio_url || song.url;
+                const fileName = `${String(i + 1).padStart(2, '0')} - ${sanitizePath(song.title || 'desconhecido')}.mp3`;
+
+                console.log(`\n⏳ MÚSICA ${i + 1}/${songs.length}`);
+                console.log(`   Título: ${song.title}`);
+                console.log(`   ID: ${song.id}`);
+                console.log(`   URL: ${songUrl ? '✅ presente' : '❌ VAZIA'}`);
+
+                if (!songUrl) {
+                    console.error(`❌ URL não encontrada para: ${song.title}`);
+                    failCount++;
+                    continue;
+                }
+
+                // Atualizar progresso
                 setDownloadProgress(prev => ({
                     ...prev,
                     [album.id]: { current: i + 1, total: songs.length }
                 }));
 
                 try {
+                    console.log(`   Iniciando download...`);
                     await downloadFile(songUrl, fileName, albumDir);
+
                     downloadedSongs.push({
                         id: song.id,
                         title: song.title,
                         fileName: fileName
                     });
-                    console.log(`✅ Baixado: ${song.title}`);
+
+                    console.log(`   ✅ SUCESSO`);
+                    successCount++;
                 } catch (error) {
-                    console.error(`❌ Erro ao baixar ${song.title}:`, error);
+                    console.error(`   ❌ FALHA: ${error.message}`);
+                    failCount++;
                 }
+            }
+
+            console.log('\n==========================================');
+            console.log(`📊 RESUMO DO DOWNLOAD`);
+            console.log(`   Sucesso: ${successCount}/${songs.length}`);
+            console.log(`   Falha: ${failCount}/${songs.length}`);
+            console.log('==========================================\n');
+
+            // Verificar se alguma música foi baixada com sucesso
+            if (downloadedSongs.length === 0) {
+                console.error('❌ Nenhuma música foi baixada com sucesso!');
+                throw new Error('Falha ao baixar todas as músicas do álbum');
             }
 
             // Salvar metadados do álbum
             const albumDownload = {
                 albumId: album.id,
                 title: album.title,
-                artist: album.artist_name || 'Desconhecido',
-                coverUrl: album.cover_url,
+                artist: album.artist_name || album.artistName || 'Desconhecido',
+                coverUrl: album.cover_url || album.coverImage,
                 albumDir: albumDir,
                 downloadedAt: new Date().toISOString(),
                 songCount: downloadedSongs.length,
@@ -254,9 +363,25 @@ export const useCapacitorDownloads = () => {
                 songs: downloadedSongs
             };
 
+            console.log('💾 Salvando metadados:', {
+                albumId: albumDownload.albumId,
+                title: albumDownload.title,
+                musicas: albumDownload.songs.length
+            });
+
             const updatedDownloads = [...downloads, albumDownload];
+
+            // Salvar metadados
+            try {
+                await saveMetadata(updatedDownloads);
+                console.log('✅ Metadados salvos com sucesso');
+            } catch (saveError) {
+                console.error('❌ Erro ao salvar metadados:', saveError);
+                throw saveError;
+            }
+
+            // Atualizar estado
             setDownloads(updatedDownloads);
-            await saveMetadata(updatedDownloads);
 
             setDownloadProgress(prev => {
                 const newProgress = { ...prev };
@@ -264,9 +389,24 @@ export const useCapacitorDownloads = () => {
                 return newProgress;
             });
 
+            console.log('✅ DOWNLOAD CONCLUÍDO COM SUCESSO');
+            console.log('   Álbum:', albumDownload.title);
+            console.log('   Músicas:', downloadedSongs.length);
+            console.log('==========================================\n');
+
             return albumDownload;
         } catch (error) {
-            console.error('Erro ao baixar álbum:', error);
+            console.error('❌ ERRO GERAL NO DOWNLOAD:', error);
+            console.error('   Mensagem:', error.message);
+            console.error('   Stack:', error.stack);
+
+            // Limpar progresso em caso de erro
+            setDownloadProgress(prev => {
+                const newProgress = { ...prev };
+                delete newProgress[album.id];
+                return newProgress;
+            });
+
             throw error;
         }
     }, [downloads]);

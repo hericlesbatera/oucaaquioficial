@@ -50,16 +50,19 @@ const AlbumPage = () => {
         const loadAlbum = async () => {
             // Resetar states ao carregar novo álbum
             if (!isMounted) return;
-            setLoading(true);
-            setNotFound(false);
-            setRecommendedAlbums([]);
-            setAlbumSongs([]);
-            setAlbum(null);
-            setArtist(null);
-            setCollaborators([]);
-            setAlbumVideo(null);
-            setIsFavorite(false);
-            setImageError(false);
+            
+            try {
+                setLoading(true);
+                setNotFound(false);
+                setRecommendedAlbums([]);
+                setAlbumSongs([]);
+                setAlbum(null);
+                setArtist(null);
+                setCollaborators([]);
+                setAlbumVideo(null);
+                setIsFavorite(false);
+                setImageError(false);
+                setDownloadInProgress(false);
             
             // Verificar se artistSlug é um artista válido (não aceita "album" como slug)
             if (artistSlug === 'album') {
@@ -174,8 +177,10 @@ const AlbumPage = () => {
                     songsResult: songsResult
                 });
             } catch (error) {
-                console.error('Error in Promise.all:', error);
-                throw error;
+                console.error('⚠️ Erro em Promise.all (não crítico):', error);
+                // Continuar mesmo com erro - tentar carregar o que foi possível
+                artistData = artistData || null;
+                songsResult = songsResult || { data: [], error };
             }
 
             // Log para debugging
@@ -374,6 +379,13 @@ const AlbumPage = () => {
             if (isMounted) {
                 setLoading(false);
             }
+            } catch (error) {
+                console.error('❌ Erro ao carregar álbum:', error);
+                if (isMounted) {
+                    setLoading(false);
+                    setNotFound(true);
+                }
+            }
             };
 
             loadAlbum();
@@ -450,10 +462,21 @@ const AlbumPage = () => {
     };
 
     const handleDownloadAlbum = async () => {
-        if (!album.id) {
+        if (!album || !album.id) {
+            console.error('❌ Album ou Album ID não disponível');
             toast({
                 title: 'Erro',
-                description: 'Album ID nao disponivel',
+                description: 'Informações do álbum não disponíveis',
+                variant: 'destructive'
+            });
+            return;
+        }
+
+        if (!albumSongs || albumSongs.length === 0) {
+            console.error('❌ Nenhuma música encontrada no álbum');
+            toast({
+                title: 'Erro',
+                description: 'Nenhuma música encontrada neste álbum',
                 variant: 'destructive'
             });
             return;
@@ -462,9 +485,11 @@ const AlbumPage = () => {
         setDownloadInProgress(true);
         try {
             // Registrar download imediatamente
-            const songIds = albumSongs.map(s => s.id);
-            recordAlbumDownload(album.id, songIds);
-            setAlbum(prev => ({ ...prev, download_count: (prev.download_count || 0) + 1 }));
+            const songIds = albumSongs.map(s => s?.id).filter(Boolean);
+            if (songIds.length > 0) {
+                recordAlbumDownload(album.id, songIds);
+            }
+            setAlbum(prev => prev ? { ...prev, download_count: (prev.download_count || 0) + 1 } : prev);
 
             // Usar handleDownload para detectar plataforma
             await handleDownload({
@@ -566,6 +591,16 @@ const AlbumPage = () => {
             return;
         }
 
+        if (!album || !album.id) {
+            console.error('❌ Album não disponível');
+            toast({
+                title: 'Erro',
+                description: 'Informações do álbum não disponíveis',
+                variant: 'destructive'
+            });
+            return;
+        }
+
         try {
             if (isFavorite) {
                 // Remover dos favoritos
@@ -580,7 +615,7 @@ const AlbumPage = () => {
                 setIsFavorite(false);
                 toast({
                     title: 'Removido dos favoritos',
-                    description: album.title
+                    description: album.title || 'Álbum'
                 });
             } else {
                 // Adicionar aos favoritos
@@ -599,14 +634,14 @@ const AlbumPage = () => {
                 setIsFavorite(true);
                 toast({
                     title: 'Adicionado aos favoritos',
-                    description: album.title
+                    description: album.title || 'Álbum'
                 });
             }
         } catch (error) {
-            console.error('Erro ao favoritar album:', error);
+            console.error('❌ Erro ao favoritar album:', error);
             toast({
                 title: 'Erro',
-                description: 'Tabela de favoritos não configurada. Contate o suporte.',
+                description: 'Não foi possível favoritar o álbum',
                 variant: 'destructive'
             });
         }
@@ -822,41 +857,41 @@ const AlbumPage = () => {
                             />
                         </Button>
                         <Button
-                            onClick={handleDownloadAlbum}
-                            disabled={downloadInProgress || isAlbumDownloaded(album?.id)}
-                            className={`relative text-white px-8 h-12 text-base font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden ${
-                                isAlbumDownloaded(album?.id) 
-                                    ? 'bg-green-600 hover:bg-green-600' 
-                                    : 'bg-red-600 hover:bg-red-700'
-                            }`}
-                        >
-                            {downloadInProgress && downloadProgress[album?.id] ? (
-                                <>
-                                    <div className="absolute inset-0 bg-red-700 transition-all duration-300" 
-                                        style={{ width: `${(downloadProgress[album.id].current / downloadProgress[album.id].total) * 100}%` }}>
-                                    </div>
-                                    <span className="relative inline-block animate-spin mr-2">⏳</span>
-                                    <span className="relative">
-                                        BAIXANDO {downloadProgress[album.id].current}/{downloadProgress[album.id].total}...
-                                    </span>
-                                </>
-                            ) : downloadInProgress ? (
-                                <>
-                                    <span className="inline-block animate-spin mr-2">⏳</span>
-                                    BAIXANDO...
-                                </>
-                            ) : isAlbumDownloaded(album?.id) ? (
-                                <>
-                                    <Download className="w-5 h-5 mr-2" />
-                                    JÁ BAIXADO ✓
-                                </>
-                            ) : (
-                                <>
-                                    <Download className="w-5 h-5 mr-2" />
-                                    BAIXAR CD COMPLETO
-                                </>
-                            )}
-                        </Button>
+                             onClick={handleDownloadAlbum}
+                             disabled={!album || downloadInProgress || (album?.id && isAlbumDownloaded(album.id))}
+                             className={`relative text-white px-8 h-12 text-base font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden ${
+                                 album?.id && isAlbumDownloaded(album.id)
+                                     ? 'bg-green-600 hover:bg-green-600' 
+                                     : 'bg-red-600 hover:bg-red-700'
+                             }`}
+                         >
+                             {downloadInProgress && album?.id && downloadProgress[album.id] ? (
+                                 <>
+                                     <div className="absolute inset-0 bg-red-700 transition-all duration-300" 
+                                         style={{ width: `${(downloadProgress[album.id].current / downloadProgress[album.id].total) * 100}%` }}>
+                                     </div>
+                                     <span className="relative inline-block animate-spin mr-2">⏳</span>
+                                     <span className="relative">
+                                         BAIXANDO {downloadProgress[album.id].current}/{downloadProgress[album.id].total}...
+                                     </span>
+                                 </>
+                             ) : downloadInProgress ? (
+                                 <>
+                                     <span className="inline-block animate-spin mr-2">⏳</span>
+                                     BAIXANDO...
+                                 </>
+                             ) : album?.id && isAlbumDownloaded(album.id) ? (
+                                 <>
+                                     <Download className="w-5 h-5 mr-2" />
+                                     JÁ BAIXADO ✓
+                                 </>
+                             ) : (
+                                 <>
+                                     <Download className="w-5 h-5 mr-2" />
+                                     BAIXAR CD COMPLETO
+                                 </>
+                             )}
+                         </Button>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
@@ -973,37 +1008,37 @@ const AlbumPage = () => {
                         </div>
                         
                         {/* Download Button */}
-                        <Button
-                            onClick={handleDownloadAlbum}
-                            disabled={downloadInProgress || isAlbumDownloaded(album?.id)}
-                            className={`w-full text-white h-12 text-base font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
-                                isAlbumDownloaded(album?.id) 
-                                    ? 'bg-green-600 hover:bg-green-600' 
-                                    : 'bg-red-600 hover:bg-red-700'
-                            }`}
-                        >
-                            {downloadInProgress && downloadProgress[album?.id] ? (
-                                <>
-                                    <span className="inline-block animate-spin mr-2">⏳</span>
-                                    BAIXANDO {downloadProgress[album.id].current}/{downloadProgress[album.id].total}...
-                                </>
-                            ) : downloadInProgress ? (
-                                <>
-                                    <span className="inline-block animate-spin mr-2">⏳</span>
-                                    BAIXANDO...
-                                </>
-                            ) : isAlbumDownloaded(album?.id) ? (
-                                <>
-                                    <Download className="w-5 h-5 mr-2" />
-                                    JÁ BAIXADO ✓
-                                </>
-                            ) : (
-                                <>
-                                    <Download className="w-5 h-5 mr-2" />
-                                    BAIXAR CD COMPLETO
-                                </>
-                            )}
-                        </Button>
+                         <Button
+                             onClick={handleDownloadAlbum}
+                             disabled={!album || downloadInProgress || (album?.id && isAlbumDownloaded(album.id))}
+                             className={`w-full text-white h-12 text-base font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                                 album?.id && isAlbumDownloaded(album.id)
+                                     ? 'bg-green-600 hover:bg-green-600' 
+                                     : 'bg-red-600 hover:bg-red-700'
+                             }`}
+                         >
+                             {downloadInProgress && album?.id && downloadProgress[album.id] ? (
+                                 <>
+                                     <span className="inline-block animate-spin mr-2">⏳</span>
+                                     BAIXANDO {downloadProgress[album.id].current}/{downloadProgress[album.id].total}...
+                                 </>
+                             ) : downloadInProgress ? (
+                                 <>
+                                     <span className="inline-block animate-spin mr-2">⏳</span>
+                                     BAIXANDO...
+                                 </>
+                             ) : album?.id && isAlbumDownloaded(album.id) ? (
+                                 <>
+                                     <Download className="w-5 h-5 mr-2" />
+                                     JÁ BAIXADO ✓
+                                 </>
+                             ) : (
+                                 <>
+                                     <Download className="w-5 h-5 mr-2" />
+                                     BAIXAR CD COMPLETO
+                                 </>
+                             )}
+                         </Button>
                         
                         {/* Share & Stats */}
                         <div className="flex items-center gap-3 w-full">
