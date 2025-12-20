@@ -97,23 +97,13 @@ export const recordAlbumDownload = async (albumId, songIds = []) => {
         .eq('id', albumId);
     }
 
-    // 2. Incrementar downloads de cada MÚSICA do álbum
+    // 2. Incrementar downloads de cada MÚSICA do álbum (em batch, não 1 por 1)
     if (songIds && songIds.length > 0) {
-      for (const songId of songIds) {
-        const songRes = await supabase
-          .from('songs')
-          .select('downloads')
-          .eq('id', songId)
-          .single();
-        
-        if (songRes.data) {
-          const currentDownloads = songRes.data.downloads || 0;
-          await supabase
-            .from('songs')
-            .update({ downloads: currentDownloads + 1 })
-            .eq('id', songId);
-        }
-      }
+      // Ao invés de fazer 1 query por música, usa RPC ou update simples
+      await supabase
+        .from('songs')
+        .update({ downloads: supabase.sql`COALESCE(downloads, 0) + 1` })
+        .in('id', songIds);
     }
   } catch (error) {
     console.error('Error recording album download:', error);

@@ -12,6 +12,8 @@ import { toast } from '../hooks/use-toast';
 import AlbumSongRow from '../components/AlbumSongRow';
 
 import LoadingSpinner from '../components/LoadingSpinner';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 
 // Lazy load do CommentSection
 const CommentSection = lazy(() => import('../components/CommentSection'));
@@ -455,54 +457,93 @@ const AlbumPage = () => {
             return;
         }
 
-        toast({
-            title: 'Download Iniciado',
-            description: `Montando arquivo ZIP com ${albumSongs.length} músicas...`
-        });
-
         try {
-            // Registrar download (incrementa albums.download_count e songs.downloads)
+            // Registrar estatísticas
             if (album.id) {
                 const songIds = albumSongs.map(s => s.id);
                 recordAlbumDownload(album.id, songIds);
                 setAlbum(prev => ({ ...prev, download_count: (prev.download_count || 0) + 1 }));
             }
 
-            // Get auth token
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            // Native app: baixar faixas em MP3 para pasta local (offline)
+            if (Capacitor.isNativePlatform()) {
+                toast({ title: 'Download Iniciado', description: `Baixando ${albumSongs.length} músicas para uso offline...` });
 
-            // Call backend API to get streaming ZIP
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-            const downloadUrl = `${apiUrl}/api/download/album/${album.id}`;
+                const folder = `downloads/albums/${album.id}`;
+                try {
+                    await Filesystem.mkdir({ path: folder, directory: Directory.Data, recursive: true });
+                } catch (e) {
+                    // Pasta já existe
+                }
 
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                const toBase64 = (blob) => new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const res = reader.result;
+                        const b64 = typeof res === 'string' ? res.split(',')[1] : '';
+                        resolve(b64);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
 
-            // Fetch the ZIP file
-            const response = await fetch(downloadUrl, { headers });
+                let i = 0;
+                for (const song of albumSongs) {
+                    i += 1;
+                    try {
+                        const resp = await fetch(song.audioUrl);
+                        if (!resp.ok) throw new Error(`Falha ao baixar: ${song.title}`);
+                        const blob = await resp.blob();
+                        const base64 = await toBase64(blob);
+                        const safeTitle = (song.title || `faixa_${i}`).replace(/[^a-zA-Z0-9\-_ ]/g, '_');
+                        const filename = `${String(song.trackNumber || i).padStart(2, '0')}_${safeTitle}.mp3`;
+                        await Filesystem.writeFile({ path: `${folder}/${filename}`, data: base64, directory: Directory.Data });
+                    } catch (e) {
+                        console.error('Erro ao salvar faixa:', song.title, e);
+                    }
+                }
 
-            if (!response.ok) {
-                throw new Error(`Download failed: ${response.statusText}`);
+                const manifest = {
+                    albumId: album.id,
+                    title: album.title,
+                    artistName: album.artistName,
+                    coverImage: album.coverImage,
+                    songCount: albumSongs.length,
+                    folder
+                };
+                try {
+                    await Filesystem.writeFile({ path: `${folder}/manifest.json`, data: JSON.stringify(manifest), directory: Directory.Data });
+                } catch {}
+
+                // Registrar em cache local para futura listagem na Biblioteca
+                const existing = JSON.parse(localStorage.getItem('offlineDownloads') || '[]');
+                const filtered = existing.filter(d => d.albumId !== album.id);
+                localStorage.setItem('offlineDownloads', JSON.stringify([...filtered, manifest]));
+
+                toast({ title: 'Download Completo', description: 'Álbum disponível offline em Biblioteca > Downloads' });
+                return;
             }
 
-            // Create blob from response
+            // Web: manter fluxo ZIP existente
+            toast({ title: 'Download Iniciado', description: `Montando arquivo ZIP com ${albumSongs.length} músicas...` });
+
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+            const downloadUrl = `${apiUrl}/api/download/album/${album.id}`;
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const response = await fetch(downloadUrl, { headers });
+            if (!response.ok) throw new Error(`Download failed: ${response.statusText}`);
             const blob = await response.blob();
-            
-            // Create download link
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = `${album.title}.zip`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
-            // Clean up object URL
             URL.revokeObjectURL(link.href);
 
-            toast({
-                title: 'Download Completo',
-                description: `${album.title} foi baixado com sucesso!`
-            });
+            toast({ title: 'Download Completo', description: `${album.title} foi baixado com sucesso!` });
         } catch (error) {
             console.error('Download error:', error);
             toast({

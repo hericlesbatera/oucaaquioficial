@@ -69,7 +69,7 @@ const ensureDownloadsDir = async () => {
     try {
         await Filesystem.mkdir({
             path: DOWNLOADS_DIR,
-            directory: Directory.Documents,
+            directory: Directory.Data,
             recursive: true
         });
     } catch (error) {
@@ -122,7 +122,7 @@ const downloadFile = async (url, fileName, albumDir) => {
         try {
             await Filesystem.mkdir({
                 path: albumPath,
-                directory: Directory.Documents,
+                directory: Directory.Data,
                 recursive: true
             });
             console.log(`📁 Pasta criada/verificada: ${albumPath}`);
@@ -138,7 +138,7 @@ const downloadFile = async (url, fileName, albumDir) => {
         const writeResult = await Filesystem.writeFile({
             path: filePath,
             data: cleanBase64,
-            directory: Directory.Documents,
+            directory: Directory.Data,
             encoding: Encoding.Base64
         });
 
@@ -206,7 +206,7 @@ const deleteFile = async (filePath) => {
     try {
         await Filesystem.deleteFile({
             path: filePath,
-            directory: Directory.Documents
+            directory: Directory.Data
         });
     } catch (error) {
         console.error('Erro ao deletar arquivo:', error);
@@ -221,7 +221,7 @@ const deleteDirectory = async (dirPath) => {
     try {
         await Filesystem.rmdir({
             path: dirPath,
-            directory: Directory.Documents,
+            directory: Directory.Data,
             recursive: true
         });
     } catch (error) {
