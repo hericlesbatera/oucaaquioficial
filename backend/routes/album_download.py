@@ -81,7 +81,7 @@ async def stream_zip(songs, album_title):
         
         # Baixar e adicionar ao ZIP sob demanda
         logger.info(f"Baixando e compactando músicas...")
-        async with httpx.AsyncClient(timeout=60.0, limits=httpx.Limits(max_connections=10)) as client:
+        async with httpx.AsyncClient(timeout=60.0, limits=httpx.Limits(max_connections=100, max_keepalive_connections=100)) as client:
             files_added = 0
             for idx, song in enumerate(songs, 1):
                 result = await download_single_song(client, song, idx)
