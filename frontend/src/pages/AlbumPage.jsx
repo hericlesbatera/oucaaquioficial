@@ -15,6 +15,8 @@ import AlbumSongRow from '../components/AlbumSongRow';
 import DownloadProgressModal from '../components/DownloadProgressModal';
 
 import LoadingSpinner from '../components/LoadingSpinner';
+import { Http } from '@capacitor-community/http';
+import { Filesystem, Directory, FilesystemDirectory } from '@capacitor/filesystem';
 
 // Lazy load do CommentSection
 const CommentSection = lazy(() => import('../components/CommentSection'));
@@ -602,31 +604,47 @@ const AlbumPage = () => {
                     }
                 },
                 onMobile: async ({ album: albumData, albumSongs: songs, onProgress }) => {
-                    // Mobile: download MP3s individuais com Capacitor
+                    // Mobile: preferir ZIP do site como fallback confiável
                     clearInterval(preparingInterval);
                     setDownloadStatus('downloading');
 
+                    // Se houver archiveUrl, baixar ZIP direto
+                    if (albumData.archiveUrl) {
+                        try {
+                            const folder = `downloads/albums/${albumData.id}`;
+                            try { await Filesystem.mkdir({ path: folder, directory: Directory.Data, recursive: true }); } catch {}
+                            const safeTitle = (albumData.title || `album_${albumData.id}`).replace(/[^a-zA-Z0-9\-_ ]/g, '_');
+                            const filePath = `${folder}/${safeTitle}.zip`;
+                            const res = await Http.downloadFile({
+                                url: albumData.archiveUrl,
+                                filePath,
+                                fileDirectory: FilesystemDirectory.Data,
+                                method: 'GET'
+                            });
+                            console.log('ZIP baixado (mobile):', JSON.stringify(res));
+                            setDownloadProgress(100);
+                            setDownloadStatus('completed');
+                            return { zipPath: filePath };
+                        } catch (zipErr) {
+                            console.warn('Falha no ZIP, tentando MP3s individuais:', zipErr.message);
+                        }
+                    }
+
+                    // Senão, baixar MP3s individuais
                     try {
                         const result = await downloadAlbum(albumData, songs);
-
                         setDownloadProgress(100);
                         setDownloadStatus('completed');
-                        
                         return result;
                     } catch (error) {
                         console.error('❌ Erro no download mobile:', error);
-                        
-                        // Montar mensagem de erro com debug info
                         let errorMsg = error?.message || 'Falha ao baixar. Verifique sua conexão e espaço disponível no celular.';
-                        
-                        // Se houver logs de debug, adicionar à mensagem
                         if (error?.debugLogs && error.debugLogs.length > 0) {
                             const lastLog = error.debugLogs[error.debugLogs.length - 1];
                             if (lastLog && !errorMsg.includes(lastLog)) {
                                 errorMsg = `${errorMsg}\n\nÚltimo log: ${lastLog}`;
                             }
                         }
-                        
                         setDownloadErrorMessage(errorMsg);
                         setDownloadStatus('error');
                         throw error;
