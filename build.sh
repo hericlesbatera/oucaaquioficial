@@ -4,7 +4,7 @@ set -e
 echo "🔨 Iniciando build..."
 cd frontend
 echo "🏗️ Compilando frontend..."
-FAST_REFRESH=false NODE_ENV=production CI=false npm run build
+FAST_REFRESH=false DISABLE_NEW_JSX_TRANSFORM=true NODE_ENV=production CI=false npm run build
 cd ..
 
 echo "📁 Preparando pasta de distribuição..."
