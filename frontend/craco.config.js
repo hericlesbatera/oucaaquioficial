@@ -37,42 +37,7 @@ const webpackConfig = {
     alias: {
       '@': path.resolve(__dirname, 'src'),
     },
-    configure: (webpackConfig, { env }) => {
-      // Remove react-refresh in production to fix "React Refresh runtime should not be included in the production bundle" error
-      if (env === 'production') {
-        // Remove ReactRefreshPlugin from webpack plugins
-        webpackConfig.plugins = webpackConfig.plugins.filter(plugin => {
-          const name = plugin.constructor.name;
-          return name !== 'ReactRefreshPlugin' && name !== 'ReactRefreshWebpackPlugin';
-        });
-        
-        // Remove react-refresh/babel from babel-loader
-        webpackConfig.module.rules.forEach(rule => {
-          if (rule.oneOf) {
-            rule.oneOf.forEach(oneOfRule => {
-              if (oneOfRule.loader && oneOfRule.loader.includes('babel-loader')) {
-                if (oneOfRule.options && oneOfRule.options.plugins) {
-                  oneOfRule.options.plugins = oneOfRule.options.plugins.filter(
-                    plugin => !String(plugin).includes('react-refresh')
-                  );
-                }
-              }
-              if (oneOfRule.use) {
-                oneOfRule.use.forEach(useRule => {
-                  if (useRule.loader && useRule.loader.includes('babel-loader')) {
-                    if (useRule.options && useRule.options.plugins) {
-                      useRule.options.plugins = useRule.options.plugins.filter(
-                        plugin => !String(plugin).includes('react-refresh')
-                      );
-                    }
-                  }
-                });
-              }
-            });
-          }
-        });
-      }
-
+    configure: (webpackConfig) => {
       // Disable hot reload completely if environment variable is set
       if (config.disableHotReload) {
         // Remove hot reload related plugins
@@ -110,24 +75,12 @@ const webpackConfig = {
   },
 };
 
-// Configure babel
-webpackConfig.babel = {
-  plugins: config.enableVisualEdits ? [babelMetadataPlugin] : [],
-  loaderOptions: (babelLoaderOptions) => {
-    // Remove react-refresh babel plugin in production
-    if (process.env.NODE_ENV === 'production') {
-      if (babelLoaderOptions.plugins) {
-        babelLoaderOptions.plugins = babelLoaderOptions.plugins.filter(
-          plugin => {
-            const pluginName = Array.isArray(plugin) ? plugin[0] : plugin;
-            return !String(pluginName).includes('react-refresh');
-          }
-        );
-      }
-    }
-    return babelLoaderOptions;
-  },
-};
+// Only add babel plugin if visual editing is enabled
+if (config.enableVisualEdits) {
+  webpackConfig.babel = {
+    plugins: [babelMetadataPlugin],
+  };
+}
 
 // Setup dev server with visual edits and/or health check
 if (config.enableVisualEdits || config.enableHealthCheck) {
