@@ -4,6 +4,9 @@ import { Preferences } from '@capacitor/preferences';
 import { CapacitorHttp } from '@capacitor/core';
 import { Http } from '@capacitor-community/http';
 
+const DOWNLOADS_DIR = 'music_downloads';
+const METADATA_KEY = 'downloaded_albums';
+
 // Função utilitária para verificar se o Capacitor está disponível
 const isCapacitorAvailable = () => {
     if (typeof window === 'undefined' || !window.Capacitor) return false;
@@ -50,7 +53,6 @@ const ensureDownloadsDir = async () => {
             recursive: true
         });
     } catch (error) {
-        // Pasta pode já existir
         console.log('Pasta de downloads já existe ou erro ao criar:', error.message);
     }
 };
@@ -61,13 +63,13 @@ const downloadFile = async (url, fileName, albumDir) => {
     
     try {
         if (!url) {
-            throw new Error(`❌ URL vazia para arquivo ${fileName}`);
+            throw new Error(`URL vazia para arquivo ${fileName}`);
         }
 
-        console.log(`🌐 Iniciando download: ${fileName}`);
+        console.log(`Iniciando download: ${fileName}`);
         console.log(`   URL: ${url}`);
 
-        // Tentar baixar diretamente com Http.downloadFile (escreve no disco sem converter)
+        // Tentar baixar diretamente com Http.downloadFile
         try {
             const albumPath = `${DOWNLOADS_DIR}/${albumDir}`;
             try { await Filesystem.mkdir({ path: albumPath, directory: Directory.Data, recursive: true }); } catch {}
@@ -79,7 +81,7 @@ const downloadFile = async (url, fileName, albumDir) => {
                 fileDirectory: FilesystemDirectory.Data,
                 method: 'GET'
             });
-            console.log(`   ✅ Http.downloadFile OK: ${JSON.stringify(res)}`);
+            console.log(`   Http.downloadFile OK: ${JSON.stringify(res)}`);
             return true;
         } catch (httpErr) {
             console.warn(`   Http.downloadFile falhou: ${httpErr.message}. Fallback para CapacitorHttp...`);
@@ -102,14 +104,12 @@ const downloadFile = async (url, fileName, albumDir) => {
                 throw new Error(`HTTP ${response.status}`);
             }
             
-            // CapacitorHttp retorna data como base64 quando responseType é blob
             base64Data = response.data;
-            console.log(`   ✅ CapacitorHttp OK - ${(base64Data?.length || 0)} chars`);
+            console.log(`   CapacitorHttp OK - ${(base64Data?.length || 0)} chars`);
             
         } catch (nativeError) {
             console.warn(`   CapacitorHttp falhou: ${nativeError.message}, tentando fetch...`);
             
-            // Fallback para fetch normal
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 120000);
             
@@ -130,7 +130,7 @@ const downloadFile = async (url, fileName, albumDir) => {
                 }
                 
                 base64Data = await blobToBase64(blob);
-                console.log(`   ✅ Fetch OK - ${blob.size} bytes`);
+                console.log(`   Fetch OK - ${blob.size} bytes`);
                 
             } catch (fetchError) {
                 clearTimeout(timeoutId);
@@ -144,7 +144,7 @@ const downloadFile = async (url, fileName, albumDir) => {
             : base64Data;
 
         if (!cleanBase64 || cleanBase64.length === 0) {
-            throw new Error(`❌ Base64 vazio para ${fileName}`);
+            throw new Error(`Base64 vazio para ${fileName}`);
         }
 
         // Criar pasta do álbum
@@ -156,11 +156,10 @@ const downloadFile = async (url, fileName, albumDir) => {
                 directory: Directory.Data,
                 recursive: true
             });
-            console.log(`📁 Pasta criada/verificada: ${albumPath}`);
+            console.log(`Pasta criada/verificada: ${albumPath}`);
         } catch (mkdirError) {
-            // Ignorar erro se pasta já existe
             if (mkdirError.message && mkdirError.message.includes('exist')) {
-                console.log(`📁 Pasta já existe: ${albumPath}`);
+                console.log(`Pasta já existe: ${albumPath}`);
             } else {
                 throw mkdirError;
             }
@@ -168,7 +167,7 @@ const downloadFile = async (url, fileName, albumDir) => {
 
         // Salvar arquivo em base64
         const filePath = `${albumPath}/${fileName}`;
-        console.log(`💾 Salvando arquivo: ${filePath}`);
+        console.log(`Salvando arquivo: ${filePath}`);
         console.log(`   Tamanho base64: ${cleanBase64.length} caracteres (${(cleanBase64.length / 1024 / 1024).toFixed(2)}MB)`);
 
         const writeResult = await Filesystem.writeFile({
@@ -179,13 +178,13 @@ const downloadFile = async (url, fileName, albumDir) => {
         });
 
         const elapsed = Date.now() - startTime;
-        console.log(`✅ Arquivo salvo com sucesso: ${filePath}`);
+        console.log(`Arquivo salvo com sucesso: ${filePath}`);
         console.log(`   Tempo total: ${elapsed}ms (${(elapsed / 1000).toFixed(2)}s)`);
         console.log(`   Resultado: ${JSON.stringify(writeResult)}`);
         return true;
     } catch (error) {
         const elapsed = Date.now() - startTime;
-        console.error(`❌ Erro ao baixar arquivo ${fileName} (após ${(elapsed / 1000).toFixed(2)}s):`, error);
+        console.error(`Erro ao baixar arquivo ${fileName} (apos ${(elapsed / 1000).toFixed(2)}s):`, error);
         console.error(`   Mensagem: ${error.message}`);
         if (error.stack) {
             console.error(`   Stack: ${error.stack}`);
@@ -198,10 +197,9 @@ const downloadFile = async (url, fileName, albumDir) => {
 const blobToBase64 = (blob) => {
     return new Promise((resolve, reject) => {
         try {
-            // Implementar timeout para evitar travar em arquivos grandes
             const timeoutId = setTimeout(() => {
-                reject(new Error('❌ Timeout na conversão Base64 - arquivo muito grande ou conexão lenta'));
-            }, 60000); // 60 segundos de timeout
+                reject(new Error('Timeout na conversao Base64 - arquivo muito grande ou conexao lenta'));
+            }, 60000);
 
             const reader = new FileReader();
 
@@ -209,20 +207,19 @@ const blobToBase64 = (blob) => {
                 clearTimeout(timeoutId);
                 try {
                     if (!reader.result) {
-                        throw new Error('❌ FileReader retornou resultado vazio');
+                        throw new Error('FileReader retornou resultado vazio');
                     }
 
-                    // FileReader retorna data:audio/mpeg;base64,xxxxx
                     const base64 = reader.result.includes(',')
                         ? reader.result.split(',')[1]
                         : reader.result;
 
                     if (!base64 || base64.length === 0) {
-                        throw new Error('❌ Base64 está vazio após split');
+                        throw new Error('Base64 esta vazio apos split');
                     }
 
-                    console.log(`✅ Blob convertido para base64 (${base64.length} chars, ${(base64.length / 1024 / 1024).toFixed(2)}MB)`);
-                    resolve(reader.result); // Retorna com prefixo para compatibilidade
+                    console.log(`Blob convertido para base64 (${base64.length} chars, ${(base64.length / 1024 / 1024).toFixed(2)}MB)`);
+                    resolve(reader.result);
                 } catch (error) {
                     reject(error);
                 }
@@ -230,7 +227,7 @@ const blobToBase64 = (blob) => {
 
             reader.onerror = (error) => {
                 clearTimeout(timeoutId);
-                console.error('❌ Erro no FileReader:', error);
+                console.error('Erro no FileReader:', error);
                 reject(new Error(`FileReader error: ${error.message}`));
             };
 
@@ -238,7 +235,7 @@ const blobToBase64 = (blob) => {
                 if (event.lengthComputable) {
                     const progress = (event.loaded / event.total * 100).toFixed(0);
                     const mb = (event.loaded / 1024 / 1024).toFixed(2);
-                    console.log(`   Progresso conversão: ${progress}% (${mb}MB)`);
+                    console.log(`   Progresso conversao: ${progress}% (${mb}MB)`);
                 }
             };
 
@@ -280,6 +277,14 @@ const deleteDirectory = async (dirPath) => {
     }
 };
 
+// Sanitizar nomes de arquivo
+function sanitizePath(name) {
+    return name
+        .replace(/[<>:"/\\|?*]/g, '_')
+        .replace(/\s+/g, '_')
+        .substring(0, 100);
+}
+
 // Hook customizado
 export const useCapacitorDownloads = (onSongDownloadStart) => {
     const [downloads, setDownloads] = useState([]);
@@ -307,7 +312,6 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
     }, []);
 
     const downloadAlbum = useCallback(async (album, songs) => {
-        // Capturar logs para debug
         const debugLogs = [];
         const originalLog = console.log;
         const originalError = console.error;
@@ -322,33 +326,33 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
 
         try {
             console.log('==========================================');
-            console.log('🎵 INICIANDO DOWNLOAD DE ALBUM');
+            console.log('INICIANDO DOWNLOAD DE ALBUM');
             console.log('==========================================');
             console.log('Album:', {
                 id: album?.id,
                 title: album?.title,
                 artist: album?.artist_name
             });
-            console.log('Número de músicas:', songs?.length);
-            console.log('Capacitor disponível:', isCapacitorAvailable());
+            console.log('Numero de musicas:', songs?.length);
+            console.log('Capacitor disponivel:', isCapacitorAvailable());
 
             if (!isCapacitorAvailable()) {
-                console.error('❌ Capacitor não disponível! Abortando download.');
-                throw new Error('Capacitor não disponível para download de arquivo');
+                console.error('Capacitor nao disponivel! Abortando download.');
+                throw new Error('Capacitor nao disponivel para download de arquivo');
             }
 
             if (!album || !album.id || !album.title) {
-                console.error('❌ Album inválido:', album);
-                throw new Error('Dados do álbum inválidos');
+                console.error('Album invalido:', album);
+                throw new Error('Dados do album invalidos');
             }
 
             if (!songs || songs.length === 0) {
-                console.error('❌ Nenhuma música para baixar');
-                throw new Error('Album sem músicas');
+                console.error('Nenhuma musica para baixar');
+                throw new Error('Album sem musicas');
             }
 
             const albumDir = sanitizePath(album.title);
-            console.log('📁 Pasta do álbum:', albumDir);
+            console.log('Pasta do album:', albumDir);
             console.log('==========================================');
 
             // Validar URLs antes de começar
@@ -357,11 +361,11 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                 return !!url;
             });
 
-            console.log(`📋 Músicas com URL válida: ${songsWithValidURLs.length}/${songs.length}`);
+            console.log(`Musicas com URL valida: ${songsWithValidURLs.length}/${songs.length}`);
 
             if (songsWithValidURLs.length === 0) {
-                console.error('❌ Nenhuma música possui URL de áudio válida!');
-                throw new Error(`Nenhuma música possui URL de áudio válida. Verifique se as músicas foram carregadas corretamente.`);
+                console.error('Nenhuma musica possui URL de audio valida!');
+                throw new Error('Nenhuma musica possui URL de audio valida. Verifique se as musicas foram carregadas corretamente.');
             }
 
             const downloadedSongs = [];
@@ -379,7 +383,7 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                 const song = songs[i];
 
                 if (!song) {
-                    console.warn(`⚠️ Música ${i + 1} é inválida (null/undefined)`);
+                    console.warn(`Musica ${i + 1} e invalida (null/undefined)`);
                     failCount++;
                     continue;
                 }
@@ -387,38 +391,16 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                 const songUrl = song.audioUrl || song.audio_url || song.url;
                 const fileName = `${String(i + 1).padStart(2, '0')} - ${sanitizePath(song.title || 'desconhecido')}.mp3`;
 
-                console.log(`\n⏳ MÚSICA ${i + 1}/${songs.length}`);
-                console.log(`   Título: ${song.title}`);
+                console.log(`\nMUSICA ${i + 1}/${songs.length}`);
+                console.log(`   Titulo: ${song.title}`);
                 console.log(`   ID: ${song.id}`);
-                console.log(`   URL: ${songUrl ? '✅ presente' : '❌ VAZIA'}`);
+                console.log(`   URL: ${songUrl ? 'presente' : 'VAZIA'}`);
 
                 if (!songUrl) {
-                    console.error(`❌ URL não encontrada para: ${song.title}`);
+                    console.error(`URL nao encontrada para: ${song.title}`);
                     failCount++;
                     continue;
                 }
-
-                // ...existing code...
-            }
-
-            console.log('\n==========================================');
-            console.log(`📊 RESUMO DO DOWNLOAD`);
-            console.log(`   Sucesso: ${successCount}/${songsWithValidURLs.length}`);
-            console.log(`   Falha: ${failCount}/${songsWithValidURLs.length}`);
-            console.log(`   Último erro: ${lastError}`);
-            console.log('==========================================\n');
-
-            // ...existing code...
-        } catch (err) {
-            console.error('Erro durante o download do álbum:', err);
-        } finally {
-            console.log = originalLog;
-            console.error = originalError;
-        }
-
-                // Atualizar progresso APÓS sucesso (não por tentativa)
-                // Mantém contagem real de arquivos gravados
-                // Progress será atualizado abaixo, depois de successCount++
 
                 // Callback para informar qual música está sendo baixada
                 if (onSongDownloadStart) {
@@ -439,44 +421,42 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                         fileName: fileName
                     });
 
-                    console.log(`   ✅ SUCESSO`);
+                    console.log(`   SUCESSO`);
                     successCount++;
-                    // Atualizar progresso real
                     setDownloadProgress(prev => ({
                         ...prev,
                         [album.id]: { current: successCount, total: songsWithValidURLs.length }
                     }));
                 } catch (error) {
-                    console.error(`   ❌ FALHA: ${error.message}`);
+                    console.error(`   FALHA: ${error.message}`);
                     lastError = `${song.title}: ${error.message}`;
                     failCount++;
-                    // Atualizar progresso mesmo em falha para mostrar que tentou
                     setDownloadProgress(prev => ({
                         ...prev,
                         [album.id]: { current: successCount, total: songsWithValidURLs.length, failed: failCount, lastError }
                     }));
                 }
-                }
+            }
 
-                console.log('\n==========================================');
-                console.log('RESUMO DO DOWNLOAD');
+            console.log('\n==========================================');
+            console.log('RESUMO DO DOWNLOAD');
             console.log(`   Sucesso: ${successCount}/${songsWithValidURLs.length}`);
             console.log(`   Falha: ${failCount}/${songsWithValidURLs.length}`);
-            console.log(`   Último erro: ${lastError}`);
+            console.log(`   Ultimo erro: ${lastError}`);
             console.log('==========================================\n');
 
             // Verificar se alguma música foi baixada com sucesso
-             if (downloadedSongs.length === 0) {
-                 console.error('Nenhuma musica foi baixada com sucesso!');
+            if (downloadedSongs.length === 0) {
+                console.error('Nenhuma musica foi baixada com sucesso!');
                 const errorMsg = lastError 
                     ? `Erro: ${lastError}` 
-                    : 'Verifique sua conexão e espaço disponível.';
+                    : 'Verifique sua conexao e espaco disponivel.';
                 throw new Error(`Falha ao baixar. ${errorMsg}`);
             }
             
             // Se algumas músicas falharam mas outras funcionaram, continuar com as que funcionaram
             if (failCount > 0 && successCount > 0) {
-                console.warn(`⚠️ Download parcial: ${successCount} de ${songs.length} músicas baixadas`);
+                console.warn(`Download parcial: ${successCount} de ${songs.length} musicas baixadas`);
             }
 
             // Salvar metadados do álbum
@@ -492,7 +472,7 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                 songs: downloadedSongs
             };
 
-            console.log('💾 Salvando metadados:', {
+            console.log('Salvando metadados:', {
                 albumId: albumDownload.albumId,
                 title: albumDownload.title,
                 musicas: albumDownload.songs.length
@@ -503,12 +483,10 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
             // Salvar metadados
             try {
                 await saveMetadata(updatedDownloads);
-                console.log('✅ Metadados salvos com sucesso');
+                console.log('Metadados salvos com sucesso');
             } catch (saveError) {
-                console.error('❌ Erro ao salvar metadados:', saveError);
-                // Mesmo que os metadados falhem, as músicas foram baixadas
-                // Tentar salvar novamente com menos dados
-                console.warn('⚠️ Tentando salvar metadados simplificados...');
+                console.error('Erro ao salvar metadados:', saveError);
+                console.warn('Tentando salvar metadados simplificados...');
                 try {
                     const simplifiedDownload = {
                         albumId: album.id,
@@ -522,11 +500,10 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                     };
                     updatedDownloads = [...downloads, simplifiedDownload];
                     await saveMetadata(updatedDownloads);
-                    console.log('✅ Metadados simplificados salvos');
+                    console.log('Metadados simplificados salvos');
                 } catch (retryError) {
-                    console.error('❌ Falha ao salvar metadados mesmo simplificados:', retryError);
-                    // Continua sem salvar - pelo menos as músicas estão lá
-                    console.warn('⚠️ Músicas baixadas mas metadados não salvos');
+                    console.error('Falha ao salvar metadados mesmo simplificados:', retryError);
+                    console.warn('Musicas baixadas mas metadados nao salvos');
                 }
             }
 
@@ -539,9 +516,9 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                 return newProgress;
             });
 
-            console.log('✅ DOWNLOAD CONCLUÍDO COM SUCESSO');
-            console.log('   Álbum:', albumDownload.title);
-            console.log('   Músicas:', downloadedSongs.length);
+            console.log('DOWNLOAD CONCLUIDO COM SUCESSO');
+            console.log('   Album:', albumDownload.title);
+            console.log('   Musicas:', downloadedSongs.length);
             console.log('==========================================\n');
 
             // Restaurar console originais
@@ -550,7 +527,7 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
             
             return albumDownload;
         } catch (error) {
-            console.error('❌ ERRO GERAL NO DOWNLOAD:', error);
+            console.error('ERRO GERAL NO DOWNLOAD:', error);
             console.error('   Mensagem:', error.message);
             console.error('   Stack:', error.stack);
 
@@ -560,7 +537,7 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
             
             // Adicionar logs de debug ao erro
             const errorWithDebug = new Error(error.message);
-            errorWithDebug.debugLogs = debugLogs.slice(-50); // Últimos 50 logs
+            errorWithDebug.debugLogs = debugLogs.slice(-50);
             errorWithDebug.stack = error.stack;
             
             // Limpar progresso em caso de erro
@@ -572,11 +549,11 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
 
             throw errorWithDebug;
         }
-    }, [downloads]);
+    }, [downloads, onSongDownloadStart]);
 
     const downloadSong = useCallback(async (song, album) => {
         if (!isCapacitorAvailable()) {
-            throw new Error('Capacitor não disponível');
+            throw new Error('Capacitor nao disponivel');
         }
 
         try {
@@ -585,7 +562,6 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
 
             await downloadFile(song.url, fileName, albumDir);
 
-            // Adicionar às músicas baixadas
             const updatedDownloads = downloads.map(dl => {
                 if (dl.albumId === album.id) {
                     return {
@@ -602,7 +578,7 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
 
             return true;
         } catch (error) {
-            console.error('Erro ao baixar música:', error);
+            console.error('Erro ao baixar musica:', error);
             throw error;
         }
     }, [downloads]);
@@ -619,7 +595,7 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                 await saveMetadata(updated);
             }
         } catch (error) {
-            console.error('Erro ao deletar álbum:', error);
+            console.error('Erro ao deletar album:', error);
             throw error;
         }
     }, [downloads]);
@@ -648,7 +624,7 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                 await saveMetadata(updated);
             }
         } catch (error) {
-            console.error('Erro ao deletar música:', error);
+            console.error('Erro ao deletar musica:', error);
             throw error;
         }
     }, [downloads]);
@@ -675,13 +651,5 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
         isCapacitorAvailable: isCapacitorAvailable()
     };
 };
-
-// Sanitizar nomes de arquivo
-function sanitizePath(name) {
-    return name
-        .replace(/[<>:"/\\|?*]/g, '_')
-        .replace(/\s+/g, '_')
-        .substring(0, 100);
-}
 
 export default useCapacitorDownloads;
