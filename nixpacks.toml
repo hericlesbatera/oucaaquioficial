@@ -1,11 +1,14 @@
 [phases.setup]
-nixPkgs = ["nodejs_20"]
+nixPkgs = ["nodejs_20", "bash"]
 
 [phases.install]
-cmds = ["npm install -g yarn", "yarn install --frozen-lockfile"]
+cmds = [
+    "npm install",
+    "cd frontend && npm install"
+]
 
 [phases.build]
-cmds = ["NODE_ENV=production bash build.sh"]
+cmds = ["NODE_ENV=production npm run build"]
 
 [start]
 cmd = "node server.js"
