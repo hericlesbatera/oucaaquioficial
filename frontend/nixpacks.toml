@@ -1,11 +1,8 @@
 [phases.setup]
-nixPkgs = ["nodejs_20"]
-
-[phases.install]
-cmds = ["yarn install --frozen-lockfile", "npm install -g serve"]
+nixPkgs = ["nodejs-18_x", "yarn"]
 
 [phases.build]
-cmds = ["NODE_ENV=production yarn build"]
+cmds = ["yarn install", "yarn build"]
 
 [start]
-cmd = "serve -s build -l $PORT"
+cmd = "npx serve -s build -l $PORT"
