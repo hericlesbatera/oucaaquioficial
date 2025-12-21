@@ -4,7 +4,7 @@
   "description": "Ouça Aqui - O Melhor da Música Você Encontra Aqui",
   "main": "index.js",
   "scripts": {
-    "build": "cd frontend && npm install && npm run build && cd .. && mkdir -p build && cp -r frontend/build/* build/",
+    "build": "bash build.sh",
     "start": "node server.js",
     "dev": "cd frontend && npm start"
   },

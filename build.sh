@@ -1,16 +1,19 @@
 #!/bin/bash
+set -e
 
-# Build frontend
+echo "🔨 Iniciando build..."
 cd frontend
-npm install
+echo "📦 Instalando dependências..."
+npm ci
+echo "🏗️ Compilando frontend..."
 npm run build
 cd ..
 
-# Copy build to backend/public
-mkdir -p backend/public
-cp -r frontend/build/* backend/public/ 2>/dev/null || true
+echo "📁 Preparando pasta de distribuição..."
+rm -rf build
+mkdir -p build
+echo "📋 Copiando arquivos compilados..."
+cp -r frontend/build/* build/
 
-# Setup backend
-cd backend
-pip install -r requirements.txt
-cd ..
+echo "✅ Build concluído com sucesso!"
+ls -la build/ | head -10
