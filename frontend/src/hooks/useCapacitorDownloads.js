@@ -456,18 +456,18 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                         [album.id]: { current: successCount, total: songsWithValidURLs.length, failed: failCount, lastError }
                     }));
                 }
-            }
+                }
 
-            console.log('\n==========================================');
-            console.log(`📊 RESUMO DO DOWNLOAD`);
+                console.log('\n==========================================');
+                console.log('RESUMO DO DOWNLOAD');
             console.log(`   Sucesso: ${successCount}/${songsWithValidURLs.length}`);
             console.log(`   Falha: ${failCount}/${songsWithValidURLs.length}`);
             console.log(`   Último erro: ${lastError}`);
             console.log('==========================================\n');
 
             // Verificar se alguma música foi baixada com sucesso
-            if (downloadedSongs.length === 0) {
-                console.error('❌ Nenhuma música foi baixada com sucesso!');
+             if (downloadedSongs.length === 0) {
+                 console.error('Nenhuma musica foi baixada com sucesso!');
                 const errorMsg = lastError 
                     ? `Erro: ${lastError}` 
                     : 'Verifique sua conexão e espaço disponível.';
