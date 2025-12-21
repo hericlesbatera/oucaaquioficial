@@ -4,9 +4,9 @@ set -e
 echo "🔨 Iniciando build..."
 cd frontend
 echo "📦 Instalando dependências..."
-npm ci
+yarn install --frozen-lockfile || npm ci
 echo "🏗️ Compilando frontend..."
-npm run build
+NODE_ENV=production yarn build || NODE_ENV=production npm run build
 cd ..
 
 echo "📁 Preparando pasta de distribuição..."
