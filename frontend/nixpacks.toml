@@ -5,7 +5,7 @@ nixPkgs = ["nodejs_20"]
 cmds = ["yarn install --frozen-lockfile", "npm install -g serve"]
 
 [phases.build]
-cmds = ["yarn build"]
+cmds = ["NODE_ENV=production yarn build"]
 
 [start]
 cmd = "serve -s build -l $PORT"
