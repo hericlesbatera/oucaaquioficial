@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { Clock } from 'lucide-react';
 import ArtistSidebar from '../../components/Artist/ArtistSidebar';
 import { supabase } from '../../lib/supabaseClient';
+import { API_URL } from '../../config/api';
 
 const UploadNew = () => {
     const { user } = useAuth();
@@ -134,7 +135,6 @@ const UploadNew = () => {
         setShowSearchResults(true);
         
         try {
-            const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
             const response = await fetch(
                 `${API_URL}/api/artists/search?q=${encodeURIComponent(query)}`
             );
@@ -373,7 +373,6 @@ const UploadNew = () => {
             }
 
             // Usar SSE para rastrear progresso em tempo real
-             const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
              // Obter token para SSE
              const { data: { session } } = await supabase.auth.getSession();
@@ -512,7 +511,6 @@ const UploadNew = () => {
              const pollingInterval = setInterval(async () => {
                 try {
                     if (!uploadCompleted) {
-                        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
                         const statusUrl = `${API_URL}/api/upload-progress/status/${uploadId}`;
                         console.log(`Polling: ${statusUrl}`);
                         const response = await fetch(statusUrl);
@@ -553,7 +551,6 @@ const UploadNew = () => {
                   try {
                       const videoId = getYouTubeVideoId(formData.youtubeUrl);
                       if (videoId) {
-                          const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
                           const response = await fetch(`${API_URL}/api/artist-videos/add`, {
                               method: 'POST',
                               headers: {
