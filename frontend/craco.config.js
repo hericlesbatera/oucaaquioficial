@@ -92,12 +92,24 @@ const webpackConfig = {
   },
 };
 
-// Only add babel plugin if visual editing is enabled
-if (config.enableVisualEdits) {
-  webpackConfig.babel = {
-    plugins: [babelMetadataPlugin],
-  };
-}
+// Configure babel
+webpackConfig.babel = {
+  plugins: config.enableVisualEdits ? [babelMetadataPlugin] : [],
+  loaderOptions: (babelLoaderOptions) => {
+    // Remove react-refresh babel plugin in production
+    if (process.env.NODE_ENV === 'production') {
+      if (babelLoaderOptions.plugins) {
+        babelLoaderOptions.plugins = babelLoaderOptions.plugins.filter(
+          plugin => {
+            const pluginName = Array.isArray(plugin) ? plugin[0] : plugin;
+            return !String(pluginName).includes('react-refresh');
+          }
+        );
+      }
+    }
+    return babelLoaderOptions;
+  },
+};
 
 // Setup dev server with visual edits and/or health check
 if (config.enableVisualEdits || config.enableHealthCheck) {
