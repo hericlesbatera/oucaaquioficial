@@ -97,13 +97,23 @@ export const recordAlbumDownload = async (albumId, songIds = []) => {
         .eq('id', albumId);
     }
 
-    // 2. Incrementar downloads de cada MÚSICA do álbum (em batch, não 1 por 1)
+    // 2. Incrementar downloads de cada MÚSICA do álbum
     if (songIds && songIds.length > 0) {
-      // Ao invés de fazer 1 query por música, usa RPC ou update simples
-      await supabase
+      // Buscar downloads atuais das músicas
+      const { data: songsData } = await supabase
         .from('songs')
-        .update({ downloads: supabase.sql`COALESCE(downloads, 0) + 1` })
+        .select('id, downloads')
         .in('id', songIds);
+      
+      // Atualizar cada música com download incrementado
+      if (songsData && songsData.length > 0) {
+        for (const song of songsData) {
+          await supabase
+            .from('songs')
+            .update({ downloads: (song.downloads || 0) + 1 })
+            .eq('id', song.id);
+        }
+      }
     }
   } catch (error) {
     console.error('Error recording album download:', error);
@@ -123,16 +133,28 @@ export const recordSongDownload = async (songId, albumId = null) => {
 
   try {
     // 1. Incrementar downloads da MÚSICA
+    const { data: songData } = await supabase
+      .from('songs')
+      .select('downloads')
+      .eq('id', songId)
+      .single();
+    
     await supabase
       .from('songs')
-      .update({ downloads: supabase.sql`COALESCE(downloads, 0) + 1` })
+      .update({ downloads: (songData?.downloads || 0) + 1 })
       .eq('id', songId);
 
     // 2. Se houver albumId, incrementar download_count do álbum também
     if (albumId) {
+      const { data: albumData } = await supabase
+        .from('albums')
+        .select('download_count')
+        .eq('id', albumId)
+        .single();
+      
       await supabase
         .from('albums')
-        .update({ download_count: supabase.sql`COALESCE(download_count, 0) + 1` })
+        .update({ download_count: (albumData?.download_count || 0) + 1 })
         .eq('id', albumId);
     }
   } catch (error) {
