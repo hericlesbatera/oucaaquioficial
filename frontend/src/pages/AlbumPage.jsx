@@ -530,7 +530,8 @@ const AlbumPage = () => {
                     // Desktop: download ZIP/RAR
                     let downloadUrl = album.archiveUrl;
                     if (!downloadUrl) {
-                        downloadUrl = `/api/albums/${album.id}/download`;
+                        const API_URL = process.env.REACT_APP_API_URL || '';
+                        downloadUrl = `${API_URL}/api/albums/${album.id}/download`;
                     }
 
                     clearInterval(preparingInterval);
