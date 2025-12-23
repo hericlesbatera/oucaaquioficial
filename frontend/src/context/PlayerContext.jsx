@@ -40,6 +40,7 @@ export const PlayerProvider = ({ children }) => {
   }
   
   const handleNextRef = useRef(null);
+  const handlePreviousRef = useRef(null);
 
   const handleNext = useCallback(() => {
     if (!queue.length) return;
