@@ -568,9 +568,11 @@ const AlbumPage = () => {
                             throw new Error(`Erro HTTP: ${response.status}`);
                         }
 
-                        // Progresso do download com base no tamanho
+                        // Progresso do download com base no tamanho real
                         const contentLength = response.headers.get('content-length');
-                        if (contentLength) {
+                        const totalSize = contentLength ? parseInt(contentLength, 10) : 0;
+                        
+                        if (totalSize > 0) {
                             let receivedLength = 0;
                             const reader = response.body.getReader();
                             const chunks = [];
@@ -580,7 +582,9 @@ const AlbumPage = () => {
                                 if (done) break;
                                 chunks.push(value);
                                 receivedLength += value.length;
-                                const progress = 90 + (receivedLength / contentLength) * 10;
+                                // Progresso de 35% a 99% baseado no download real
+                                const downloadPercent = receivedLength / totalSize;
+                                const progress = 35 + (downloadPercent * 64); // 35% inicial + até 64% do download = 99%
                                 setLocalDownloadProgress(Math.min(progress, 99));
                             }
 
@@ -597,8 +601,20 @@ const AlbumPage = () => {
                             document.body.removeChild(link);
                             window.URL.revokeObjectURL(url);
                         } else {
-                            // Se não houver content-length, faz o download normal
+                            // Se não houver content-length, simular progresso gradual
+                            const progressInterval = setInterval(() => {
+                                setLocalDownloadProgress(prev => {
+                                    if (prev >= 95) {
+                                        clearInterval(progressInterval);
+                                        return 95;
+                                    }
+                                    return prev + 2;
+                                });
+                            }, 500);
+                            
                             const blob = await response.blob();
+                            clearInterval(progressInterval);
+                            
                             const extension = downloadUrl.includes('.rar') ? 'rar' : 'zip';
                             const filename = `${album.title}.${extension}`;
                             
