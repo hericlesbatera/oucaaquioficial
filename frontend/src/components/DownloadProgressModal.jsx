@@ -18,18 +18,13 @@ export const DownloadProgressModal = ({
   onClose 
 }) => {
   const [showDebug, setShowDebug] = useState(false);
-  const [deviceMessage, setDeviceMessage] = useState('');
   const [animatedProgress, setAnimatedProgress] = useState(0);
   const prevIsOpen = useRef(isOpen);
 
-  // Detecta plataforma e define mensagem
-  useEffect(() => {
-    if (isMobileApp()) {
-      setDeviceMessage('Transferindo para seu celular');
-    } else {
-      setDeviceMessage('Transferindo para seu computador');
-    }
-  }, [isOpen]);
+  // Detecta plataforma e define mensagem (computado, não em estado)
+  const deviceMessage = isMobileApp() 
+    ? 'Transferindo para seu celular' 
+    : 'Transferindo para seu computador';
 
   // Animação suave da barra de progresso
   useEffect(() => {
