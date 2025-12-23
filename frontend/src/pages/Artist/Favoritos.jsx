@@ -377,47 +377,41 @@ const Favoritos = () => {
   }
 
   return (
-    <div className="bg-gray-50 flex min-h-screen">
-      {/* Sidebar - Hidden on mobile, visible on medium screens and up */}
-      <div className="hidden md:block w-64 sticky top-0 h-screen border-r border-gray-200 bg-white">
-        <ArtistSidebar />
-      </div>
-      
-      <div className="flex-1">
-        <div className="max-w-6xl mx-auto p-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-              <Heart className="w-8 h-8 text-red-600 fill-red-600" />
-              Favoritos
-            </h1>
-            <p className="text-gray-600">Suas músicas, álbuns e playlists favoritas</p>
-          </div>
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-6xl mx-auto p-4 md:p-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+            <Heart className="w-6 md:w-8 h-6 md:h-8 text-red-600 fill-red-600" />
+            Favoritos
+          </h1>
+          <p className="text-gray-600">Suas músicas, álbuns e playlists favoritas</p>
+        </div>
 
-          {/* Tabs */}
-          <div className="flex gap-8 mb-8 border-b border-gray-300">
-            <button
-              onClick={() => setActiveTab('musicas')}
-              className={`pb-4 font-semibold text-lg ${
-                activeTab === 'musicas'
-                  ? 'text-gray-900 border-b-4 border-red-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              MÚSICAS ({filteredMusicas.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('albums')}
-              className={`pb-4 font-semibold text-lg ${
-                activeTab === 'albums'
-                  ? 'text-gray-900 border-b-4 border-red-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              ÁLBUNS ({filteredAlbums.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('playlists')}
+        {/* Tabs */}
+        <div className="flex gap-4 md:gap-8 mb-8 border-b border-gray-300 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('musicas')}
+            className={`pb-4 font-semibold text-base md:text-lg whitespace-nowrap ${
+              activeTab === 'musicas'
+                ? 'text-gray-900 border-b-4 border-red-600'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            MÚSICAS ({filteredMusicas.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('albums')}
+            className={`pb-4 font-semibold text-base md:text-lg whitespace-nowrap ${
+              activeTab === 'albums'
+                ? 'text-gray-900 border-b-4 border-red-600'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            ÁLBUNS ({filteredAlbums.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('playlists')}
               className={`pb-4 font-semibold text-lg ${
                 activeTab === 'playlists'
                   ? 'text-gray-900 border-b-4 border-red-600'
