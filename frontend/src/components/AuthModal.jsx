@@ -39,10 +39,10 @@ const AuthModal = ({ isOpen, onClose }) => {
     const termosDeUso = (
         <div style={{ whiteSpace: 'pre-wrap', fontSize: 13, lineHeight: 1.6 }}>
             <div style={{ fontWeight: 700, marginBottom: 10 }}>AVISO LEGAL</div>
-            <p>O site "Ouça Aqui", oferece uma plataforma para compartilhamento e divulgação de conteúdo musical. Ao acessar ou utilizar nossos serviços, você concorda com os Termos de Uso e a Política de Privacidade, os quais podem ser alterados periodicamente. Recomendamos que você os revise regularmente.</p>
+            <p>O site &quot;Ouça Aqui&quot;, oferece uma plataforma para compartilhamento e divulgação de conteúdo musical. Ao acessar ou utilizar nossos serviços, você concorda com os Termos de Uso e a Política de Privacidade, os quais podem ser alterados periodicamente. Recomendamos que você os revise regularmente.</p>
 
             <div style={{ fontWeight: 700, marginTop: 15, marginBottom: 10 }}>1. Uso do Serviço</div>
-            <p>Usuários: Podem acessar, ouvir, compartilhar, e criar suas playlists no "Ouça Aqui".</p>
+            <p>Usuários: Podem acessar, ouvir, compartilhar, e criar suas playlists no &quot;Ouça Aqui&quot;.</p>
             <p>Visitantes: Podem acessar o conteúdo disponível para visualização e streaming, sem a capacidade de realizar upload.
             O uso da plataforma está sujeito à criação de uma conta, sendo de sua responsabilidade manter a segurança da mesma.</p>
 
@@ -59,22 +59,22 @@ const AuthModal = ({ isOpen, onClose }) => {
             <p>Tem a possibilidade de gerenciar e editar seus próprios conteúdos dentro da plataforma.</p>
 
             <div style={{ fontWeight: 700, marginTop: 15, marginBottom: 10 }}>3. Direitos e Responsabilidades</div>
-            <p>Você é o único responsável pelo conteúdo que enviar. Ao fazer upload de conteúdo, concede ao "Ouça Aqui" uma licença não exclusiva para exibição, reprodução e distribuição do conteúdo através de nossa plataforma.</p>
+            <p>Você é o único responsável pelo conteúdo que enviar. Ao fazer upload de conteúdo, concede ao &quot;Ouça Aqui&quot; uma licença não exclusiva para exibição, reprodução e distribuição do conteúdo através de nossa plataforma.</p>
             <p>O conteúdo enviado não pode violar direitos de terceiros, incluindo direitos autorais, marcas registradas, privacidade ou qualquer outra legislação vigente.</p>
-            <p>O "Ouça Aqui" reserva-se o direito de remover qualquer conteúdo que infrinja as leis ou que seja considerado inadequado.</p>
+            <p>O &quot;Ouça Aqui&quot; reserva-se o direito de remover qualquer conteúdo que infrinja as leis ou que seja considerado inadequado.</p>
 
             <div style={{ fontWeight: 700, marginTop: 15, marginBottom: 10 }}>4. Modificação do Serviço</div>
-            <p>O "Ouça Aqui" pode, a qualquer momento, modificar ou descontinuar serviços, funcionalidades ou recursos sem aviso prévio, não sendo responsável por compensações aos usuários.</p>
+            <p>O &quot;Ouça Aqui&quot; pode, a qualquer momento, modificar ou descontinuar serviços, funcionalidades ou recursos sem aviso prévio, não sendo responsável por compensações aos usuários.</p>
 
             <div style={{ fontWeight: 700, marginTop: 15, marginBottom: 10 }}>5. Propriedade Intelectual</div>
-            <p>O conteúdo do "Ouça Aqui", incluindo sua marca, design e funcionalidades, são protegidos por direitos autorais e não podem ser reproduzidos sem autorização prévia.</p>
-            <p>O conteúdo publicado por usuários é de sua propriedade, mas você concede ao "Ouça Aqui" uma licença para usá-lo conforme necessário para operar a plataforma.</p>
+            <p>O conteúdo do &quot;Ouça Aqui&quot;, incluindo sua marca, design e funcionalidades, são protegidos por direitos autorais e não podem ser reproduzidos sem autorização prévia.</p>
+            <p>O conteúdo publicado por usuários é de sua propriedade, mas você concede ao &quot;Ouça Aqui&quot; uma licença para usá-lo conforme necessário para operar a plataforma.</p>
 
             <div style={{ fontWeight: 700, marginTop: 15, marginBottom: 10 }}>6. Limitação de Responsabilidade</div>
-            <p>O "Ouça Aqui" não se responsabiliza por danos diretos, indiretos, incidentais ou consequenciais relacionados ao uso da plataforma. O serviço é fornecido "como está", sem garantias expressas ou implícitas.</p>
+            <p>O &quot;Ouça Aqui&quot; não se responsabiliza por danos diretos, indiretos, incidentais ou consequenciais relacionados ao uso da plataforma. O serviço é fornecido &quot;como está&quot;, sem garantias expressas ou implícitas.</p>
 
             <div style={{ fontWeight: 700, marginTop: 15, marginBottom: 10 }}>7. Encerramento de Conta</div>
-            <p>Você pode encerrar sua conta a qualquer momento. O "Ouça Aqui" também pode suspender ou encerrar sua conta caso haja violação dos Termos de Uso.</p>
+            <p>Você pode encerrar sua conta a qualquer momento. O &quot;Ouça Aqui&quot; também pode suspender ou encerrar sua conta caso haja violação dos Termos de Uso.</p>
 
             <div style={{ fontWeight: 700, marginTop: 15, marginBottom: 10 }}>8. Foro</div>
             <p>Qualquer disputa relacionada a estes Termos de Uso será resolvida no foro da cidade de São Vicente Férrer, Pernambuco, com exclusão de qualquer outro foro.</p>
