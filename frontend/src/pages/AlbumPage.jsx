@@ -552,7 +552,42 @@ const AlbumPage = () => {
 
                     clearInterval(preparingInterval);
                     setDownloadStatus('downloading');
-                    setLocalDownloadProgress(35); // Começar de 35% após preparação
+                    
+                    // Se tem URL direta do arquivo, fazer download direto (mais rápido)
+                    if (album.archiveUrl) {
+                        // Progresso simulado enquanto o navegador baixa
+                        let progress = 35;
+                        const progressInterval = setInterval(() => {
+                            progress += Math.random() * 5 + 2;
+                            if (progress >= 95) {
+                                progress = 95;
+                                clearInterval(progressInterval);
+                            }
+                            setLocalDownloadProgress(progress);
+                        }, 200);
+                        
+                        // Abrir download direto em nova aba/link
+                        const link = document.createElement('a');
+                        link.href = downloadUrl;
+                        link.download = `${album.title}.${downloadUrl.includes('.rar') ? 'rar' : 'zip'}`;
+                        link.target = '_blank';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        // Aguardar um pouco e finalizar
+                        setTimeout(() => {
+                            clearInterval(progressInterval);
+                            setLocalDownloadProgress(100);
+                            setDownloadStatus('completed');
+                            setDownloadInProgress(false);
+                        }, 2000);
+                        
+                        return;
+                    }
+
+                    // Se não tem archiveUrl, fazer via fetch com progresso
+                    setLocalDownloadProgress(35);
 
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 300000);
@@ -572,71 +607,37 @@ const AlbumPage = () => {
                         const contentLength = response.headers.get('content-length');
                         const totalSize = contentLength ? parseInt(contentLength, 10) : 0;
                         
-                        if (totalSize > 0) {
-                            let receivedLength = 0;
-                            const reader = response.body.getReader();
-                            const chunks = [];
+                        const reader = response.body.getReader();
+                        const chunks = [];
+                        let receivedLength = 0;
+                        const estimatedSize = totalSize || (albumSongs.length * 4 * 1024 * 1024);
 
-                            while (true) {
-                                const { done, value } = await reader.read();
-                                if (done) break;
-                                chunks.push(value);
-                                receivedLength += value.length;
-                                // Progresso de 35% a 99% baseado no download real
-                                const downloadPercent = receivedLength / totalSize;
-                                const progress = 35 + (downloadPercent * 64); // 35% inicial + até 64% do download = 99%
-                                setLocalDownloadProgress(Math.min(progress, 99));
-                            }
-
-                            const blob = new Blob(chunks);
-                            const extension = downloadUrl.includes('.rar') ? 'rar' : 'zip';
-                            const filename = `${album.title}.${extension}`;
-                            
-                            const url = window.URL.createObjectURL(blob);
-                            const link = document.createElement('a');
-                            link.href = url;
-                            link.download = filename;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            window.URL.revokeObjectURL(url);
-                        } else {
-                            // Se não houver content-length, usar stream para medir progresso real
-                            const reader = response.body.getReader();
-                            const chunks = [];
-                            let receivedLength = 0;
-                            
-                            // Estimar tamanho baseado no número de músicas (aprox 4MB por música)
-                            const estimatedSize = albumSongs.length * 4 * 1024 * 1024;
-
-                            while (true) {
-                                const { done, value } = await reader.read();
-                                if (done) break;
-                                chunks.push(value);
-                                receivedLength += value.length;
-                                // Progresso baseado na estimativa
-                                const downloadPercent = Math.min(receivedLength / estimatedSize, 1);
-                                const progress = 35 + (downloadPercent * 64);
-                                setLocalDownloadProgress(Math.min(progress, 99));
-                            }
-                            
-                            const blob = new Blob(chunks);
-                            const extension = downloadUrl.includes('.rar') ? 'rar' : 'zip';
-                            const filename = `${album.title}.${extension}`;
-                            
-                            const url = window.URL.createObjectURL(blob);
-                            const link = document.createElement('a');
-                            link.href = url;
-                            link.download = filename;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            window.URL.revokeObjectURL(url);
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            chunks.push(value);
+                            receivedLength += value.length;
+                            const downloadPercent = Math.min(receivedLength / estimatedSize, 1);
+                            const progress = 35 + (downloadPercent * 64);
+                            setLocalDownloadProgress(Math.min(progress, 99));
                         }
+
+                        const blob = new Blob(chunks);
+                        const extension = downloadUrl.includes('.rar') ? 'rar' : 'zip';
+                        const filename = `${album.title}.${extension}`;
+                        
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
 
                         setLocalDownloadProgress(100);
                         setDownloadStatus('completed');
-                        setDownloadInProgress(false); // Reset ao completar
+                        setDownloadInProgress(false);
                     } catch (fetchError) {
                         clearTimeout(timeoutId);
                         throw fetchError;
