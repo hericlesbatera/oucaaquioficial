@@ -556,17 +556,28 @@ const AlbumPage = () => {
                     setLocalDownloadProgress(5);
                     setCurrentDownloadIndex(0);
                     
+                    // Garantir que todas as músicas têm URLs completas
+                    const SUPABASE_URL = 'https://rtdxqthhhwqnlrevzmap.supabase.co';
+                    
                     // Baixar cada música e adicionar ao ZIP
                     for (const song of albumSongs) {
                         try {
-                            const audioUrl = song.audioUrl || song.audio_url;
+                            let audioUrl = song.audioUrl || song.audio_url;
                             if (!audioUrl) continue;
+                            
+                            // Se a URL é relativa, construir URL completa
+                            if (!audioUrl.startsWith('http')) {
+                                audioUrl = `${SUPABASE_URL}/storage/v1/object/public/${audioUrl}`;
+                            }
                             
                             setCurrentDownloadSong(song.title);
                             setCurrentDownloadIndex(downloadedSongs + 1);
                             
                             const response = await fetch(audioUrl);
-                            if (!response.ok) continue;
+                            if (!response.ok) {
+                                console.error(`Erro ao baixar ${song.title}: Status ${response.status}`);
+                                continue;
+                            }
                             
                             const blob = await response.blob();
                             const trackNum = String(song.trackNumber || downloadedSongs + 1).padStart(2, '0');
