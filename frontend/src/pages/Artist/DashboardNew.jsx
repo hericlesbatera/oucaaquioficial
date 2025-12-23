@@ -376,10 +376,10 @@ const DashboardNew = () => {
                 )}
               </CardContent>
             </Card>
-          )}
+        )}
 
-          {/* Playlists tab */}
-          {activeTab === 'playlists' && (
+        {/* Playlists tab */}
+        {activeTab === 'playlists' && (
             <Card className="mb-6 border-red-200 overflow-hidden">
               <CardContent className="p-0">
                 {loading && playlists.length === 0 ? (
