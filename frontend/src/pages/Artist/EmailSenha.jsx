@@ -271,7 +271,6 @@ const EmailSenha = () => {
           </div>
         </div>
       </div>
-    </div>
   );
 };
 
