@@ -7,15 +7,6 @@ const HomePopup = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  useEffect(() => {
-    // Delay de 500ms para melhor UX
-    const timer = setTimeout(() => {
-      loadPopup();
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, []);
-
   const loadPopup = async () => {
     try {
       const { data } = await supabase
