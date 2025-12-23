@@ -98,9 +98,6 @@ const TopCds = () => {
                     collaborators
                 };
             });
-                    collaborators: collaborators
-                };
-            });
 
             // Se o período for 'geral', retorna todos os álbuns ordenados por play_count
             if (period === 'geral') {
