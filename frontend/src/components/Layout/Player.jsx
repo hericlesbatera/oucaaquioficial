@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX, Download, Heart, List, ChevronUp, ChevronDown, Trash2, X, WifiOff } from 'lucide-react';
 import { usePlayer } from '../../context/PlayerContext';
 import { useAuth } from '../../context/AuthContext';
