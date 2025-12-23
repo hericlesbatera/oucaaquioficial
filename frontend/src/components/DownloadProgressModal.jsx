@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Copy, ChevronDown, ChevronUp } from 'lucide-react';
 
 // DEBUG BUTTON v1.0
+
+
+import { isMobileApp } from '../lib/downloadHelper';
 
 export const DownloadProgressModal = ({ 
   isOpen, 
@@ -15,7 +18,46 @@ export const DownloadProgressModal = ({
   onClose 
 }) => {
   const [showDebug, setShowDebug] = useState(false);
-  
+  const [deviceMessage, setDeviceMessage] = useState('');
+  const [animatedProgress, setAnimatedProgress] = useState(0);
+  const prevIsOpen = useRef(isOpen);
+
+  // Detecta plataforma e define mensagem
+  useEffect(() => {
+    if (isMobileApp()) {
+      setDeviceMessage('Transferindo para seu celular');
+    } else {
+      setDeviceMessage('Transferindo para seu computador');
+    }
+  }, [isOpen]);
+
+  // Animação suave da barra de progresso
+  useEffect(() => {
+    if (!isOpen) return;
+    let raf;
+    const animate = () => {
+      setAnimatedProgress(prev => {
+        if (Math.abs(prev - progress) < 1) return progress;
+        return prev + (progress - prev) * 0.2;
+      });
+      if (Math.abs(animatedProgress - progress) > 0.5) {
+        raf = requestAnimationFrame(animate);
+      }
+    };
+    animate();
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line
+  }, [progress, isOpen]);
+
+  // Resetar estado ao fechar modal
+  useEffect(() => {
+    if (!isOpen && prevIsOpen.current) {
+      setShowDebug(false);
+      setAnimatedProgress(0);
+    }
+    prevIsOpen.current = isOpen;
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const copyToClipboard = () => {
@@ -57,7 +99,7 @@ ${document.querySelector('[data-debug-logs]')?.innerText || 'Nenhum log'}
       case 'preparing':
         return `Reunindo ${songCount} músicas para compactação`;
       case 'downloading':
-        return `Transferindo para seu celular${currentSongIndex ? ` (${currentSongIndex}/${songCount})` : ''}`;
+        return `${deviceMessage}${currentSongIndex ? ` (${currentSongIndex}/${songCount})` : ''}`;
       case 'completed':
         return `${albumTitle} foi baixado com sucesso`;
       case 'error':
@@ -103,11 +145,11 @@ ${document.querySelector('[data-debug-logs]')?.innerText || 'Nenhum log'}
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
               <div
                 className="bg-blue-500 h-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
+                style={{ width: `${animatedProgress}%` }}
               />
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center">
-              {Math.round(progress)}%
+              {Math.round(animatedProgress)}%
             </p>
           </div>
         )}

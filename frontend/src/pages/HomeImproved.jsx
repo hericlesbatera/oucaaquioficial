@@ -446,7 +446,7 @@ const HomeImproved = () => {
                 <div className="box-adicionar-artista dotted-border">
                     <div className="inner">
                         <div className="mensagem">Divulgue sua banda em nosso site <b>www.oucaaqui.com</b></div>
-                        <a href="https://web.archive.org/web/20180329073822/http://jairzinhocds.com.br/contato/" className="btn-twomp">
+                        <a href="#" className="btn-twomp">
                             <span className="icon-lapis-enviar"></span>Entre em contato
                         </a>
                     </div>

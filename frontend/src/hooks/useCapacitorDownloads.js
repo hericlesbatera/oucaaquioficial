@@ -111,7 +111,7 @@ const downloadFile = async (url, fileName, albumDir) => {
             console.warn(`   CapacitorHttp falhou: ${nativeError.message}, tentando fetch...`);
             
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 120000);
+            const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutos
             
             try {
                 const response = await fetch(url, {

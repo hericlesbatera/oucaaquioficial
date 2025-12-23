@@ -272,60 +272,60 @@ const Header = () => {
                                 <DropdownMenuContent className="bg-white w-80 sm:w-96">
                                     {isAdmin ? (
                                         <>
-                                            <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer flex items-center gap-3 py-3">
-                                                <Settings className="w-5 h-5 text-gray-500" />
-                                                <span>Painel Admin</span>
-                                            </DropdownMenuItem>
-                                            <div className="border-t border-gray-200 my-2"></div>
-                                            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer flex items-center gap-3 py-3 text-red-600">
-                                                <LogOut className="w-5 h-5" />
-                                                <span>Sair</span>
-                                            </DropdownMenuItem>
+                                             <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer flex items-center gap-3 py-2">
+                                                 <Settings className="w-5 h-5 text-gray-500" />
+                                                 <span>Painel Admin</span>
+                                             </DropdownMenuItem>
+                                             <div className="border-t border-gray-200 my-2"></div>
+                                             <DropdownMenuItem onClick={handleLogout} className="cursor-pointer flex items-center gap-3 py-2 text-red-600">
+                                                 <LogOut className="w-5 h-5" />
+                                                 <span>Sair</span>
+                                             </DropdownMenuItem>
                                         </>
-                                    ) : isArtist ? (
-                                        <>
-                                            <DropdownMenuItem onClick={() => navigate(`/${artistForUser?.slug || artistForUser?.id || 'a1'}`)} className="cursor-pointer flex items-center gap-3 py-3">
+                                        ) : isArtist ? (
+                                       <>
+                                            <DropdownMenuItem onClick={() => navigate(`/${artistForUser?.slug || artistForUser?.id || 'a1'}`)} className="cursor-pointer flex items-center gap-3 py-2">
                                                 <User className="w-5 h-5 text-gray-500" />
                                                 <span>Meu Perfil</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/artist/upload')} className="cursor-pointer flex items-center gap-3 py-3">
+                                            <DropdownMenuItem onClick={() => navigate('/artist/upload')} className="cursor-pointer flex items-center gap-3 py-2">
                                                 <Upload className="w-5 h-5 text-gray-500" />
                                                 <span>Novo Upload</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/artist/albums')} className="cursor-pointer flex items-center gap-3 py-3">
+                                            <DropdownMenuItem onClick={() => navigate('/artist/albums')} className="cursor-pointer flex items-center gap-3 py-2">
                                                 <Disc className="w-5 h-5 text-gray-500" />
                                                 <span>Meus Álbuns</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/artist/dashboard')} className="cursor-pointer flex items-center gap-3 py-3">
+                                            <DropdownMenuItem onClick={() => navigate('/artist/dashboard')} className="cursor-pointer flex items-center gap-3 py-2">
                                                 <BarChart3 className="w-5 h-5 text-gray-500" />
                                                 <span>Estatísticas</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/artist/settings')} className="cursor-pointer flex items-center gap-3 py-3">
+                                            <DropdownMenuItem onClick={() => navigate('/artist/settings')} className="cursor-pointer flex items-center gap-3 py-2">
                                                 <Settings className="w-5 h-5 text-gray-500" />
                                                 <span>Configurações</span>
                                             </DropdownMenuItem>
                                             <div className="border-t border-gray-200 my-2"></div>
-                                            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer flex items-center gap-3 py-3 text-red-600">
+                                            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer flex items-center gap-3 py-2 text-red-600">
                                                 <LogOut className="w-5 h-5" />
                                                 <span>Sair</span>
                                             </DropdownMenuItem>
-                                        </>
+                                       </>
                                     ) : (
-                                        <>
-                                            <DropdownMenuItem onClick={() => navigate('/user/panel')} className="cursor-pointer flex items-center gap-3 py-3">
+                                       <>
+                                            <DropdownMenuItem onClick={() => navigate('/user/panel')} className="cursor-pointer flex items-center gap-3 py-2">
                                                 <Settings className="w-5 h-5 text-gray-500" />
                                                 <span>Meu Painel</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/favorites')} className="cursor-pointer flex items-center gap-3 py-3">
+                                            <DropdownMenuItem onClick={() => navigate('/favorites')} className="cursor-pointer flex items-center gap-3 py-2">
                                                 <Heart className="w-5 h-5 text-gray-500" />
                                                 <span>Favoritos</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/playlists')} className="cursor-pointer flex items-center gap-3 py-3">
+                                            <DropdownMenuItem onClick={() => navigate('/playlists')} className="cursor-pointer flex items-center gap-3 py-2">
                                                 <ListMusic className="w-5 h-5 text-gray-500" />
                                                 <span>Playlists</span>
                                             </DropdownMenuItem>
                                             <div className="border-t border-gray-200 my-2"></div>
-                                            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer flex items-center gap-3 py-3 text-red-600">
+                                            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer flex items-center gap-3 py-2 text-red-600">
                                                 <LogOut className="w-5 h-5" />
                                                 <span>Sair</span>
                                             </DropdownMenuItem>

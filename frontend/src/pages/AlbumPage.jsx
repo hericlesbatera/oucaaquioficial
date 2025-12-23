@@ -543,8 +543,7 @@ const AlbumPage = () => {
                     
                     try {
                         const response = await fetch(downloadUrl, {
-                            signal: controller.signal,
-                            credentials: 'include'
+                            signal: controller.signal
                         });
                         
                         clearTimeout(timeoutId);
@@ -605,33 +604,9 @@ const AlbumPage = () => {
                     }
                 },
                 onMobile: async ({ album: albumData, albumSongs: songs, onProgress }) => {
-                    // Mobile: preferir ZIP do site como fallback confiável
+                    // Mobile: baixar sempre os MP3s individuais, ignorando ZIP
                     clearInterval(preparingInterval);
                     setDownloadStatus('downloading');
-
-                    // Se houver archiveUrl, baixar ZIP direto
-                    if (albumData.archiveUrl) {
-                        try {
-                            const folder = `downloads/albums/${albumData.id}`;
-                            try { await Filesystem.mkdir({ path: folder, directory: Directory.Data, recursive: true }); } catch {}
-                            const safeTitle = (albumData.title || `album_${albumData.id}`).replace(/[^a-zA-Z0-9\-_ ]/g, '_');
-                            const filePath = `${folder}/${safeTitle}.zip`;
-                            const res = await Http.downloadFile({
-                                url: albumData.archiveUrl,
-                                filePath,
-                                fileDirectory: FilesystemDirectory.Data,
-                                method: 'GET'
-                            });
-                            console.log('ZIP baixado (mobile):', JSON.stringify(res));
-                            setLocalDownloadProgress(100);
-                            setDownloadStatus('completed');
-                            return { zipPath: filePath };
-                        } catch (zipErr) {
-                            console.warn('Falha no ZIP, tentando MP3s individuais:', zipErr.message);
-                        }
-                    }
-
-                    // Senão, baixar MP3s individuais
                     try {
                         const result = await downloadAlbum(albumData, songs);
                         setLocalDownloadProgress(100);
