@@ -269,14 +269,15 @@ const AlbumPage = () => {
                       .eq('album_id', supabaseAlbum.id)
                       .maybeSingle() : Promise.resolve({ data: null }),
                   
-                  // Buscar recomendados
+                  // Buscar recomendados (sem relação com artists)
                   supabase
                       .from('albums')
-                      .select('id, slug, title, artist_name, artist_id, cover_url, play_count, genre, artist:artists(slug)')
+                      .select('id, slug, title, artist_name, artist_id, cover_url, play_count, genre')
                       .eq('is_private', false)
+                      .is('deleted_at', null)
                       .neq('id', supabaseAlbum.id)
                       .order('play_count', { ascending: false })
-                      .limit(30) // Reduzir limite
+                      .limit(30)
               ]);
 
               // Processar músicas
