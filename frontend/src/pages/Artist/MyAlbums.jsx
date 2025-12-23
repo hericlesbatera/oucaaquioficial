@@ -559,6 +559,7 @@ const MyAlbums = () => {
     );
 
     return (
+    <>
     <div className="bg-gray-50 min-h-screen">
         <div className="max-w-7xl mx-auto p-4 md:p-8 pb-16">
             <div className="flex items-center justify-between mb-8">
