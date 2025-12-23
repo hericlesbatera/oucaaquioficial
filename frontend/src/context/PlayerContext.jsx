@@ -182,7 +182,7 @@ export const PlayerProvider = ({ children }) => {
       mediaSession.setActionHandler('nexttrack', null);
       mediaSession.setActionHandler('seekto', null);
     };
-  }, [currentSong, isPlaying, handleNext]);
+  }, [currentSong, isPlaying, handleNext, handlePrevious]);
 
   const playSong = async (song, songQueue = [], playlistId = null) => {
    setCurrentSong(song);
