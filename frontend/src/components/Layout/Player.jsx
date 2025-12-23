@@ -366,12 +366,9 @@ const Player = () => {
                                     <img
                                         src={imageError ? '/images/default-album.png' : currentSong.coverImage}
                                         alt={currentSong.title}
-                                        className="w-11 h-11 rounded object-cover shadow-lg group-hover:shadow-xl transition-all group-hover:brightness-75"
+                                        className="w-11 h-11 rounded object-cover shadow-lg group-hover:shadow-xl transition-all group-hover:brightness-90"
                                         onError={() => setImageError(true)}
                                     />
-                                    <div className="absolute inset-0 bg-black/20 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <span className="text-white text-xs font-medium">Ver álbum</span>
-                                    </div>
                                 </Link>
                                 <div className="flex-1 min-w-0">
                                     <Link 
