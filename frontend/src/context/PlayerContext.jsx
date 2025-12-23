@@ -242,6 +242,10 @@ export const PlayerProvider = ({ children }) => {
     }
   }, [currentTime, queue, currentSong, repeatMode, isPlaying]);
 
+  useEffect(() => {
+    handlePreviousRef.current = handlePrevious;
+  }, [handlePrevious]);
+
   const seekTo = (time) => {
     audioRef.current.currentTime = time;
     setCurrentTime(time);
