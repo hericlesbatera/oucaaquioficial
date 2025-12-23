@@ -477,6 +477,10 @@ const MyAlbums = () => {
                     src={album.coverImage}
                     alt={album.title}
                     className={`w-full aspect-square object-cover rounded-lg ${isTrash ? 'opacity-60' : ''}`}
+                    onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/images/default-album.png';
+                    }}
                 />
                 {!isTrash && (
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 rounded-lg flex items-center justify-center">
