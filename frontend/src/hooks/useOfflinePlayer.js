@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { isCapacitorAvailable } from './useCapacitorDownloads';
 
-const DOWNLOADS_DIR = 'downloads';
+const DOWNLOADS_DIR = 'music_downloads';
 
 /**
  * Hook para gerenciar reprodução de arquivos baixados offline
