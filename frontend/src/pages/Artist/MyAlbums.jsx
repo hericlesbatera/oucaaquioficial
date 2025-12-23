@@ -899,7 +899,7 @@ const MyAlbums = () => {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-    </div>
+    </>
     );
 };
 
