@@ -559,45 +559,40 @@ const MyAlbums = () => {
     );
 
     return (
-    <div className="bg-gray-50 flex min-h-screen">
-        {/* Sidebar - Hidden on mobile, visible on medium screens and up */}
-        <div className="hidden md:block w-64 sticky top-0 h-screen border-r border-gray-200 bg-white">
-            <ArtistSidebar />
-        </div>
-
-        <div className="flex-1">
-            <div className="max-w-7xl mx-auto p-8 pb-16">
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">Meus Álbuns</h1>
-                        <p className="text-gray-600">
-                            {loading ? 'Carregando...' : `${activeAlbums.length} álbuns publicados`}
-                        </p>
-                    </div>
-                    <Link to="/artist/upload">
-                        <Button className="bg-red-600 hover:bg-red-700 text-white">
-                            <Plus className="w-5 h-5 mr-2" />
-                            Novo Álbum
-                        </Button>
-                    </Link>
+    <div className="bg-gray-50 min-h-screen">
+        <div className="max-w-7xl mx-auto p-4 md:p-8 pb-16">
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Meus Álbuns</h1>
+                    <p className="text-gray-600">
+                        {loading ? 'Carregando...' : `${activeAlbums.length} álbuns publicados`}
+                    </p>
                 </div>
+                <Link to="/artist/upload">
+                    <Button className="bg-red-600 hover:bg-red-700 text-white">
+                        <Plus className="w-5 h-5 mr-2" />
+                        <span className="hidden md:inline">Novo Álbum</span>
+                        <span className="md:hidden">Novo</span>
+                    </Button>
+                </Link>
+            </div>
 
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="mb-6">
-                        <TabsTrigger value="published" className="flex items-center gap-2">
-                            <Disc className="w-4 h-4" />
-                            Publicados ({activeAlbums.length})
-                        </TabsTrigger>
-                        <TabsTrigger value="trash" className="flex items-center gap-2">
-                            <Trash2 className="w-4 h-4" />
-                            Lixeira ({trashedAlbums.length})
-                        </TabsTrigger>
-                    </TabsList>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="mb-6">
+                    <TabsTrigger value="published" className="flex items-center gap-2">
+                        <Disc className="w-4 h-4" />
+                        Publicados ({activeAlbums.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="trash" className="flex items-center gap-2">
+                        <Trash2 className="w-4 h-4" />
+                        Lixeira ({trashedAlbums.length})
+                    </TabsTrigger>
+                </TabsList>
 
-                    <TabsContent value="published">
-                        {activeAlbums.length > 0 ? (
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                                {activeAlbums.map(album => renderAlbumCard(album, false))}
+                <TabsContent value="published">
+                    {activeAlbums.length > 0 ? (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                            {activeAlbums.map(album => renderAlbumCard(album, false))}
                             </div>
                         ) : (
                             <Card className="bg-white shadow-sm">
