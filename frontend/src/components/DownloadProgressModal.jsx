@@ -47,8 +47,13 @@ export const DownloadProgressModal = ({
   // Resetar estado ao fechar modal
   useEffect(() => {
     if (!isOpen && prevIsOpen.current) {
-      setShowDebug(false);
-      setAnimatedProgress(0);
+      // Resetamos no próximo ciclo para evitar cascading renders
+      const timeout = setTimeout(() => {
+        setShowDebug(false);
+        setAnimatedProgress(0);
+      }, 0);
+      prevIsOpen.current = isOpen;
+      return () => clearTimeout(timeout);
     }
     prevIsOpen.current = isOpen;
   }, [isOpen]);
