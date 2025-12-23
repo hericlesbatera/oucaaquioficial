@@ -3,13 +3,19 @@ set -e
 
 echo "🔨 Iniciando build..."
 cd frontend
+
+echo "📦 Instalando dependências do frontend..."
+npm install --legacy-peer-deps
+
 echo "🏗️ Compilando frontend..."
-FAST_REFRESH=false DISABLE_NEW_JSX_TRANSFORM=true NODE_ENV=production CI=false npm run build
+CI=false npm run build
+
 cd ..
 
 echo "📁 Preparando pasta de distribuição..."
 rm -rf build
 mkdir -p build
+
 echo "📋 Copiando arquivos compilados..."
 cp -r frontend/build/* build/
 
