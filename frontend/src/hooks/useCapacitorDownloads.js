@@ -386,8 +386,8 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                 [album.id]: { current: 0, total: songsWithValidURLs.length }
             }));
 
-            for (let i = 0; i < songs.length; i++) {
-                const song = songs[i];
+            for (let i = 0; i < songsWithValidURLs.length; i++) {
+                const song = songsWithValidURLs[i];
 
                 if (!song) {
                     console.warn(`Musica ${i + 1} e invalida (null/undefined)`);
