@@ -1014,7 +1014,7 @@ const MyPlaylists = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 };
 
