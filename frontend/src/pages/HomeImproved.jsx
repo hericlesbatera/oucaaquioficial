@@ -77,10 +77,7 @@ const HomeImproved = () => {
                     // Query 1: Álbuns com limite - ordenado por data de lançamento (release_date)
                     supabase
                         .from('albums')
-                        .select(`
-                *,
-                artist:artists(id, name, slug, is_verified)
-                `)
+                        .select('*')
                         .eq('is_private', false)
                         .is('deleted_at', null)
                         .order('release_date', { ascending: false, nullsFirst: false })
@@ -91,7 +88,7 @@ const HomeImproved = () => {
                         .from('artists')
                         .select('*')
                         .order('followers_count', { ascending: false })
-                        .limit(20),
+                        .limit(100),
                     
                     // Query 3: Colaborações
                     supabase
@@ -107,6 +104,14 @@ const HomeImproved = () => {
                         .limit(12)
                 ]);
 
+                // Criar mapa de artistas para busca rápida
+                const artistsMap = {};
+                if (artistsResult.data) {
+                    artistsResult.data.forEach(artist => {
+                        artistsMap[artist.id] = artist;
+                    });
+                }
+
                 // Processar álbuns
                 if (albumsResult.data && albumsResult.data.length > 0) {
                     const supabaseAlbums = albumsResult.data;
@@ -114,43 +119,39 @@ const HomeImproved = () => {
                     // Mapear colaboradores
                     const collaboratorsByAlbum = {};
                     if (collabResult.data && collabResult.data.length > 0) {
-                        const invitedUserIds = [...new Set(collabResult.data.map(c => c.invited_user_id))];
-                        
-                        const { data: collabArtists } = await supabase
-                            .from('artists')
-                            .select('id, name, slug, is_verified')
-                            .in('id', invitedUserIds);
-
-                        if (collabArtists) {
-                            const artistsMap = {};
-                            collabArtists.forEach(artist => {
-                                artistsMap[artist.id] = artist;
-                            });
-                            collabResult.data.forEach(collab => {
-                                if (artistsMap[collab.invited_user_id]) {
-                                    if (!collaboratorsByAlbum[collab.album_id]) {
-                                        collaboratorsByAlbum[collab.album_id] = [];
-                                    }
-                                    collaboratorsByAlbum[collab.album_id].push(artistsMap[collab.invited_user_id]);
+                        collabResult.data.forEach(collab => {
+                            const artist = artistsMap[collab.invited_user_id];
+                            if (artist) {
+                                if (!collaboratorsByAlbum[collab.album_id]) {
+                                    collaboratorsByAlbum[collab.album_id] = [];
                                 }
-                            });
-                        }
+                                collaboratorsByAlbum[collab.album_id].push({
+                                    id: artist.id,
+                                    name: artist.name,
+                                    slug: artist.slug,
+                                    is_verified: artist.is_verified
+                                });
+                            }
+                        });
                     }
 
-                    const formattedAlbums = supabaseAlbums.map(album => ({
-                        id: album.id,
-                        slug: album.slug,
-                        title: album.title,
-                        artistName: album.artist?.name || album.artist_name,
-                        artistId: album.artist_id,
-                        artistSlug: album.artist?.slug || album.artist_id,
-                        artistVerified: album.artist?.is_verified || false,
-                        collaborators: collaboratorsByAlbum[album.id] || [],
-                        coverImage: album.cover_url || '/images/default-album.png',
-                        releaseYear: album.release_year,
-                        playCount: album.play_count || 0,
-                        downloadCount: album.download_count || 0
-                    }));
+                    const formattedAlbums = supabaseAlbums.map(album => {
+                        const artist = artistsMap[album.artist_id] || {};
+                        return {
+                            id: album.id,
+                            slug: album.slug,
+                            title: album.title,
+                            artistName: artist.name || album.artist_name || 'Artista',
+                            artistId: album.artist_id,
+                            artistSlug: artist.slug || album.artist_id,
+                            artistVerified: artist.is_verified || false,
+                            collaborators: collaboratorsByAlbum[album.id] || [],
+                            coverImage: album.cover_url || '/images/default-album.png',
+                            releaseYear: album.release_year,
+                            playCount: album.play_count || 0,
+                            downloadCount: album.download_count || 0
+                        };
+                    });
                     
                     setAllAlbums(formattedAlbums);
                     
