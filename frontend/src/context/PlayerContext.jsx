@@ -161,7 +161,9 @@ export const PlayerProvider = ({ children }) => {
     });
 
     mediaSession.setActionHandler('previoustrack', () => {
-      handlePrevious();
+      if (handlePreviousRef.current) {
+        handlePreviousRef.current();
+      }
     });
 
     mediaSession.setActionHandler('nexttrack', () => {
@@ -183,7 +185,7 @@ export const PlayerProvider = ({ children }) => {
       mediaSession.setActionHandler('nexttrack', null);
       mediaSession.setActionHandler('seekto', null);
     };
-  }, [currentSong, isPlaying, handleNext, handlePrevious]);
+  }, [currentSong, isPlaying]);
 
   const playSong = async (song, songQueue = [], playlistId = null) => {
    setCurrentSong(song);
