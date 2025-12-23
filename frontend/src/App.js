@@ -147,20 +147,6 @@ const MainLayout = ({ children, showFooter = true }) => {
   );
 };
 
-const ArtistLayout = ({ children }) => {
-   return (
-     <div className="min-h-screen flex flex-col bg-white">
-       <Header />
-       <HeaderMobile />
-       <main className="flex-1 pb-20 md:pb-0">
-         {children}
-       </main>
-       <MobileBottomNav />
-       <Player />
-     </div>
-   );
- };
-
 const AdminLayout = ({ children }) => {
    return (
      <div className="min-h-screen flex flex-col bg-gray-50">
