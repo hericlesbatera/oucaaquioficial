@@ -548,37 +548,7 @@ const AlbumPage = () => {
                     clearInterval(preparingInterval);
                     setDownloadStatus('downloading');
                     
-                    // Se tem archiveUrl (ZIP pronto), fazer download direto
-                    if (album.archiveUrl) {
-                        const downloadUrl = album.archiveUrl;
-                        
-                        let progress = 35;
-                        const progressInterval = setInterval(() => {
-                            progress += Math.random() * 8 + 3;
-                            if (progress >= 95) {
-                                progress = 95;
-                                clearInterval(progressInterval);
-                            }
-                            setLocalDownloadProgress(progress);
-                        }, 150);
-                        
-                        const link = document.createElement('a');
-                        link.href = downloadUrl;
-                        link.download = `${album.title}.${downloadUrl.includes('.rar') ? 'rar' : 'zip'}`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        
-                        setTimeout(() => {
-                            clearInterval(progressInterval);
-                            setLocalDownloadProgress(100);
-                            setDownloadStatus('completed');
-                            setDownloadInProgress(false);
-                        }, 1500);
-                        return;
-                    }
-                    
-                    // Se não tem archiveUrl, criar ZIP no navegador
+                    // Criar ZIP no navegador (sempre - mais rápido e sem CORS)
                     const zip = new JSZip();
                     const totalSongs = albumSongs.length;
                     let downloadedSongs = 0;
@@ -618,6 +588,26 @@ const AlbumPage = () => {
                     }
                     
                     // Gerar o ZIP (90% a 99%)
+                    setLocalDownloadProgress(92);
+                    setCurrentDownloadSong('Criando arquivo ZIP...');
+                    
+                    const zipBlob = await zip.generateAsync({ 
+                        type: 'blob',
+                        compression: 'DEFLATE',
+                        compressionOptions: { level: 1 }
+                    }, (metadata) => {
+                        const progress = 92 + (metadata.percent / 100) * 7;
+                        setLocalDownloadProgress(progress);
+                    });
+                    
+                    // Download do ZIP
+                    setLocalDownloadProgress(99);
+                    saveAs(zipBlob, `${album.title}.zip`);
+                    
+                    setLocalDownloadProgress(100);
+                    setDownloadStatus('completed');
+                    setDownloadInProgress(false);
+                },
                     setLocalDownloadProgress(92);
                     setCurrentDownloadSong('Criando arquivo ZIP...');
                     
