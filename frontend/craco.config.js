@@ -2,6 +2,9 @@
 const path = require("path");
 require("dotenv").config();
 
+// OG Meta middleware para crawlers de redes sociais
+const setupOgMetaMiddleware = require("./plugins/og-meta/og-middleware");
+
 // Environment variable overrides
 const config = {
   disableHotReload: process.env.DISABLE_HOT_RELOAD === "true",
