@@ -648,7 +648,6 @@ const DashboardNew = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
       </div>
     </div>
   );
