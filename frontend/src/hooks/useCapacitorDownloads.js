@@ -398,7 +398,7 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                 const songUrl = song.audioUrl || song.audio_url || song.url;
                 const fileName = `${String(i + 1).padStart(2, '0')} - ${sanitizePath(song.title || 'desconhecido')}.mp3`;
 
-                console.log(`\nMUSICA ${i + 1}/${songs.length}`);
+                console.log(`\nMUSICA ${i + 1}/${songsWithValidURLs.length}`);
                 console.log(`   Titulo: ${song.title}`);
                 console.log(`   ID: ${song.id}`);
                 console.log(`   URL: ${songUrl ? 'presente' : 'VAZIA'}`);
