@@ -295,9 +295,19 @@ const AlbumPage = () => {
                   console.error('Erro ao carregar músicas:', songsError);
               }
               if (songs && songs.length > 0) {
+                  // DEBUG: Ver dados brutos do banco
+                  console.log('=== DADOS BRUTOS DAS MÚSICAS ===');
+                  songs.forEach((s, i) => {
+                      console.log(`${i+1}. ${s.title}:`);
+                      console.log('   - audio_url:', s.audio_url);
+                      console.log('   - url:', s.url);
+                      console.log('   - file_url:', s.file_url);
+                  });
+                  console.log('================================');
+                  
                   const processedSongs = songs.map(song => {
                       // Garantir que a URL de áudio está completa
-                      let audioUrl = song.audio_url;
+                      let audioUrl = song.audio_url || song.url || song.file_url;
                       
                       // Se a URL é relativa (começa com 'songs/' ou similar), construir URL completa do Supabase
                       if (audioUrl && !audioUrl.startsWith('http')) {
@@ -324,8 +334,8 @@ const AlbumPage = () => {
                   });
                   setAlbumSongs(processedSongs);
                   console.log(`Carregadas ${processedSongs.length} músicas`);
-                  // Debug: mostrar URLs de áudio
-                  console.log('URLs de áudio das músicas:', processedSongs.map(s => ({ title: s.title, audioUrl: s.audioUrl?.substring(0, 80) + '...' })));
+                  // Debug: mostrar URLs de áudio processadas
+                  console.log('URLs processadas:', processedSongs.map(s => ({ title: s.title, audioUrl: s.audioUrl })));
               } else {
                   console.warn('Nenhuma música encontrada para o álbum', {
                       albumId: supabaseAlbum.id,
