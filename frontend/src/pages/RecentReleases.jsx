@@ -131,10 +131,12 @@ const RecentReleases = () => {
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-              {albums.map((album) => (
+              {albums.map((album) => {
+                const artist = getArtist(album);
+                return (
                 <div key={album.id}>
                   <Link
-                    to={`/${album.artist?.slug || album.artist_id}/${album.slug || album.id}`}
+                    to={`/${artist.slug || album.artist_id}/${album.slug || album.id}`}
                     className="group cursor-pointer block"
                   >
                     <div className="relative mb-3 overflow-hidden rounded-lg shadow-lg">
@@ -154,11 +156,11 @@ const RecentReleases = () => {
                     </h3>
                   </Link>
                   <Link
-                    to={`/${album.artist?.slug || album.artist_id}`}
+                    to={`/${artist.slug || album.artist_id}`}
                     className="flex items-center gap-1 text-gray-500 text-xs truncate hover:text-red-600 transition-colors mb-2"
                   >
-                    <span className="truncate">{album.artist?.name || album.artist_name}</span>
-                    {album.artist?.is_verified && (
+                    <span className="truncate">{artist.name}</span>
+                    {artist.is_verified && (
                       <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
                     )}
                   </Link>
@@ -173,7 +175,7 @@ const RecentReleases = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+              );})}
             </div>
             {loading && (
               <div className="flex justify-center py-12">
