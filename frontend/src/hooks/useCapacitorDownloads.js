@@ -356,10 +356,17 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
             console.log('==========================================');
 
             // Validar URLs antes de começar
-            const songsWithValidURLs = songs.filter(song => {
-                const url = song?.audioUrl || song?.audio_url || song?.url;
-                return !!url;
-            });
+            const SUPABASE_URL = 'https://rtdxqthhhwqnlrevzmap.supabase.co';
+            const songsWithValidURLs = songs.map(song => {
+                let url = song?.audioUrl || song?.audio_url || song?.url;
+                
+                // Se URL é relativa, construir URL completa do Supabase
+                if (url && !url.startsWith('http')) {
+                    url = `${SUPABASE_URL}/storage/v1/object/public/${url}`;
+                }
+                
+                return { ...song, audioUrl: url, audio_url: url, url: url };
+            }).filter(song => !!song.audioUrl);
 
             console.log(`Musicas com URL valida: ${songsWithValidURLs.length}/${songs.length}`);
 
