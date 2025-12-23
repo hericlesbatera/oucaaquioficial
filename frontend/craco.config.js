@@ -90,33 +90,39 @@ if (config.enableVisualEdits) {
   };
 }
 
-// Setup dev server with visual edits and/or health check
-if (config.enableVisualEdits || config.enableHealthCheck) {
-  webpackConfig.devServer = (devServerConfig) => {
-    // Apply visual edits dev server setup if enabled
-    if (config.enableVisualEdits && setupDevServer) {
-      devServerConfig = setupDevServer(devServerConfig);
-    }
-
-    // Add health check endpoints if enabled
-    if (config.enableHealthCheck && setupHealthEndpoints && healthPluginInstance) {
-      const originalSetupMiddlewares = devServerConfig.setupMiddlewares;
-
-      devServerConfig.setupMiddlewares = (middlewares, devServer) => {
-        // Call original setup if exists
-        if (originalSetupMiddlewares) {
-          middlewares = originalSetupMiddlewares(middlewares, devServer);
-        }
-
-        // Setup health endpoints
-        setupHealthEndpoints(devServer, healthPluginInstance);
-
-        return middlewares;
-      };
-    }
-
-    return devServerConfig;
+// Setup dev server with OG meta tags, visual edits and/or health check
+webpackConfig.devServer = (devServerConfig) => {
+  // Setup OG Meta middleware para crawlers (WhatsApp, Facebook, etc)
+  devServerConfig.setupMiddlewares = (middlewares, devServer) => {
+    // Adicionar middleware de OG meta tags ANTES dos outros
+    setupOgMetaMiddleware(devServer);
+    
+    return middlewares;
   };
-}
+
+  // Apply visual edits dev server setup if enabled
+  if (config.enableVisualEdits && setupDevServer) {
+    devServerConfig = setupDevServer(devServerConfig);
+  }
+
+  // Add health check endpoints if enabled
+  if (config.enableHealthCheck && setupHealthEndpoints && healthPluginInstance) {
+    const originalSetupMiddlewares = devServerConfig.setupMiddlewares;
+
+    devServerConfig.setupMiddlewares = (middlewares, devServer) => {
+      // Call original setup if exists
+      if (originalSetupMiddlewares) {
+        middlewares = originalSetupMiddlewares(middlewares, devServer);
+      }
+
+      // Setup health endpoints
+      setupHealthEndpoints(devServer, healthPluginInstance);
+
+      return middlewares;
+    };
+  }
+
+  return devServerConfig;
+};
 
 module.exports = webpackConfig;
