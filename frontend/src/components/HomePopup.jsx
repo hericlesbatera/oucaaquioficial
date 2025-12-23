@@ -33,6 +33,16 @@ const HomePopup = () => {
     }
   };
 
+  useEffect(() => {
+    // Delay de 500ms para melhor UX
+    const timer = setTimeout(() => {
+      loadPopup();
+    }, 500);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleClose = () => {
     setIsAnimating(false);
     // Esperar animação terminar antes de desaparecer
