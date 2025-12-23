@@ -645,7 +645,6 @@ const Favoritos = () => {
           )}
         </div>
       </div>
-    </div>
   );
 };
 
