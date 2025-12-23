@@ -288,45 +288,39 @@ const SettingsNew = () => {
   };
 
   return (
-    <div className="bg-gray-50 flex min-h-screen">
-      {/* Sidebar - Hidden on mobile, visible on medium screens and up */}
-      <div className="hidden md:block w-64 sticky top-0 h-screen border-r border-gray-200 bg-white">
-        <ArtistSidebar />
-      </div>
-      
-      <div className="flex-1">
-        <div className="max-w-4xl mx-auto p-4 md:p-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-            <div className="flex items-center gap-3">
-              <Settings className="w-8 h-8 text-red-600" />
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Configurações do Perfil</h1>
-            </div>
-            <Button
-              onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-              className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
-              disabled={saving}
-            >
-              {saving ? (
-                'Salvando...'
-              ) : isEditing ? (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Salvar Alterações
-                </>
-              ) : (
-                'Editar Perfil'
-              )}
-            </Button>
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-4xl mx-auto p-4 md:p-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+          <div className="flex items-center gap-3">
+            <Settings className="w-8 h-8 text-red-600" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Configurações do Perfil</h1>
           </div>
+          <Button
+            onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+            className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
+            disabled={saving}
+          >
+            {saving ? (
+              'Salvando...'
+            ) : isEditing ? (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Salvar Alterações
+              </>
+            ) : (
+              'Editar Perfil'
+            )}
+          </Button>
+        </div>
 
-          <Card className="bg-white shadow-sm mb-6 overflow-hidden">
-            <div className="relative h-40 sm:h-64 bg-gradient-to-r from-red-600 to-red-800">
-              {artist.coverImage && (
-                <img
-                  src={artist.coverImage}
-                  alt="Capa"
-                  className="w-full h-full object-cover"
-                />
+        <Card className="bg-white shadow-sm mb-6 overflow-hidden">
+          <div className="relative h-40 sm:h-64 bg-gradient-to-r from-red-600 to-red-800">
+            {artist.coverImage && (
+              <img
+                src={artist.coverImage}
+                alt="Capa"
+                className="w-full h-full object-cover"
+              />
               )}
               {isEditing && (
                 <label
