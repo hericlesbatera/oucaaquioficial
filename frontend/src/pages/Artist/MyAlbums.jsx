@@ -59,90 +59,88 @@ const MyAlbums = () => {
     const [albumToPermanentDelete, setAlbumToPermanentDelete] = useState(null);
 
     useEffect(() => {
-        loadAlbums();
-    loadArtistSlug();
+        if (user?.id) {
+            loadAlbums();
+            loadArtistSlug();
+        }
     }, [user?.id]);
 
     const loadArtistSlug = async () => {
         if (!user?.id) return;
-    const {data} = await supabase
-    .from('artists')
-    .select('slug')
-    .eq('id', user.id)
-    .maybeSingle();
-    if (data?.slug) {
-        setArtistSlug(data.slug);
+        try {
+            const {data} = await supabase
+                .from('artists')
+                .select('slug')
+                .eq('id', user.id)
+                .maybeSingle();
+            if (data?.slug) {
+                setArtistSlug(data.slug);
+            }
+        } catch (err) {
+            console.error('Erro ao carregar slug:', err);
         }
     };
 
     const loadAlbums = async () => {
         if (!user?.id) {
-        setLoading(false);
-    return;
+            setLoading(false);
+            return;
         }
 
-    try {
-        let {data: allAlbums, error } = await supabase
-    .from('albums')
-    .select('*')
-    .eq('artist_id', user.id)
-    .order('release_date', {ascending: false });
+        setLoading(true);
+        
+        try {
+            // Query simples e rápida
+            const {data: allAlbums, error} = await supabase
+                .from('albums')
+                .select('id, slug, title, cover_url, song_count, release_year, release_date, genre, description, deleted_at, created_at')
+                .eq('artist_id', user.id)
+                .order('created_at', {ascending: false});
 
-    // Se houver erro porque a coluna não existe, fazer fallback para created_at
-    if (error && error.code === 'PGRST116') {
-                const fallback = await supabase
-    .from('albums')
-    .select('*')
-    .eq('artist_id', user.id)
-    .order('created_at', {ascending: false });
-    allAlbums = fallback.data;
-    error = fallback.error;
-            }
+            if (error) throw error;
 
-    if (error) throw error;
-
-    const now = new Date();
-    const active = [];
-    const trashed = [];
+            const now = new Date();
+            const active = [];
+            const trashed = [];
 
             (allAlbums || []).forEach(album => {
                 const albumData = {
-        id: album.id,
-    slug: album.slug,
-    title: album.title,
-    coverImage: album.cover_url || '/images/default-album.png',
-    songCount: album.song_count || 0,
-    releaseYear: album.release_year,
-    releaseDate: album.release_date,
-    genre: album.genre,
-    description: album.description,
-    deletedAt: album.deleted_at
+                    id: album.id,
+                    slug: album.slug,
+                    title: album.title,
+                    coverImage: album.cover_url || '/images/default-album.png',
+                    songCount: album.song_count || 0,
+                    releaseYear: album.release_year,
+                    releaseDate: album.release_date,
+                    genre: album.genre,
+                    description: album.description,
+                    deletedAt: album.deleted_at
                 };
 
-    if (album.deleted_at) {
+                if (album.deleted_at) {
                     const deletedDate = new Date(album.deleted_at);
-    const daysSinceDelete = Math.floor((now - deletedDate) / (1000 * 60 * 60 * 24));
-    albumData.daysRemaining = 30 - daysSinceDelete;
+                    const daysSinceDelete = Math.floor((now - deletedDate) / (1000 * 60 * 60 * 24));
+                    albumData.daysRemaining = 30 - daysSinceDelete;
 
                     if (albumData.daysRemaining > 0) {
-        trashed.push(albumData);
+                        trashed.push(albumData);
                     }
                 } else {
-        active.push(albumData);
+                    active.push(albumData);
                 }
             });
 
-    setActiveAlbums(active);
-    setTrashedAlbums(trashed);
+            setActiveAlbums(active);
+            setTrashedAlbums(trashed);
         } catch (error) {
-        console.error('Erro ao carregar álbuns:', error);
-    toast({
-        title: 'Erro',
-    description: 'Não foi possível carregar os álbuns',
-    variant: 'destructive'
+            console.error('Erro ao carregar álbuns:', error);
+            toast({
+                title: 'Erro',
+                description: 'Não foi possível carregar os álbuns',
+                variant: 'destructive'
             });
         } finally {
-        setLoading(false);
+            setLoading(false);
         }
     };
 
