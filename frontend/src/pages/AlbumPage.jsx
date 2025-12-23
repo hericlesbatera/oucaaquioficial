@@ -608,26 +608,6 @@ const AlbumPage = () => {
                     setDownloadStatus('completed');
                     setDownloadInProgress(false);
                 },
-                    setLocalDownloadProgress(92);
-                    setCurrentDownloadSong('Criando arquivo ZIP...');
-                    
-                    const zipBlob = await zip.generateAsync({ 
-                        type: 'blob',
-                        compression: 'DEFLATE',
-                        compressionOptions: { level: 1 } // Compressão rápida
-                    }, (metadata) => {
-                        const progress = 92 + (metadata.percent / 100) * 7;
-                        setLocalDownloadProgress(progress);
-                    });
-                    
-                    // Download do ZIP
-                    setLocalDownloadProgress(99);
-                    saveAs(zipBlob, `${album.title}.zip`);
-                    
-                    setLocalDownloadProgress(100);
-                    setDownloadStatus('completed');
-                    setDownloadInProgress(false);
-                },
                 onMobile: async ({ album: albumData, albumSongs: songs, onProgress }) => {
                     // Mobile: baixar sempre os MP3s individuais, ignorando ZIP
                     clearInterval(preparingInterval);
