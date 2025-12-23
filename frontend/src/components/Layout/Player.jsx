@@ -583,28 +583,46 @@ const Player = () => {
                                     Limpar fila
                                 </Button>
                             </div>
-                            <div className="overflow-x-auto overflow-y-hidden px-4 py-3">
+                            <div 
+                                ref={queueContainerRef}
+                                className="overflow-x-auto overflow-y-hidden px-4 py-3 scroll-smooth"
+                                style={{ scrollbarWidth: 'thin', scrollbarColor: '#ef4444 #27272a' }}
+                            >
                                 <div className="flex gap-3">
                                     {queue.map((song, index) => (
                                         <div
                                             key={song.id}
+                                            ref={currentSong?.id === song.id ? currentSongRef : null}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handlePlayFromQueue(song);
                                             }}
-                                            className={`flex-shrink-0 flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all min-w-[220px] ${currentSong.id === song.id
-                                                ? 'bg-red-600/30 ring-1 ring-red-500'
+                                            className={`flex-shrink-0 flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all min-w-[220px] ${currentSong?.id === song.id
+                                                ? 'bg-red-600/30 ring-2 ring-red-500'
                                                 : 'hover:bg-zinc-800'
                                                 }`}
                                         >
-                                            <img
-                                                src={song.coverImage || '/images/default-album.png'}
-                                                alt={song.title}
-                                                className="w-14 h-14 object-cover rounded"
-                                                onError={(e) => e.target.src = '/images/default-album.png'}
-                                            />
+                                            <div className="relative">
+                                                <img
+                                                    src={song.coverImage || '/images/default-album.png'}
+                                                    alt={song.title}
+                                                    className="w-14 h-14 object-cover rounded"
+                                                    onError={(e) => e.target.src = '/images/default-album.png'}
+                                                />
+                                                {currentSong?.id === song.id && isPlaying && (
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded">
+                                                        <div className="flex items-end gap-0.5 h-4">
+                                                            <span className="w-1 bg-white rounded-full animate-music-bar-1"></span>
+                                                            <span className="w-1 bg-white rounded-full animate-music-bar-2"></span>
+                                                            <span className="w-1 bg-white rounded-full animate-music-bar-3"></span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-white text-sm font-medium truncate">{cleanTitle(song.title)}</p>
+                                                <p className={`text-sm font-medium truncate ${currentSong?.id === song.id ? 'text-red-400' : 'text-white'}`}>
+                                                    {cleanTitle(song.title)}
+                                                </p>
                                                 <p className="text-gray-400 text-xs truncate">{song.artistName}</p>
                                             </div>
                                         </div>
