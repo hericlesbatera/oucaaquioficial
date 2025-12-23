@@ -9,9 +9,10 @@ const RecentReleases = () => {
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
+  const [artistsMap, setArtistsMap] = useState({});
 
   useEffect(() => {
-    loadAlbums();
+    loadArtists();
   }, []);
 
   useEffect(() => {
@@ -30,28 +31,40 @@ const RecentReleases = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [loading, hasMore, offset]);
 
+  const loadArtists = async () => {
+    // Carregar todos os artistas primeiro para criar o mapa
+    const { data: artists } = await supabase
+      .from('artists')
+      .select('id, name, slug, is_verified, avatar_url');
+    
+    if (artists) {
+      const map = {};
+      artists.forEach(artist => {
+        map[artist.id] = artist;
+      });
+      setArtistsMap(map);
+    }
+    
+    // Depois carregar os álbuns
+    loadAlbums();
+  };
+
   const loadAlbums = async () => {
     setLoading(true);
     setOffset(0);
     
     const { data, error } = await supabase
       .from('albums')
-      .select(`
-        *,
-        artist:artists(id, name, slug, is_verified, avatar_url)
-      `)
+      .select('*')
+      .eq('is_private', false)
+      .is('deleted_at', null)
       .order('release_date', { ascending: false })
       .range(0, 19);
 
     if (!error && data) {
-      const publicAlbums = data.filter(album => {
-        if (album.is_private === true) return false;
-        if (album.deleted_at !== null && album.deleted_at !== undefined) return false;
-        return true;
-      });
-      setAlbums(publicAlbums);
+      setAlbums(data);
       setOffset(20);
-      setHasMore(publicAlbums.length >= 20);
+      setHasMore(data.length >= 20);
     }
     setLoading(false);
   };
@@ -59,23 +72,22 @@ const RecentReleases = () => {
   const loadMoreAlbums = async () => {
     const { data, error } = await supabase
       .from('albums')
-      .select(`
-        *,
-        artist:artists(id, name, slug, is_verified, avatar_url)
-      `)
+      .select('*')
+      .eq('is_private', false)
+      .is('deleted_at', null)
       .order('release_date', { ascending: false })
       .range(offset, offset + 19);
 
     if (!error && data) {
-      const publicAlbums = data.filter(album => {
-        if (album.is_private === true) return false;
-        if (album.deleted_at !== null && album.deleted_at !== undefined) return false;
-        return true;
-      });
-      setAlbums(prev => [...prev, ...publicAlbums]);
+      setAlbums(prev => [...prev, ...data]);
       setOffset(offset + 20);
-      setHasMore(publicAlbums.length >= 20);
+      setHasMore(data.length >= 20);
     }
+  };
+
+  // Helper para obter dados do artista
+  const getArtist = (album) => {
+    return artistsMap[album.artist_id] || { name: album.artist_name || 'Artista', slug: album.artist_id, is_verified: false };
   };
 
   const formatNumber = (num) => {
