@@ -580,10 +580,6 @@ const AlbumPage = () => {
                         setDownloadInProgress(false);
                     }, 1500);
                 },
-                        clearTimeout(timeoutId);
-                        throw fetchError;
-                    }
-                },
                 onMobile: async ({ album: albumData, albumSongs: songs, onProgress }) => {
                     // Mobile: baixar sempre os MP3s individuais, ignorando ZIP
                     clearInterval(preparingInterval);
