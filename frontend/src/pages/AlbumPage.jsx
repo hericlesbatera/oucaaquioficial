@@ -553,6 +553,14 @@ const AlbumPage = () => {
                     const totalSongs = albumSongs.length;
                     let downloadedSongs = 0;
                     
+                    // Debug: ver URLs das músicas
+                    console.log('=== DEBUG DOWNLOAD ===');
+                    console.log('Total de músicas:', totalSongs);
+                    albumSongs.forEach((s, i) => {
+                        console.log(`${i+1}. ${s.title} - URL: ${s.audioUrl || s.audio_url || 'VAZIA'}`);
+                    });
+                    console.log('======================');
+                    
                     setLocalDownloadProgress(5);
                     setCurrentDownloadIndex(0);
                     
