@@ -482,10 +482,10 @@ const DashboardNew = () => {
                 )}
               </CardContent>
             </Card>
-          )}
+        )}
 
-          {/* Stats Card */}
-          <Card className="border-gray-200">
+        {/* Stats Card */}
+        <Card className="border-gray-200">
             <CardContent className="p-6">
               {/* Period Filter */}
               <div className="flex justify-end mb-4">
