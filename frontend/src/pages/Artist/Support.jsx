@@ -202,29 +202,26 @@ const Support = () => {
     }
 
     return (
-        <div className="flex h-screen bg-gray-50">
-            <ArtistSidebar />
-
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Header */}
-                <div className="bg-white border-b border-gray-200 px-8 py-6">
-                    <div className="max-w-6xl mx-auto flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Suporte</h1>
-                            <p className="text-gray-600 text-sm mt-1">
-                                Comunique-se diretamente com nosso time
-                            </p>
-                        </div>
-                        <Button
-                            onClick={() => setShowNewMessage(!showNewMessage)}
-                            className="bg-red-600 hover:bg-red-700"
-                        >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Nova Conversa
-                        </Button>
+        <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
+            {/* Header */}
+            <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-6">
+                <div className="max-w-6xl mx-auto flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Suporte</h1>
+                        <p className="text-gray-600 text-sm mt-1">
+                            Comunique-se diretamente com nosso time
+                        </p>
                     </div>
+                    <Button
+                        onClick={() => setShowNewMessage(!showNewMessage)}
+                        className="bg-red-600 hover:bg-red-700"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        <span className="hidden md:inline">Nova Conversa</span>
+                        <span className="md:hidden">Novo</span>
+                    </Button>
                 </div>
+            </div>
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-hidden px-8 py-6">
