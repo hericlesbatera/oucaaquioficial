@@ -562,14 +562,7 @@ const AlbumPage = () => {
                     const zip = new JSZip();
                     const totalSongs = albumSongs.length;
                     let downloadedSongs = 0;
-                    
-                    // Debug: ver URLs das músicas
-                    console.log('=== DEBUG DOWNLOAD ===');
-                    console.log('Total de músicas:', totalSongs);
-                    albumSongs.forEach((s, i) => {
-                        console.log(`${i+1}. ${s.title} - URL: ${s.audioUrl || s.audio_url || 'VAZIA'}`);
-                    });
-                    console.log('======================');
+                    let failedSongs = 0;
                     
                     setLocalDownloadProgress(5);
                     setCurrentDownloadIndex(0);
@@ -577,47 +570,70 @@ const AlbumPage = () => {
                     // Garantir que todas as músicas têm URLs completas
                     const SUPABASE_URL = 'https://rtdxqthhhwqnlrevzmap.supabase.co';
                     
-                    // Baixar cada música e adicionar ao ZIP
-                    for (const song of albumSongs) {
+                    // Preparar URLs das músicas
+                    const songsToDownload = albumSongs.map((song, index) => {
+                        let audioUrl = song.audioUrl || song.audio_url;
+                        if (audioUrl && !audioUrl.startsWith('http')) {
+                            audioUrl = `${SUPABASE_URL}/storage/v1/object/public/${audioUrl}`;
+                        }
+                        return {
+                            ...song,
+                            audioUrl,
+                            index: index + 1
+                        };
+                    }).filter(song => song.audioUrl);
+                    
+                    // Função para baixar uma música
+                    const downloadSong = async (song) => {
                         try {
-                            let audioUrl = song.audioUrl || song.audio_url;
-                            if (!audioUrl) continue;
-                            
-                            // Se a URL é relativa, construir URL completa
-                            if (!audioUrl.startsWith('http')) {
-                                audioUrl = `${SUPABASE_URL}/storage/v1/object/public/${audioUrl}`;
-                            }
-                            
-                            setCurrentDownloadSong(song.title);
-                            setCurrentDownloadIndex(downloadedSongs + 1);
-                            
-                            const response = await fetch(audioUrl);
+                            const response = await fetch(song.audioUrl);
                             if (!response.ok) {
                                 console.error(`Erro ao baixar ${song.title}: Status ${response.status}`);
-                                continue;
+                                return null;
                             }
-                            
                             const blob = await response.blob();
-                            const trackNum = String(song.trackNumber || downloadedSongs + 1).padStart(2, '0');
+                            const trackNum = String(song.trackNumber || song.index).padStart(2, '0');
                             const fileName = `${trackNum} - ${song.title.replace(/[<>:"/\\|?*]/g, '')}.mp3`;
-                            
-                            zip.file(fileName, blob);
-                            downloadedSongs++;
-                            
-                            // Progresso de 5% a 90% durante download das músicas
-                            const progress = 5 + (downloadedSongs / totalSongs) * 85;
-                            setLocalDownloadProgress(progress);
+                            return { fileName, blob };
                         } catch (err) {
                             console.error(`Erro ao baixar ${song.title}:`, err);
+                            return null;
                         }
+                    };
+                    
+                    // Baixar em lotes de 5 músicas por vez (paralelo mas controlado)
+                    const batchSize = 5;
+                    for (let i = 0; i < songsToDownload.length; i += batchSize) {
+                        const batch = songsToDownload.slice(i, i + batchSize);
+                        
+                        // Atualizar UI com a primeira música do lote
+                        setCurrentDownloadSong(batch[0].title);
+                        setCurrentDownloadIndex(i + 1);
+                        
+                        // Baixar lote em paralelo
+                        const results = await Promise.all(batch.map(downloadSong));
+                        
+                        // Adicionar resultados ao ZIP
+                        for (const result of results) {
+                            if (result) {
+                                zip.file(result.fileName, result.blob);
+                                downloadedSongs++;
+                            } else {
+                                failedSongs++;
+                            }
+                        }
+                        
+                        // Atualizar progresso (5% a 85%)
+                        const progress = 5 + ((i + batch.length) / totalSongs) * 80;
+                        setLocalDownloadProgress(progress);
                     }
                     
                     if (downloadedSongs === 0) {
-                        throw new Error('Não foi possível baixar nenhuma música');
+                        throw new Error('Não foi possível baixar nenhuma música. Verifique sua conexão.');
                     }
                     
-                    // Gerar o ZIP (90% a 99%)
-                    setLocalDownloadProgress(92);
+                    // Gerar o ZIP (85% a 98%)
+                    setLocalDownloadProgress(87);
                     setCurrentDownloadSong('Criando arquivo ZIP...');
                     
                     const zipBlob = await zip.generateAsync({ 
@@ -625,7 +641,7 @@ const AlbumPage = () => {
                         compression: 'DEFLATE',
                         compressionOptions: { level: 1 }
                     }, (metadata) => {
-                        const progress = 92 + (metadata.percent / 100) * 7;
+                        const progress = 87 + (metadata.percent / 100) * 11;
                         setLocalDownloadProgress(progress);
                     });
                     
@@ -636,6 +652,10 @@ const AlbumPage = () => {
                     setLocalDownloadProgress(100);
                     setDownloadStatus('completed');
                     setDownloadInProgress(false);
+                    
+                    if (failedSongs > 0) {
+                        console.warn(`Download concluído com ${failedSongs} música(s) falhando`);
+                    }
                 },
                 onMobile: async ({ album: albumData, albumSongs: songs, onProgress }) => {
                     // Mobile: baixar sempre os MP3s individuais, ignorando ZIP
