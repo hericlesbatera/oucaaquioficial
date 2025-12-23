@@ -1,3 +1,32 @@
+/* Animação das barras de música tocando */
+@keyframes music-bar-1 {
+    0%, 100% { height: 4px; }
+    50% { height: 16px; }
+}
+
+@keyframes music-bar-2 {
+    0%, 100% { height: 8px; }
+    50% { height: 12px; }
+}
+
+@keyframes music-bar-3 {
+    0%, 100% { height: 12px; }
+    50% { height: 4px; }
+}
+
+.animate-music-bar-1 {
+    animation: music-bar-1 0.5s ease-in-out infinite;
+}
+
+.animate-music-bar-2 {
+    animation: music-bar-2 0.5s ease-in-out infinite 0.1s;
+}
+
+.animate-music-bar-3 {
+    animation: music-bar-3 0.5s ease-in-out infinite 0.2s;
+}
+
+
 /* Custom scrollbar for webkit browsers */
 ::-webkit-scrollbar {
     width: 8px;
