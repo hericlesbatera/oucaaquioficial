@@ -166,33 +166,28 @@ const EmailSenha = () => {
   }
 
   return (
-    <div className="bg-gray-50 flex min-h-screen">
-      {/* Sidebar - Hidden on mobile, visible on medium screens and up */}
-      <div className="hidden md:block w-64 sticky top-0 h-screen border-r border-gray-200 bg-white">
-        <ArtistSidebar />
-      </div>
-      <div className="flex-1">
-        <div className="max-w-2xl mx-auto p-4 md:p-8">
-          <h1 className="text-xl md:text-2xl font-bold mb-8 flex items-center gap-2 text-black">
-            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-lock text-red-600">
-              <rect width="18" height="11" x="3" y="11" rx="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-            Email e senha
-          </h1>
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-2xl mx-auto p-4 md:p-8">
+        <h1 className="text-xl md:text-2xl font-bold mb-8 flex items-center gap-2 text-black">
+          <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-lock text-red-600">
+            <rect width="18" height="11" x="3" y="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          Email e senha
+        </h1>
 
-          <div className="space-y-3">
-            {/* Email Section */}
-            <div className="bg-white rounded-lg p-4 md:p-6 border border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">Email</h2>
-              <p className="text-sm text-gray-600 mb-4">Apenas letras</p>
-              <Input
-                type="email"
-                value={user?.email || ''}
-                disabled
-                className="bg-gray-100 disabled:opacity-70"
-              />
-            </div>
+        <div className="space-y-3">
+          {/* Email Section */}
+          <div className="bg-white rounded-lg p-4 md:p-6 border border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">Email</h2>
+            <p className="text-sm text-gray-600 mb-4">Apenas letras</p>
+            <Input
+              type="email"
+              value={user?.email || ''}
+              disabled
+              className="bg-gray-100 disabled:opacity-70"
+            />
+          </div>
 
             {/* Change Email Section */}
             <form onSubmit={handleEmailChange} className="bg-white rounded-lg p-4 md:p-6 border border-gray-200">
