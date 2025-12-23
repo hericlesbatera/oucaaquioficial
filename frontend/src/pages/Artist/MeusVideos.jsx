@@ -447,7 +447,6 @@ const MeusVideos = () => {
           )}
         </div>
       </div>
-    </div>
   );
 };
 
