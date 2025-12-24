@@ -1,0 +1,23 @@
+#!/bin/bash
+set -e
+
+echo "🔨 Iniciando build..."
+cd frontend
+
+echo "📦 Instalando dependências do frontend..."
+npm install --legacy-peer-deps
+
+echo "🏗️ Compilando frontend..."
+CI=false npm run build
+
+cd ..
+
+echo "📁 Preparando pasta de distribuição..."
+rm -rf build
+mkdir -p build
+
+echo "📋 Copiando arquivos compilados..."
+cp -r frontend/build/* build/
+
+echo "✅ Build concluído com sucesso!"
+ls -la build/ | head -10
