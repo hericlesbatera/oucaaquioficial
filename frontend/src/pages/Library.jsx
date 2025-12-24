@@ -142,11 +142,14 @@ const Library = () => {
     const handlePlayDownloadedAlbum = async (downloadedAlbum) => {
         try {
             console.log('[Library] Iniciando reprodução do álbum baixado:', downloadedAlbum.title);
+            console.log('[Library] Modo IndexedDB:', downloadedAlbum.useIndexedDB);
             
             // Carregar URLs locais das músicas baixadas
+            // Passa as músicas com os blobs se estiverem usando IndexedDB
             const songsWithURLs = await loadAlbumOfflineURLs(
                 downloadedAlbum.albumDir, 
-                downloadedAlbum.songs
+                downloadedAlbum.songs,
+                downloadedAlbum.useIndexedDB
             );
 
             console.log('[Library] Músicas com URLs:', songsWithURLs.length);
