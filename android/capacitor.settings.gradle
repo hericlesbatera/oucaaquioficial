@@ -7,3 +7,6 @@ project(':capacitor-filesystem').projectDir = new File('../frontend/node_modules
 
 include ':capacitor-preferences'
 project(':capacitor-preferences').projectDir = new File('../frontend/node_modules/@capacitor/preferences/android')
+
+include ':capacitor-community-http'
+project(':capacitor-community-http').projectDir = new File('../frontend/node_modules/@capacitor-community/http/android')
