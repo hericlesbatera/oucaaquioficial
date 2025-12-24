@@ -753,32 +753,43 @@ const ProfilePublicNew = () => {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
                   {sortedAlbums.map((album) => (
-                    <Link
-                      key={album.id}
-                      to={album.isCollab 
-                        ? `/${album.artistSlug}/${album.slug || album.id}` 
-                        : `/${artist?.slug || slug}/${album.slug || album.id}`}
-                      className="group cursor-pointer"
-                    >
-                      <div className="relative mb-2 md:mb-3 overflow-hidden rounded-lg shadow-lg">
-                        <img
-                          src={album.coverImage}
-                          alt={album.title}
-                          className="w-full aspect-square object-cover transform group-hover:scale-110 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
-                          <div className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transform scale-75 group-hover:scale-100 transition-all duration-300">
-                            <Play className="w-4 h-4 md:w-6 md:h-6 text-white ml-0.5" fill="white" />
+                    <div key={album.id}>
+                      <Link
+                        to={album.isCollab 
+                          ? `/${album.artistSlug}/${album.slug || album.id}` 
+                          : `/${artist?.slug || slug}/${album.slug || album.id}`}
+                        className="group cursor-pointer block"
+                      >
+                        <div className="relative mb-2 md:mb-3 overflow-hidden rounded-lg shadow-lg">
+                          <img
+                            src={album.coverImage}
+                            alt={album.title}
+                            className="w-full aspect-square object-cover transform group-hover:scale-110 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
+                            <div className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transform scale-75 group-hover:scale-100 transition-all duration-300">
+                              <Play className="w-4 h-4 md:w-6 md:h-6 text-white ml-0.5" fill="white" />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <h3 className="text-black font-semibold text-sm md:text-base mb-1 truncate group-hover:text-red-600 transition-colors">
-                        {album.title}
-                      </h3>
-                      <p className="text-gray-600 text-xs md:text-sm">
+                        <h3 className="text-black font-semibold text-sm md:text-base mb-1 truncate group-hover:text-red-600 transition-colors">
+                          {album.title}
+                        </h3>
+                      </Link>
+                      <p className="text-gray-600 text-xs md:text-sm mb-2">
                         {artist.name}
                       </p>
-                    </Link>
+                      <div className="flex items-center gap-2 text-xs">
+                        <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded">
+                          <span className="font-bold text-gray-700">{formatNumber(album.playCount)}</span>
+                          <span className="text-gray-500">Plays</span>
+                        </div>
+                        <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded">
+                          <span className="font-bold text-gray-700">{formatNumber(album.downloadCount)}</span>
+                          <span className="text-gray-500">Downloads</span>
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
 
