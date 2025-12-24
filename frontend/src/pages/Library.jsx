@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { useAuth } from '../context/AuthContext';
 import { useTrackPageView } from '../hooks/useTrackPageView';
@@ -14,10 +14,11 @@ const Library = () => {
     const { playSong } = usePlayer();
     const { user } = useAuth();
     const { downloads, loading: downloadsLoading, deleteDownloadedAlbum } = useCapacitorDownloads();
-    const { loadAlbumOfflineURLs } = useOfflinePlayer();
+    const { loadAlbumOfflineURLs, getOfflineCoverURL } = useOfflinePlayer();
     const [activeTab, setActiveTab] = useState('favoritos');
     const [loading, setLoading] = useState(true);
     const [expandedDownload, setExpandedDownload] = useState(null);
+    const [offlineCovers, setOfflineCovers] = useState({});
     const [data, setData] = useState({
         favoriteAlbums: [],
         favoritePlaylists: [],
