@@ -273,7 +273,7 @@ const Header = () => {
                                         <span className="text-white font-medium hidden md:block">{isAdmin ? (adminName || 'Ouça Aqui') : user.name}</span>
                                     </button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent className="bg-white w-80 sm:w-96">
+                                <DropdownMenuContent className="bg-white w-auto min-w-[180px]">
                                     {isAdmin ? (
                                         <>
                                              <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer flex items-center gap-3 py-2">
