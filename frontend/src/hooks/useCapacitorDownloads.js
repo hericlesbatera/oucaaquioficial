@@ -380,6 +380,12 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
             console.log('Pasta do album:', albumDir);
             console.log('==========================================');
 
+            // Baixar capa do álbum primeiro
+            const coverUrl = album.cover_url || album.coverImage;
+            if (coverUrl) {
+                await downloadCoverImage(coverUrl, albumDir);
+            }
+
             // Validar URLs antes de começar
             const SUPABASE_URL = 'https://rtdxqthhhwqnlrevzmap.supabase.co';
             const songsWithValidURLs = songs.map(song => {
