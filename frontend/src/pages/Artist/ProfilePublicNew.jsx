@@ -775,16 +775,9 @@ const ProfilePublicNew = () => {
                       <h3 className="text-black font-semibold text-sm md:text-base mb-1 truncate group-hover:text-red-600 transition-colors">
                         {album.title}
                       </h3>
-                      <div className="flex items-center gap-1 md:gap-2 text-xs mb-1">
-                        <div className="flex items-center gap-0.5 md:gap-1 px-1.5 md:px-2 py-0.5 md:py-1 bg-gray-100 rounded">
-                          <span className="font-bold text-gray-700">{formatNumber(album.playCount)}</span>
-                          <span className="text-gray-500 hidden sm:inline">Plays</span>
-                        </div>
-                        <div className="flex items-center gap-0.5 md:gap-1 px-1.5 md:px-2 py-0.5 md:py-1 bg-gray-100 rounded">
-                          <span className="font-bold text-gray-700">{formatNumber(album.downloadCount)}</span>
-                          <span className="text-gray-500 hidden sm:inline">Downloads</span>
-                        </div>
-                      </div>
+                      <p className="text-gray-600 text-xs md:text-sm">
+                        {artist.name}
+                      </p>
                     </Link>
                   ))}
                 </div>
