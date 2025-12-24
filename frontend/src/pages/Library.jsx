@@ -421,12 +421,21 @@ const Library = () => {
                                                 onClick={() => handlePlayDownloadedAlbum(downloadedAlbum)}
                                             >
                                                 <div className="flex items-start gap-3">
-                                                    <div className="relative flex-shrink-0 overflow-hidden rounded-lg shadow-md border-2 border-gray-200">
-                                                        <img
-                                                            src={downloadedAlbum.coverUrl}
-                                                            alt={downloadedAlbum.title}
-                                                            className="w-20 h-20 object-cover transform group-hover:scale-105 transition-transform duration-300"
-                                                        />
+                                                    <div className="relative flex-shrink-0 overflow-hidden rounded-lg shadow-md border-2 border-gray-200 bg-gray-100">
+                                                        {offlineCovers[downloadedAlbum.albumId] || downloadedAlbum.coverUrl ? (
+                                                            <img
+                                                                src={offlineCovers[downloadedAlbum.albumId] || downloadedAlbum.coverUrl}
+                                                                alt={downloadedAlbum.title}
+                                                                className="w-20 h-20 object-cover transform group-hover:scale-105 transition-transform duration-300"
+                                                                onError={(e) => {
+                                                                    e.target.style.display = 'none';
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-20 h-20 bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center">
+                                                                <Music className="w-8 h-8 text-white opacity-50" />
+                                                            </div>
+                                                        )}
                                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
                                                             <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transform scale-50 group-hover:scale-100 transition-all duration-300">
                                                                 <Play className="w-4 h-4 text-white ml-0.5" fill="white" />
