@@ -13,8 +13,8 @@ const Library = () => {
     useTrackPageView('library');
     const { playSong } = usePlayer();
     const { user } = useAuth();
-    const { downloads, loading: downloadsLoading, deleteDownloadedAlbum } = useCapacitorDownloads();
-    const { loadAlbumOfflineURLs, getOfflineCoverURL } = useOfflinePlayer();
+    const { downloads, loading: downloadsLoading, deleteDownloadedAlbum, useIndexedDBFallback } = useCapacitorDownloads();
+    const { loadAlbumOfflineURLs, getOfflineCoverURL, createBlobURL } = useOfflinePlayer();
     const [activeTab, setActiveTab] = useState('favoritos');
     const [loading, setLoading] = useState(true);
     const [expandedDownload, setExpandedDownload] = useState(null);
@@ -35,9 +35,15 @@ const Library = () => {
             if (activeTab === 'downloads' && downloads.length > 0) {
                 const covers = {};
                 for (const download of downloads) {
-                    const coverUrl = await getOfflineCoverURL(download.albumDir);
-                    if (coverUrl) {
-                        covers[download.albumId] = coverUrl;
+                    // Se tem coverBlob (IndexedDB mode), usar direto
+                    if (download.coverBlob instanceof Blob) {
+                        covers[download.albumId] = URL.createObjectURL(download.coverBlob);
+                    } else {
+                        // Tentar carregar do Filesystem
+                        const coverUrl = await getOfflineCoverURL(download.albumDir, download.coverBlob);
+                        if (coverUrl) {
+                            covers[download.albumId] = coverUrl;
+                        }
                     }
                 }
                 setOfflineCovers(covers);
