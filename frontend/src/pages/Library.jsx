@@ -450,9 +450,15 @@ const Library = () => {
                                                         <p className="text-gray-500 text-xs mt-1">
                                                             {downloadedAlbum.songCount}/{downloadedAlbum.totalSongs} músicas
                                                         </p>
-                                                        <p className="text-gray-400 text-xs mt-1">
-                                                            {new Date(downloadedAlbum.downloadedAt).toLocaleDateString('pt-BR')}
-                                                        </p>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <p className="text-gray-400 text-xs">
+                                                                {new Date(downloadedAlbum.downloadedAt).toLocaleDateString('pt-BR')}
+                                                            </p>
+                                                            <span className="inline-flex items-center text-green-600 text-xs">
+                                                                <Download className="w-3 h-3 mr-0.5" />
+                                                                Offline
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                     <div className="flex-shrink-0 flex gap-1">
                                                         <button
