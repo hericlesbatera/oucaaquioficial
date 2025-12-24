@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Music, TrendingUp, Search, Video, ListMusic, Library } from 'lucide-react';
+import { Home, Music, TrendingUp, Search, Library } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const MobileBottomNav = () => {
@@ -9,6 +9,11 @@ const MobileBottomNav = () => {
     const { user } = useAuth();
 
     const navItems = [
+        {
+            path: '/',
+            label: 'Home',
+            icon: Home,
+        },
         {
             path: '/lancamentos',
             label: 'Lançamentos',
@@ -24,11 +29,6 @@ const MobileBottomNav = () => {
             label: 'Biblioteca',
             icon: Library,
             protected: true,
-        },
-        {
-            path: '/clips',
-            label: 'Clips',
-            icon: Video,
         },
         {
             path: '/search',
