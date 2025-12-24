@@ -135,11 +135,18 @@ const Library = () => {
 
     const handlePlayDownloadedAlbum = async (downloadedAlbum) => {
         try {
+            console.log('[Library] Iniciando reprodução do álbum baixado:', downloadedAlbum.title);
+            
             // Carregar URLs locais das músicas baixadas
             const songsWithURLs = await loadAlbumOfflineURLs(
                 downloadedAlbum.albumDir, 
                 downloadedAlbum.songs
             );
+
+            console.log('[Library] Músicas com URLs:', songsWithURLs.length);
+
+            // Usar capa offline se disponível
+            const coverImage = offlineCovers[downloadedAlbum.albumId] || downloadedAlbum.coverUrl;
 
             // Criar queue com as músicas
             const queue = songsWithURLs.map(song => ({
@@ -147,22 +154,33 @@ const Library = () => {
                 title: song.title,
                 artist: downloadedAlbum.artist,
                 album: downloadedAlbum.title,
-                image: downloadedAlbum.coverUrl,
+                image: coverImage,
                 audioUrl: song.audioUrl,
-                isOffline: true,
+                isOffline: song.isOffline,
                 albumId: downloadedAlbum.albumId
             }));
 
-            // Tocar primeira música da fila
-            if (queue.length > 0) {
-                playSong(queue[0], queue);
+            // Verificar se alguma música tem URL válida
+            const validSongs = queue.filter(s => s.audioUrl);
+            console.log('[Library] Músicas com audioUrl válido:', validSongs.length);
+
+            if (validSongs.length === 0) {
                 toast({
-                    title: 'Reproduzindo Offline',
-                    description: `${downloadedAlbum.title} - ${downloadedAlbum.artist}`
+                    title: 'Erro',
+                    description: 'Nenhuma música offline encontrada. Tente baixar novamente.',
+                    variant: 'destructive'
                 });
+                return;
             }
+
+            // Tocar primeira música da fila
+            playSong(validSongs[0], validSongs);
+            toast({
+                title: 'Reproduzindo Offline',
+                description: `${downloadedAlbum.title} - ${downloadedAlbum.artist}`
+            });
         } catch (error) {
-            console.error('Erro ao reproduzir álbum baixado:', error);
+            console.error('[Library] Erro ao reproduzir álbum baixado:', error);
             toast({
                 title: 'Erro',
                 description: 'Não foi possível reproduzir o álbum',
