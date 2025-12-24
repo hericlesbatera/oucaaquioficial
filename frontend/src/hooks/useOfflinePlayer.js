@@ -195,14 +195,20 @@ export const useOfflinePlayer = () => {
      * Limpar cache de URLs
      */
     const clearURLCache = useCallback(() => {
-        Object.values(offlineURLs).forEach(url => {
-            URL.revokeObjectURL(url);
+        Object.values(urlCacheRef.current).forEach(url => {
+            try {
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                // Ignorar erros ao revogar
+            }
         });
+        urlCacheRef.current = {};
         setOfflineURLs({});
-    }, [offlineURLs]);
+    }, []);
 
     return {
         getOfflineSongURL,
+        getOfflineCoverURL,
         loadAlbumOfflineURLs,
         clearURLCache,
         offlineURLs
