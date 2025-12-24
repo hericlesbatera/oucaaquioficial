@@ -505,20 +505,33 @@ const Library = () => {
                                                             key={song.id}
                                                             className="px-3 py-2 text-xs hover:bg-gray-100 cursor-pointer transition-colors flex items-center gap-2"
                                                             onClick={async () => {
+                                                                console.log('[Library] Reproduzindo música individual:', song.title);
                                                                 const songsWithURLs = await loadAlbumOfflineURLs(
                                                                     downloadedAlbum.albumDir, 
                                                                     downloadedAlbum.songs
                                                                 );
+                                                                const coverImage = offlineCovers[downloadedAlbum.albumId] || downloadedAlbum.coverUrl;
                                                                 const queue = songsWithURLs.map(s => ({
                                                                     id: s.id,
                                                                     title: s.title,
                                                                     artist: downloadedAlbum.artist,
                                                                     album: downloadedAlbum.title,
-                                                                    image: downloadedAlbum.coverUrl,
+                                                                    image: coverImage,
                                                                     audioUrl: s.audioUrl,
-                                                                    isOffline: true,
+                                                                    isOffline: s.isOffline,
                                                                     albumId: downloadedAlbum.albumId
                                                                 }));
+                                                                
+                                                                // Verificar se a música clicada tem URL válida
+                                                                if (!queue[idx]?.audioUrl) {
+                                                                    toast({
+                                                                        title: 'Erro',
+                                                                        description: 'Não foi possível carregar esta música offline',
+                                                                        variant: 'destructive'
+                                                                    });
+                                                                    return;
+                                                                }
+                                                                
                                                                 playSong(queue[idx], queue);
                                                             }}
                                                         >
