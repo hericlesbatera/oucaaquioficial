@@ -6,6 +6,13 @@ import { Http } from '@capacitor-community/http';
 
 const DOWNLOADS_DIR = 'music_downloads';
 const METADATA_KEY = 'downloaded_albums';
+const IDB_DB_NAME = 'MusicOfflineDB';
+const IDB_STORE_NAME = 'albums';
+const IDB_VERSION = 1;
+
+// Variable global para controlar se devemos usar IndexedDB
+let useIndexedDBFallback = false;
+let idbDatabase = null;
 
 // Função utilitária para verificar se o Capacitor está disponível
 export const isCapacitorAvailable = () => {
@@ -23,8 +30,84 @@ export const isCapacitorAvailable = () => {
     return isNative;
 };
 
+// ==================== INDEXEDDB FALLBACK ====================
+
+const initIndexedDB = () => {
+    return new Promise((resolve, reject) => {
+        if (idbDatabase) {
+            resolve(idbDatabase);
+            return;
+        }
+
+        const request = indexedDB.open(IDB_DB_NAME, IDB_VERSION);
+        
+        request.onerror = () => {
+            console.error('[IDB] Erro ao abrir IndexedDB:', request.error);
+            reject(request.error);
+        };
+        
+        request.onsuccess = () => {
+            idbDatabase = request.result;
+            console.log('[IDB] IndexedDB inicializado com sucesso');
+            resolve(idbDatabase);
+        };
+        
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(IDB_STORE_NAME)) {
+                const store = db.createObjectStore(IDB_STORE_NAME, { keyPath: 'albumId' });
+                store.createIndex('title', 'title', { unique: false });
+                store.createIndex('downloadedAt', 'downloadedAt', { unique: false });
+                console.log('[IDB] Object store criado');
+            }
+        };
+    });
+};
+
+const saveToIndexedDB = async (albumData) => {
+    const db = await initIndexedDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([IDB_STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(IDB_STORE_NAME);
+        const request = store.put(albumData);
+        
+        request.onsuccess = () => resolve(albumData);
+        request.onerror = () => reject(request.error);
+    });
+};
+
+const loadFromIndexedDB = async () => {
+    const db = await initIndexedDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([IDB_STORE_NAME], 'readonly');
+        const store = transaction.objectStore(IDB_STORE_NAME);
+        const request = store.getAll();
+        
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+    });
+};
+
+const deleteFromIndexedDB = async (albumId) => {
+    const db = await initIndexedDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([IDB_STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(IDB_STORE_NAME);
+        const request = store.delete(albumId);
+        
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
+};
+
+// ==================== CAPACITOR METHODS (Original) ====================
+
 // Salvar metadados em cache local
 const saveMetadata = async (downloads) => {
+    if (useIndexedDBFallback) {
+        // IndexedDB já salva os dados completos, não precisa de metadata separada
+        return;
+    }
     await Preferences.set({
         key: METADATA_KEY,
         value: JSON.stringify(downloads)
@@ -33,6 +116,9 @@ const saveMetadata = async (downloads) => {
 
 // Carregar metadados do cache
 const loadMetadata = async () => {
+    if (useIndexedDBFallback) {
+        return await loadFromIndexedDB();
+    }
     try {
         const { value } = await Preferences.get({ key: METADATA_KEY });
         return value ? JSON.parse(value) : [];
@@ -44,7 +130,7 @@ const loadMetadata = async () => {
 
 // Criar pasta de downloads se não existir
 const ensureDownloadsDir = async () => {
-    if (!isCapacitorAvailable()) return;
+    if (!isCapacitorAvailable() || useIndexedDBFallback) return;
 
     try {
         await Filesystem.mkdir({
@@ -54,6 +140,100 @@ const ensureDownloadsDir = async () => {
         });
     } catch (error) {
         console.log('Pasta de downloads já existe ou erro ao criar:', error.message);
+    }
+};
+
+// Testar se Filesystem plugin funciona
+const testFilesystemPlugin = async () => {
+    if (!isCapacitorAvailable()) {
+        console.log('[Download] Capacitor não disponível, usando IndexedDB');
+        useIndexedDBFallback = true;
+        return false;
+    }
+
+    try {
+        // Tentar criar um arquivo de teste
+        await Filesystem.writeFile({
+            path: `${DOWNLOADS_DIR}/test.txt`,
+            data: 'test',
+            directory: Directory.Data
+        });
+        
+        // Tentar deletar
+        await Filesystem.deleteFile({
+            path: `${DOWNLOADS_DIR}/test.txt`,
+            directory: Directory.Data
+        });
+        
+        console.log('[Download] Filesystem plugin funcionando corretamente');
+        useIndexedDBFallback = false;
+        return true;
+    } catch (error) {
+        console.warn('[Download] Filesystem plugin não disponível:', error.message);
+        console.log('[Download] Usando IndexedDB como fallback');
+        useIndexedDBFallback = true;
+        return false;
+    }
+};
+
+// Baixar imagem de capa do álbum
+const downloadCoverImage = async (coverUrl, albumDir) => {
+    if (!coverUrl) {
+        console.log('[Download] URL da capa não fornecida');
+        return null;
+    }
+
+    try {
+        console.log(`📸 Baixando capa do álbum...`);
+
+        const response = await fetch(coverUrl);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        
+        if (useIndexedDBFallback) {
+            // Retornar blob diretamente para IndexedDB
+            console.log(`   ✅ Capa baixada (IndexedDB mode)`);
+            return blob;
+        }
+        
+        // Converter blob para base64
+        const reader = new FileReader();
+        const base64Promise = new Promise((resolve, reject) => {
+            reader.onload = () => {
+                const base64 = reader.result.split(',')[1];
+                resolve(base64);
+            };
+            reader.onerror = reject;
+        });
+        reader.readAsDataURL(blob);
+        const base64Data = await base64Promise;
+        
+        // Criar diretório e salvar arquivo
+        const albumPath = `${DOWNLOADS_DIR}/${albumDir}`;
+        try { 
+            await Filesystem.mkdir({ 
+                path: albumPath, 
+                directory: Directory.Data, 
+                recursive: true 
+            }); 
+        } catch (mkdirErr) { }
+        
+        const filePath = `${albumPath}/cover.jpg`;
+        await Filesystem.writeFile({
+            path: filePath,
+            data: base64Data,
+            directory: Directory.Data
+        });
+        
+        console.log(`   ✅ Capa baixada com sucesso`);
+        return true;
+
+    } catch (error) {
+        console.warn(`   ⚠️ Falha ao baixar capa: ${error.message}`);
+        return null;
     }
 };
 
@@ -67,7 +247,18 @@ const downloadFile = async (url, fileName, albumDir) => {
         }
 
         console.log(`📥 Iniciando download: ${fileName}`);
-        console.log(`   URL: ${url.substring(0, 100)}...`);
+
+        // Se estamos usando IndexedDB, baixar via fetch e retornar blob
+        if (useIndexedDBFallback) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            const blob = await response.blob();
+            const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+            console.log(`   ✅ Download OK via fetch (IndexedDB mode) (${elapsed}s)`);
+            return blob;
+        }
 
         // Criar diretório do álbum
         const albumPath = `${DOWNLOADS_DIR}/${albumDir}`;
@@ -146,75 +337,7 @@ const downloadFile = async (url, fileName, albumDir) => {
 
     } catch (error) {
         console.error(`❌ Erro no download de ${fileName}:`, error.message);
-        return false;
-    }
-};
-
-// Baixar imagem de capa do álbum
-const downloadCoverImage = async (coverUrl, albumDir) => {
-    if (!coverUrl) {
-        console.log('[Download] URL da capa não fornecida');
-        return false;
-    }
-
-    try {
-        console.log(`📸 Baixando capa do álbum...`);
-        console.log(`   URL: ${coverUrl.substring(0, 80)}...`);
-
-        // Criar diretório do álbum
-        const albumPath = `${DOWNLOADS_DIR}/${albumDir}`;
-        try { 
-            await Filesystem.mkdir({ 
-                path: albumPath, 
-                directory: Directory.Data, 
-                recursive: true 
-            }); 
-        } catch (mkdirErr) {
-            // Diretório já existe
-        }
-        
-        const filePath = `${albumPath}/cover.jpg`;
-
-        // Tentar baixar a imagem usando fetch
-        try {
-            const response = await fetch(coverUrl);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            
-            const blob = await response.blob();
-            
-            // Converter blob para base64
-            const reader = new FileReader();
-            const base64Promise = new Promise((resolve, reject) => {
-                reader.onload = () => {
-                    const base64 = reader.result.split(',')[1];
-                    resolve(base64);
-                };
-                reader.onerror = reject;
-            });
-            reader.readAsDataURL(blob);
-            const base64Data = await base64Promise;
-            
-            // Salvar arquivo
-            await Filesystem.writeFile({
-                path: filePath,
-                data: base64Data,
-                directory: Directory.Data
-            });
-            
-            console.log(`   ✅ Capa baixada com sucesso`);
-            return true;
-            
-        } catch (fetchErr) {
-            console.warn(`   ⚠️ Falha ao baixar capa: ${fetchErr.message}`);
-            return false;
-        }
-
-    } catch (error) {
-        console.error(`❌ Erro ao baixar capa:`, error.message);
-        return false;
+        throw error;
     }
 };
 
@@ -273,7 +396,7 @@ const blobToBase64 = (blob) => {
 
 // Deletar arquivo
 const deleteFile = async (filePath) => {
-    if (!isCapacitorAvailable()) return;
+    if (!isCapacitorAvailable() || useIndexedDBFallback) return;
 
     try {
         await Filesystem.deleteFile({
@@ -288,7 +411,7 @@ const deleteFile = async (filePath) => {
 
 // Deletar pasta do álbum
 const deleteDirectory = async (dirPath) => {
-    if (!isCapacitorAvailable()) return;
+    if (!isCapacitorAvailable() || useIndexedDBFallback) return;
 
     try {
         await Filesystem.rmdir({
@@ -315,19 +438,30 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
     const [downloads, setDownloads] = useState([]);
     const [loading, setLoading] = useState(false);
     const [downloadProgress, setDownloadProgress] = useState({});
+    const [isReady, setIsReady] = useState(false);
 
     // Inicializar
     useEffect(() => {
-        if (isCapacitorAvailable()) {
-            ensureDownloadsDir();
-            loadDownloads();
-        }
+        const init = async () => {
+            // Testar se Filesystem funciona, senão usar IndexedDB
+            await testFilesystemPlugin();
+            
+            if (!useIndexedDBFallback) {
+                await ensureDownloadsDir();
+            }
+            
+            await loadDownloads();
+            setIsReady(true);
+        };
+        
+        init();
     }, []);
 
     const loadDownloads = useCallback(async () => {
         setLoading(true);
         try {
             const metadata = await loadMetadata();
+            console.log(`[Download] Carregados ${metadata.length} álbuns`);
             setDownloads(metadata);
         } catch (error) {
             console.error('Erro ao carregar downloads:', error);
@@ -352,6 +486,7 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
         try {
             console.log('==========================================');
             console.log('INICIANDO DOWNLOAD DE ALBUM');
+            console.log(`Modo: ${useIndexedDBFallback ? 'IndexedDB' : 'Filesystem'}`);
             console.log('==========================================');
             console.log('Album:', {
                 id: album?.id,
@@ -359,12 +494,6 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                 artist: album?.artist_name
             });
             console.log('Numero de musicas:', songs?.length);
-            console.log('Capacitor disponivel:', isCapacitorAvailable());
-
-            if (!isCapacitorAvailable()) {
-                console.error('Capacitor nao disponivel! Abortando download.');
-                throw new Error('Capacitor nao disponivel para download de arquivo');
-            }
 
             if (!album || !album.id || !album.title) {
                 console.error('Album invalido:', album);
@@ -378,12 +507,12 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
 
             const albumDir = sanitizePath(album.title);
             console.log('Pasta do album:', albumDir);
-            console.log('==========================================');
 
             // Baixar capa do álbum primeiro
             const coverUrl = album.cover_url || album.coverImage;
+            let coverBlob = null;
             if (coverUrl) {
-                await downloadCoverImage(coverUrl, albumDir);
+                coverBlob = await downloadCoverImage(coverUrl, albumDir);
             }
 
             // Validar URLs antes de começar
@@ -432,7 +561,6 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                 console.log(`\nMUSICA ${i + 1}/${songsWithValidURLs.length}`);
                 console.log(`   Titulo: ${song.title}`);
                 console.log(`   ID: ${song.id}`);
-                console.log(`   URL: ${songUrl ? 'presente' : 'VAZIA'}`);
 
                 if (!songUrl) {
                     console.error(`URL nao encontrada para: ${song.title}`);
@@ -451,13 +579,20 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
 
                 try {
                     console.log(`   Iniciando download...`);
-                    await downloadFile(songUrl, fileName, albumDir);
+                    const result = await downloadFile(songUrl, fileName, albumDir);
 
-                    downloadedSongs.push({
+                    const songData = {
                         id: song.id,
                         title: song.title,
                         fileName: fileName
-                    });
+                    };
+                    
+                    // Se estamos usando IndexedDB, salvar o blob também
+                    if (useIndexedDBFallback && result instanceof Blob) {
+                        songData.audioBlob = result;
+                    }
+
+                    downloadedSongs.push(songData);
 
                     console.log(`   SUCESSO`);
                     successCount++;
@@ -480,7 +615,6 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
             console.log('RESUMO DO DOWNLOAD');
             console.log(`   Sucesso: ${successCount}/${songsWithValidURLs.length}`);
             console.log(`   Falha: ${failCount}/${songsWithValidURLs.length}`);
-            console.log(`   Ultimo erro: ${lastError}`);
             console.log('==========================================\n');
 
             // Verificar se alguma música foi baixada com sucesso
@@ -490,11 +624,6 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                     ? `Erro: ${lastError}` 
                     : 'Verifique sua conexao e espaco disponivel.';
                 throw new Error(`Falha ao baixar. ${errorMsg}`);
-            }
-            
-            // Se algumas músicas falharam mas outras funcionaram, continuar com as que funcionaram
-            if (failCount > 0 && successCount > 0) {
-                console.warn(`Download parcial: ${successCount} de ${songs.length} musicas baixadas`);
             }
 
             // Salvar metadados do álbum
@@ -507,46 +636,42 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                 downloadedAt: new Date().toISOString(),
                 songCount: downloadedSongs.length,
                 totalSongs: songs.length,
-                songs: downloadedSongs
+                songs: downloadedSongs,
+                useIndexedDB: useIndexedDBFallback
             };
+
+            // Se usando IndexedDB, adicionar blobs
+            if (useIndexedDBFallback) {
+                if (coverBlob instanceof Blob) {
+                    albumDownload.coverBlob = coverBlob;
+                }
+            }
 
             console.log('Salvando metadados:', {
                 albumId: albumDownload.albumId,
                 title: albumDownload.title,
-                musicas: albumDownload.songs.length
+                musicas: albumDownload.songs.length,
+                modo: useIndexedDBFallback ? 'IndexedDB' : 'Filesystem'
             });
 
-            let updatedDownloads = [...downloads, albumDownload];
+            if (useIndexedDBFallback) {
+                // Salvar no IndexedDB
+                await saveToIndexedDB(albumDownload);
+                const updatedDownloads = [...downloads, albumDownload];
+                setDownloads(updatedDownloads);
+            } else {
+                // Salvar via Preferences
+                let updatedDownloads = [...downloads, albumDownload];
 
-            // Salvar metadados
-            try {
-                await saveMetadata(updatedDownloads);
-                console.log('Metadados salvos com sucesso');
-            } catch (saveError) {
-                console.error('Erro ao salvar metadados:', saveError);
-                console.warn('Tentando salvar metadados simplificados...');
                 try {
-                    const simplifiedDownload = {
-                        albumId: album.id,
-                        title: album.title,
-                        artist: album.artist_name || 'Desconhecido',
-                        albumDir: sanitizePath(album.title),
-                        downloadedAt: new Date().toISOString(),
-                        songCount: downloadedSongs.length,
-                        totalSongs: songs.length,
-                        songs: downloadedSongs.map(s => ({ id: s.id, title: s.title, fileName: s.fileName }))
-                    };
-                    updatedDownloads = [...downloads, simplifiedDownload];
                     await saveMetadata(updatedDownloads);
-                    console.log('Metadados simplificados salvos');
-                } catch (retryError) {
-                    console.error('Falha ao salvar metadados mesmo simplificados:', retryError);
-                    console.warn('Musicas baixadas mas metadados nao salvos');
+                    console.log('Metadados salvos com sucesso');
+                } catch (saveError) {
+                    console.error('Erro ao salvar metadados:', saveError);
                 }
-            }
 
-            // Atualizar estado
-            setDownloads(updatedDownloads);
+                setDownloads(updatedDownloads);
+            }
 
             setDownloadProgress(prev => {
                 const newProgress = { ...prev };
@@ -555,8 +680,6 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
             });
 
             console.log('DOWNLOAD CONCLUIDO COM SUCESSO');
-            console.log('   Album:', albumDownload.title);
-            console.log('   Musicas:', downloadedSongs.length);
             console.log('==========================================\n');
 
             // Restaurar console originais
@@ -566,17 +689,10 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
             return albumDownload;
         } catch (error) {
             console.error('ERRO GERAL NO DOWNLOAD:', error);
-            console.error('   Mensagem:', error.message);
-            console.error('   Stack:', error.stack);
 
             // Restaurar console originais
             console.log = originalLog;
             console.error = originalError;
-            
-            // Adicionar logs de debug ao erro
-            const errorWithDebug = new Error(error.message);
-            errorWithDebug.debugLogs = debugLogs.slice(-50);
-            errorWithDebug.stack = error.stack;
             
             // Limpar progresso em caso de erro
             setDownloadProgress(prev => {
@@ -585,15 +701,11 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                 return newProgress;
             });
 
-            throw errorWithDebug;
+            throw error;
         }
     }, [downloads, onSongDownloadStart]);
 
     const downloadSong = useCallback(async (song, album) => {
-        if (!isCapacitorAvailable()) {
-            throw new Error('Capacitor nao disponivel');
-        }
-
         try {
             const albumDir = sanitizePath(album.title);
             const fileName = `${sanitizePath(song.title)}.mp3`;
@@ -612,7 +724,15 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
             });
 
             setDownloads(updatedDownloads);
-            await saveMetadata(updatedDownloads);
+            
+            if (useIndexedDBFallback) {
+                const albumData = updatedDownloads.find(d => d.albumId === album.id);
+                if (albumData) {
+                    await saveToIndexedDB(albumData);
+                }
+            } else {
+                await saveMetadata(updatedDownloads);
+            }
 
             return true;
         } catch (error) {
@@ -622,15 +742,23 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
     }, [downloads]);
 
     const deleteDownloadedAlbum = useCallback(async (albumId) => {
-        if (!isCapacitorAvailable()) return;
-
         try {
             const album = downloads.find(d => d.albumId === albumId);
             if (album) {
-                await deleteDirectory(`${DOWNLOADS_DIR}/${album.albumDir}`);
+                if (!useIndexedDBFallback) {
+                    await deleteDirectory(`${DOWNLOADS_DIR}/${album.albumDir}`);
+                }
+                
+                if (useIndexedDBFallback) {
+                    await deleteFromIndexedDB(albumId);
+                }
+                
                 const updated = downloads.filter(d => d.albumId !== albumId);
                 setDownloads(updated);
-                await saveMetadata(updated);
+                
+                if (!useIndexedDBFallback) {
+                    await saveMetadata(updated);
+                }
             }
         } catch (error) {
             console.error('Erro ao deletar album:', error);
@@ -639,13 +767,13 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
     }, [downloads]);
 
     const deleteDownloadedSong = useCallback(async (albumId, songId, fileName) => {
-        if (!isCapacitorAvailable()) return;
-
         try {
             const album = downloads.find(d => d.albumId === albumId);
             if (album) {
-                const filePath = `${DOWNLOADS_DIR}/${album.albumDir}/${fileName}`;
-                await deleteFile(filePath);
+                if (!useIndexedDBFallback) {
+                    const filePath = `${DOWNLOADS_DIR}/${album.albumDir}/${fileName}`;
+                    await deleteFile(filePath);
+                }
 
                 const updated = downloads.map(dl => {
                     if (dl.albumId === albumId) {
@@ -659,7 +787,17 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
                 }).filter(dl => dl.songCount > 0);
 
                 setDownloads(updated);
-                await saveMetadata(updated);
+                
+                if (useIndexedDBFallback) {
+                    const albumData = updated.find(d => d.albumId === albumId);
+                    if (albumData) {
+                        await saveToIndexedDB(albumData);
+                    } else {
+                        await deleteFromIndexedDB(albumId);
+                    }
+                } else {
+                    await saveMetadata(updated);
+                }
             }
         } catch (error) {
             console.error('Erro ao deletar musica:', error);
@@ -686,7 +824,9 @@ export const useCapacitorDownloads = (onSongDownloadStart) => {
         isAlbumDownloaded,
         getDownloadedAlbum,
         loadDownloads,
-        isCapacitorAvailable: isCapacitorAvailable()
+        isCapacitorAvailable: isCapacitorAvailable(),
+        isReady,
+        useIndexedDBFallback
     };
 };
 
