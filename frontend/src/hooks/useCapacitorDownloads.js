@@ -150,6 +150,74 @@ const downloadFile = async (url, fileName, albumDir) => {
     }
 };
 
+// Baixar imagem de capa do álbum
+const downloadCoverImage = async (coverUrl, albumDir) => {
+    if (!coverUrl) {
+        console.log('[Download] URL da capa não fornecida');
+        return false;
+    }
+
+    try {
+        console.log(`📸 Baixando capa do álbum...`);
+        console.log(`   URL: ${coverUrl.substring(0, 80)}...`);
+
+        // Criar diretório do álbum
+        const albumPath = `${DOWNLOADS_DIR}/${albumDir}`;
+        try { 
+            await Filesystem.mkdir({ 
+                path: albumPath, 
+                directory: Directory.Data, 
+                recursive: true 
+            }); 
+        } catch (mkdirErr) {
+            // Diretório já existe
+        }
+        
+        const filePath = `${albumPath}/cover.jpg`;
+
+        // Tentar baixar a imagem usando fetch
+        try {
+            const response = await fetch(coverUrl);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const blob = await response.blob();
+            
+            // Converter blob para base64
+            const reader = new FileReader();
+            const base64Promise = new Promise((resolve, reject) => {
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+            });
+            reader.readAsDataURL(blob);
+            const base64Data = await base64Promise;
+            
+            // Salvar arquivo
+            await Filesystem.writeFile({
+                path: filePath,
+                data: base64Data,
+                directory: Directory.Data
+            });
+            
+            console.log(`   ✅ Capa baixada com sucesso`);
+            return true;
+            
+        } catch (fetchErr) {
+            console.warn(`   ⚠️ Falha ao baixar capa: ${fetchErr.message}`);
+            return false;
+        }
+
+    } catch (error) {
+        console.error(`❌ Erro ao baixar capa:`, error.message);
+        return false;
+    }
+};
+
 // Converter Blob para Base64 com timeout e otimização
 const blobToBase64 = (blob) => {
     return new Promise((resolve, reject) => {
