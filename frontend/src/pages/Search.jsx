@@ -154,12 +154,12 @@ const Search = () => {
         {query && (
           <div>
             {/* Horizontal Filter Tabs */}
-            <div className="flex gap-2 mb-8 flex-wrap">
+            <div className="flex gap-2 mb-8">
               {filters.map((filter) => (
                 <button
                   key={filter.id}
                   onClick={() => setActiveFilter(filter.id)}
-                  className={`px-6 py-2 rounded-full font-medium transition-colors ${
+                  className={`px-3 md:px-6 py-1.5 md:py-2 rounded-full font-medium text-xs md:text-sm transition-colors whitespace-nowrap ${
                     activeFilter === filter.id
                       ? 'bg-red-600 text-white'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
