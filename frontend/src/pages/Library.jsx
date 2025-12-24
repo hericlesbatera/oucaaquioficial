@@ -517,7 +517,8 @@ const Library = () => {
                                                                 console.log('[Library] Reproduzindo música individual:', song.title);
                                                                 const songsWithURLs = await loadAlbumOfflineURLs(
                                                                     downloadedAlbum.albumDir, 
-                                                                    downloadedAlbum.songs
+                                                                    downloadedAlbum.songs,
+                                                                    downloadedAlbum.useIndexedDB
                                                                 );
                                                                 const coverImage = offlineCovers[downloadedAlbum.albumId] || downloadedAlbum.coverUrl;
                                                                 const queue = songsWithURLs.map(s => ({
