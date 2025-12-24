@@ -29,6 +29,23 @@ const Library = () => {
         loadLibraryData();
     }, [user?.id]);
 
+    // Carregar capas offline quando a aba de downloads está ativa
+    useEffect(() => {
+        const loadOfflineCovers = async () => {
+            if (activeTab === 'downloads' && downloads.length > 0) {
+                const covers = {};
+                for (const download of downloads) {
+                    const coverUrl = await getOfflineCoverURL(download.albumDir);
+                    if (coverUrl) {
+                        covers[download.albumId] = coverUrl;
+                    }
+                }
+                setOfflineCovers(covers);
+            }
+        };
+        loadOfflineCovers();
+    }, [activeTab, downloads, getOfflineCoverURL]);
+
     const loadLibraryData = async () => {
         if (!user?.id) {
             setLoading(false);
