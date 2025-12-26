@@ -353,35 +353,8 @@ const LoginWhite = () => {
                 return;
             }
 
-            if (userType === 'artist' && authData?.user?.id) {
-                console.log('Tentando criar perfil de artista para:', authData.user.id);
-                
-                const { data: insertData, error: profileError } = await supabase
-                    .from('artists')
-                    .insert({
-                        id: authData.user.id,
-                        name: artistName,
-                        slug: artistSlug,
-                        email: signupEmail,
-                        cidade: artistCidade,
-                        estado: artistEstado,
-                        genero: artistGenero,
-                        estilo_musical: artistEstiloMusical,
-                        bio: '',
-                        avatar_url: '',
-                        cover_url: '',
-                        followers_count: 0,
-                        is_verified: false
-                    });
-
-                if (profileError) {
-                    console.error('Erro ao criar perfil:', profileError);
-                    console.error('Detalhes do erro:', JSON.stringify(profileError));
-                    throw profileError;
-                }
-                
-                console.log('Perfil de artista criado com sucesso!', insertData);
-            }
+            // Perfil de artista será criado automaticamente por trigger no banco de dados
+            // Nenhum INSERT manual necessário aqui
 
             toast({
                 title: 'Cadastro realizado!',
