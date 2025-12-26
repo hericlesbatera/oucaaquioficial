@@ -392,11 +392,14 @@ const AuthModal = ({ isOpen, onClose }) => {
                         avatar_url: '',
                         cover_url: '',
                         followers_count: 0,
-                        is_verified: false
+                        is_verified: false,
+                        created_at: new Date(),
+                        updated_at: new Date()
                     });
 
                 if (profileError) {
                     console.error('Erro ao criar perfil:', profileError);
+                    // Não falha o signup, apenas loga o erro
                 }
             }
 
