@@ -368,6 +368,13 @@ const LoginWhite = () => {
                 description: 'Verifique seu email para confirmar a conta'
             });
 
+            // Redirecionar para o perfil do artista após 2 segundos
+            if (userType === 'artist') {
+                setTimeout(() => {
+                    navigate(`/${artistSlug}`);
+                }, 2000);
+            }
+
             setSignupStep(3);
         } catch (error) {
             toast({
