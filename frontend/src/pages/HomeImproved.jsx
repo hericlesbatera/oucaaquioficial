@@ -429,6 +429,9 @@ const HomeImproved = () => {
         <div className="flex-1 overflow-y-auto bg-white relative">
             {/* Content wrapper */}
             <div className="relative">
+                {/* Main H1 for SEO - Hidden visually */}
+                <h1 className="sr-only">Ouça Aqui - O Melhor da Música Você Encontra Aqui. Baixe e Ouça Forró, Piseiro, Arrocha e Muito Mais</h1>
+
                 {/* Home Popup */}
                 <HomePopup />
 

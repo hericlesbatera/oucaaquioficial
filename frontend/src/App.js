@@ -36,6 +36,7 @@ import GenrePage from "./pages/GenrePage";
 import ProfilePublicNew from "./pages/Artist/ProfilePublicNew";
 import About from "./pages/About";
 import Policies from "./pages/Policies";
+import NotFound from "./pages/NotFound";
 
 // Artist Pages
 import DashboardNew from "./pages/Artist/DashboardNew";
@@ -376,7 +377,17 @@ function AppRoutes() {
         }
       />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* 404 Not Found */}
+      <Route 
+        path="/404" 
+        element={
+          <MainLayout>
+            <NotFound />
+          </MainLayout>
+        } 
+      />
+
+      <Route path="*" element={<Navigate to="/404" replace />} />
     </Routes>
   );
 }
