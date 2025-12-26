@@ -17,6 +17,7 @@ import MobileBottomNav from "./components/Layout/MobileBottomNav";
 import MobileLayout from "./components/Layout/MobileLayout";
 import ArtistPanelLayout from "./components/Artist/ArtistPanelLayout";
 import OfflineDetector from "./components/OfflineDetector";
+import AdSense from "./components/AdSense";
 
 // Pages
 import Login from "./pages/Login";
@@ -390,6 +391,7 @@ function App() {
           <PathSaver />
           <RecoveryHandler />
           <OfflineDetector />
+          <AdSense />
           <AppRoutes />
           <Toaster />
         </PlayerProvider>
