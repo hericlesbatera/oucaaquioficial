@@ -308,6 +308,18 @@ const LoginWhite = () => {
 
             if (authError) throw authError;
 
+            // Criar sessão autenticada para permitir inserção na tabela artists (RLS)
+            if (authData?.user?.id) {
+                const { error: signInError } = await supabase.auth.signInWithPassword({
+                    email: signupEmail,
+                    password: signupPassword
+                });
+
+                if (signInError) {
+                    console.warn('Erro ao autenticar após signup:', signInError);
+                }
+            }
+
             // Verificar se o email já é admin no banco
             const { data: adminCheck } = await supabase
                 .from('admin_users')
@@ -347,6 +359,7 @@ const LoginWhite = () => {
 
                 if (profileError) {
                     console.error('Erro ao criar perfil:', profileError);
+                    throw profileError;
                 }
             }
 

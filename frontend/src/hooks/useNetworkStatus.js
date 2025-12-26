@@ -1,47 +1,50 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import { Network } from '@capacitor/network';
 
 /**
- * Hook para detectar status de conectividade do app
- * Dispara listeners quando fica online/offline
+ * Hook para monitorar status da conexão de internet
+ * @returns {{ isOnline: boolean, isLoading: boolean }}
  */
 export const useNetworkStatus = () => {
-  const [isOnline, setIsOnline] = useState(
-    typeof navigator !== 'undefined' ? navigator.onLine : true
-  );
-  const [wasJustOffline, setWasJustOffline] = useState(false);
+    const [isOnline, setIsOnline] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
 
-  const handleOnline = useCallback(() => {
-    console.log('[NetworkStatus] App está ONLINE');
-    setIsOnline(true);
-    setWasJustOffline(false);
-  }, []);
+    useEffect(() => {
+        let unsubscribe = null;
 
-  const handleOffline = useCallback(() => {
-    console.log('[NetworkStatus] App está OFFLINE');
-    setIsOnline(false);
-    setWasJustOffline(true);
-  }, []);
+        const initNetworkStatus = async () => {
+            try {
+                // Verificar status inicial
+                const status = await Network.getStatus();
+                setIsOnline(status.connected);
+                setIsLoading(false);
+                console.log('🌐 Internet status inicial:', status.connected ? 'Online' : 'Offline');
 
-  useEffect(() => {
-    // Verificar status inicial
-    setIsOnline(navigator.onLine);
+                // Monitorar mudanças de conexão (only on native)
+                if (window.Capacitor?.isNativePlatform?.()) {
+                    unsubscribe = Network.addListener('networkStatusChange', (status) => {
+                        setIsOnline(status.connected);
+                        console.log('🌐 Status da internet mudou:', status.connected ? 'Online' : 'Offline');
+                    });
+                }
+            } catch (error) {
+                console.warn('Erro ao verificar status de internet:', error);
+                setIsLoading(false);
+                // Assumir online em caso de erro
+                setIsOnline(true);
+            }
+        };
 
-    // Adicionar listeners para eventos de rede
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+        initNetworkStatus();
 
-    // Limpar listeners
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, [handleOnline, handleOffline]);
+        return () => {
+            if (unsubscribe) {
+                unsubscribe.remove();
+            }
+        };
+    }, []);
 
-  return {
-    isOnline,
-    isOffline: !isOnline,
-    wasJustOffline
-  };
+    return { isOnline, isLoading };
 };
 
 export default useNetworkStatus;

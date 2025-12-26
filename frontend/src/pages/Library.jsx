@@ -162,12 +162,28 @@ const Library = () => {
 
     const handlePlayDownloadedAlbum = async (downloadedAlbum) => {
         try {
+            console.log('[Library] Iniciando reprodução do álbum baixado:', downloadedAlbum);
+            
+            // Garantir que cada música tem fileName (fallback)
+            const songsWithFileName = (downloadedAlbum.songs || []).map((song, idx) => {
+                if (song.fileName) return song;
+                // Se não tiver fileName, gerar baseado no índice e título
+                return {
+                    ...song,
+                    fileName: `${String(idx + 1).padStart(2, '0')} - ${(song.title || 'desconhecido').replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, '_').substring(0, 100)}.mp3`
+                };
+            });
+            
+            console.log('[Library] Músicas com fileName:', songsWithFileName);
+            
             // Carregar URLs locais das músicas baixadas
             const { songs: songsWithURLs, coverUrl } = await loadAlbumOfflineURLs(
                 downloadedAlbum.albumDir, 
-                downloadedAlbum.songs,
+                songsWithFileName,
                 downloadedAlbum.coverFileName
             );
+
+            console.log('[Library] Músicas carregadas:', songsWithURLs);
 
             // Criar queue com as músicas
             const queue = songsWithURLs.map(song => ({
@@ -181,19 +197,28 @@ const Library = () => {
                 albumId: downloadedAlbum.albumId
             }));
 
+            console.log('[Library] Fila criada:', queue);
+
             // Tocar primeira música da fila
             if (queue.length > 0) {
+                console.log('[Library] Tocando música:', queue[0]);
                 playSong(queue[0], queue);
                 toast({
                     title: 'Reproduzindo Offline',
                     description: `${downloadedAlbum.title} - ${downloadedAlbum.artist}`
                 });
+            } else {
+                toast({
+                    title: 'Aviso',
+                    description: 'Nenhuma música disponível neste álbum',
+                    variant: 'default'
+                });
             }
         } catch (error) {
-            console.error('Erro ao reproduzir álbum baixado:', error);
+            console.error('[Library] Erro ao reproduzir álbum baixado:', error);
             toast({
                 title: 'Erro',
-                description: 'Não foi possível reproduzir o álbum',
+                description: error.message || 'Não foi possível reproduzir o álbum',
                 variant: 'destructive'
             });
         }
@@ -522,22 +547,40 @@ const Library = () => {
                                                             key={song.id}
                                                             className="px-3 py-2 text-xs hover:bg-gray-100 cursor-pointer transition-colors flex items-center gap-2"
                                                             onClick={async () => {
-                                                                const { songs: songsWithURLs, coverUrl } = await loadAlbumOfflineURLs(
-                                                                    downloadedAlbum.albumDir, 
-                                                                    downloadedAlbum.songs,
-                                                                    downloadedAlbum.coverFileName
-                                                                );
-                                                                const queue = songsWithURLs.map(s => ({
-                                                                    id: s.id,
-                                                                    title: s.title,
-                                                                    artist: downloadedAlbum.artist,
-                                                                    album: downloadedAlbum.title,
-                                                                    image: coverUrl || downloadedAlbum.coverUrl,
-                                                                    audioUrl: s.audioUrl,
-                                                                    isOffline: true,
-                                                                    albumId: downloadedAlbum.albumId
-                                                                }));
-                                                                playSong(queue[idx], queue);
+                                                                try {
+                                                                    // Garantir que cada música tem fileName
+                                                                    const songsWithFileName = (downloadedAlbum.songs || []).map((s, i) => {
+                                                                        if (s.fileName) return s;
+                                                                        return {
+                                                                            ...s,
+                                                                            fileName: `${String(i + 1).padStart(2, '0')} - ${(s.title || 'desconhecido').replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, '_').substring(0, 100)}.mp3`
+                                                                        };
+                                                                    });
+                                                                    
+                                                                    const { songs: songsWithURLs, coverUrl } = await loadAlbumOfflineURLs(
+                                                                        downloadedAlbum.albumDir, 
+                                                                        songsWithFileName,
+                                                                        downloadedAlbum.coverFileName
+                                                                    );
+                                                                    const queue = songsWithURLs.map(s => ({
+                                                                        id: s.id,
+                                                                        title: s.title,
+                                                                        artist: downloadedAlbum.artist,
+                                                                        album: downloadedAlbum.title,
+                                                                        image: coverUrl || downloadedAlbum.coverUrl,
+                                                                        audioUrl: s.audioUrl,
+                                                                        isOffline: true,
+                                                                        albumId: downloadedAlbum.albumId
+                                                                    }));
+                                                                    playSong(queue[idx], queue);
+                                                                } catch (err) {
+                                                                    console.error('Erro ao reproduzir música baixada:', err);
+                                                                    toast({
+                                                                        title: 'Erro',
+                                                                        description: err.message || 'Não foi possível reproduzir',
+                                                                        variant: 'destructive'
+                                                                    });
+                                                                }
                                                             }}
                                                         >
                                                             <Play className="w-3 h-3 text-gray-400" fill="currentColor" />
