@@ -308,16 +308,22 @@ const LoginWhite = () => {
 
             if (authError) throw authError;
 
+            // Aguardar um pouco para garantir que o usuário foi criado
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
             // Criar sessão autenticada para permitir inserção na tabela artists (RLS)
             if (authData?.user?.id) {
-                const { error: signInError } = await supabase.auth.signInWithPassword({
+                const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
                     email: signupEmail,
                     password: signupPassword
                 });
 
                 if (signInError) {
-                    console.warn('Erro ao autenticar após signup:', signInError);
+                    console.error('Erro ao autenticar após signup:', signInError);
+                    throw signInError;
                 }
+                
+                console.log('Sessão autenticada criada para:', signupEmail);
             }
 
             // Verificar se o email já é admin no banco
@@ -339,7 +345,9 @@ const LoginWhite = () => {
             }
 
             if (userType === 'artist' && authData?.user?.id) {
-                const { error: profileError } = await supabase
+                console.log('Tentando criar perfil de artista para:', authData.user.id);
+                
+                const { data: insertData, error: profileError } = await supabase
                     .from('artists')
                     .insert({
                         id: authData.user.id,
@@ -359,8 +367,11 @@ const LoginWhite = () => {
 
                 if (profileError) {
                     console.error('Erro ao criar perfil:', profileError);
+                    console.error('Detalhes do erro:', JSON.stringify(profileError));
                     throw profileError;
                 }
+                
+                console.log('Perfil de artista criado com sucesso!', insertData);
             }
 
             toast({
