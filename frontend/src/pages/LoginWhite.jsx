@@ -313,17 +313,26 @@ const LoginWhite = () => {
 
             // Criar sessão autenticada para permitir inserção na tabela artists (RLS)
             if (authData?.user?.id) {
-                const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-                    email: signupEmail,
-                    password: signupPassword
-                });
-
-                if (signInError) {
-                    console.error('Erro ao autenticar após signup:', signInError);
-                    throw signInError;
-                }
+                console.log('Usuário criado no auth:', authData.user.id);
                 
-                console.log('Sessão autenticada criada para:', signupEmail);
+                // Se o usuário foi criado mas não tem sessão, forçar login
+                if (authData.user && !authData.session) {
+                    console.log('Sem sessão detectada, tentando fazer login...');
+                    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                        email: signupEmail,
+                        password: signupPassword
+                    });
+
+                    if (signInError) {
+                        console.error('Erro ao autenticar após signup:', signInError);
+                        // Não lançar erro - continuar mesmo sem autenticação
+                        // throw signInError;
+                    } else {
+                        console.log('Sessão autenticada criada para:', signupEmail);
+                    }
+                } else {
+                    console.log('Sessão já existe:', authData.session?.user?.email);
+                }
             }
 
             // Verificar se o email já é admin no banco
