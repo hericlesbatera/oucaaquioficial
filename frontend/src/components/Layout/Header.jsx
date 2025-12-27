@@ -287,11 +287,21 @@ const Header = () => {
                                              </DropdownMenuItem>
                                         </>
                                         ) : isArtist ? (
-                                       <>
-                                            <DropdownMenuItem onClick={() => navigate(`/${artistForUser?.slug || artistForUser?.id || 'a1'}`)} className="cursor-pointer flex items-center gap-3 py-2">
-                                                <User className="w-5 h-5 text-gray-500" />
-                                                <span>Meu Perfil</span>
-                                            </DropdownMenuItem>
+                                        <>
+                                             <DropdownMenuItem onClick={() => {
+                                                 // Ir direto ao perfil público usando slug
+                                                 if (artistForUser?.slug) {
+                                                     navigate(`/${artistForUser.slug}`);
+                                                 } else if (artistForUser?.id) {
+                                                     navigate(`/${artistForUser.id}`);
+                                                 } else {
+                                                     // Se não tem dados do artista, ir para settings
+                                                     navigate('/artist/settings');
+                                                 }
+                                             }} className="cursor-pointer flex items-center gap-3 py-2">
+                                                 <User className="w-5 h-5 text-gray-500" />
+                                                 <span>Meu Perfil</span>
+                                             </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => navigate('/artist/upload')} className="cursor-pointer flex items-center gap-3 py-2">
                                                 <Upload className="w-5 h-5 text-gray-500" />
                                                 <span>Novo Upload</span>
