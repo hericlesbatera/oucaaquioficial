@@ -372,6 +372,11 @@ const UploadNew = () => {
                 uploadData.append('coverImage', formData.coverImage);
             }
 
+            // Adicionar URL do YouTube do álbum
+            if (formData.youtubeUrl) {
+                uploadData.append('youtubeUrl', formData.youtubeUrl);
+            }
+
             // Usar SSE para rastrear progresso em tempo real
 
              // Obter token para SSE
