@@ -356,33 +356,77 @@ const LoginWhite = () => {
             // Criar perfil de artista se aplicável
             if (userType === 'artist' && authData?.user?.id) {
                 try {
-                    // Usar RLS bypass com service role (não recomendado, mas funciona para signup)
-                    const { error: profileError } = await supabase
-                        .from('artists')
-                        .insert({
-                            id: authData.user.id,
-                            name: artistName,
-                            slug: artistSlug,
-                            email: signupEmail,
-                            cidade: artistCidade,
-                            estado: artistEstado,
-                            genero: artistGenero,
-                            estilo_musical: artistEstiloMusical,
-                            bio: '',
-                            avatar_url: '',
-                            cover_url: '',
-                            followers_count: 0,
-                            is_verified: false
-                        });
+                    console.log('[SIGNUP] Inicializando perfil de artista via API...');
+                    
+                    // Obter session com token
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const token = session?.access_token;
+                    
+                    if (token) {
+                        try {
+                            // Chamar endpoint do backend para criar perfil
+                            const apiResponse = await fetch(
+                                `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/auth/init-artist-profile`,
+                                {
+                                    method: 'POST',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        artist_name: artistName,
+                                        artist_slug: artistSlug,
+                                        cidade: artistCidade,
+                                        estado: artistEstado,
+                                        genero: artistGenero,
+                                        estilo_musical: artistEstiloMusical
+                                    })
+                                }
+                            );
+                            
+                            if (apiResponse.ok) {
+                                const apiData = await apiResponse.json();
+                                console.log('[SIGNUP] Perfil de artista criado via API:', apiData);
+                            } else {
+                                console.warn('[SIGNUP] Falha ao criar perfil via API. Tentando fallback...');
+                                // Fallback: tenta criar direto na tabela
+                                throw new Error('API creation failed');
+                            }
+                        } catch (apiError) {
+                            console.warn('[SIGNUP] Erro ao chamar API, usando fallback Supabase:', apiError);
+                            
+                            // Fallback: Usar RLS bypass com Supabase client (pode falhar se RLS não permitir)
+                            const { error: profileError } = await supabase
+                                .from('artists')
+                                .insert({
+                                    id: authData.user.id,
+                                    name: artistName,
+                                    slug: artistSlug,
+                                    email: signupEmail,
+                                    cidade: artistCidade,
+                                    estado: artistEstado,
+                                    genero: artistGenero,
+                                    estilo_musical: artistEstiloMusical,
+                                    bio: '',
+                                    avatar_url: '',
+                                    cover_url: '',
+                                    followers_count: 0,
+                                    is_verified: false
+                                });
 
-                    if (profileError) {
-                        console.error('Erro ao criar perfil (não crítico):', profileError);
-                        // Não lançar erro - pode ser criado depois quando usuário confirmar email
+                            if (profileError) {
+                                console.warn('[SIGNUP] Perfil não foi criado agora (será criado após confirmação de email):', profileError);
+                                // Não lançar erro - pode ser criado depois quando usuário confirmar email
+                            } else {
+                                console.log('[SIGNUP] Perfil de artista criado via Supabase fallback');
+                            }
+                        }
                     } else {
-                        console.log('Perfil de artista criado com sucesso!');
+                        console.warn('[SIGNUP] Token não disponível, pulando criação de perfil');
                     }
                 } catch (error) {
-                    console.error('Erro ao criar perfil de artista:', error);
+                    console.error('[SIGNUP] Erro ao criar perfil de artista:', error);
+                    // Não falhar o signup se a criação do perfil falhar
                 }
             }
 
