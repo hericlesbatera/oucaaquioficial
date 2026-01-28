@@ -62,6 +62,30 @@ const RecentReleases = () => {
       .range(0, 19);
 
     if (!error && data) {
+      // Para álbuns sem cover_url, buscar a cover_url da primeira música
+      const albumsWithoutCover = data.filter(a => !a.cover_url);
+      if (albumsWithoutCover.length > 0) {
+        const albumIds = albumsWithoutCover.map(a => a.id);
+        const { data: songs } = await supabase
+          .from('songs')
+          .select('album_id, cover_url')
+          .in('album_id', albumIds)
+          .not('cover_url', 'is', null);
+        
+        const songCovers = {};
+        (songs || []).forEach(song => {
+          if (!songCovers[song.album_id] && song.cover_url) {
+            songCovers[song.album_id] = song.cover_url;
+          }
+        });
+        
+        data.forEach(album => {
+          if (!album.cover_url && songCovers[album.id]) {
+            album.cover_url = songCovers[album.id];
+          }
+        });
+      }
+      
       setAlbums(data);
       setOffset(20);
       setHasMore(data.length >= 20);

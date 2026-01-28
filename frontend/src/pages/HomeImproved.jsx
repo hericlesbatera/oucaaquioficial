@@ -135,6 +135,25 @@ const HomeImproved = () => {
                         });
                     }
 
+                    // Para álbuns sem cover_url, buscar a cover_url da primeira música
+                    const albumsWithoutCover = supabaseAlbums.filter(a => !a.cover_url);
+                    let songCovers = {};
+                    
+                    if (albumsWithoutCover.length > 0) {
+                        const albumIds = albumsWithoutCover.map(a => a.id);
+                        const { data: songs } = await supabase
+                            .from('songs')
+                            .select('album_id, cover_url')
+                            .in('album_id', albumIds)
+                            .not('cover_url', 'is', null);
+                        
+                        (songs || []).forEach(song => {
+                            if (!songCovers[song.album_id] && song.cover_url) {
+                                songCovers[song.album_id] = song.cover_url;
+                            }
+                        });
+                    }
+                    
                     const formattedAlbums = supabaseAlbums.map(album => {
                         const artist = artistsMap[album.artist_id] || {};
                         return {
@@ -146,7 +165,7 @@ const HomeImproved = () => {
                             artistSlug: artist.slug || album.artist_id,
                             artistVerified: artist.is_verified || false,
                             collaborators: collaboratorsByAlbum[album.id] || [],
-                            coverImage: album.cover_url || '/images/default-album.png',
+                            coverImage: album.cover_url || songCovers[album.id] || '/images/default-album.png',
                             releaseYear: album.release_year,
                             playCount: album.play_count || 0,
                             downloadCount: album.download_count || 0

@@ -99,16 +99,39 @@ const MyAlbums = () => {
 
             if (error) throw error;
 
+            // Para álbuns sem cover_url, buscar a cover_url da primeira música
+            const albumsWithoutCover = (allAlbums || []).filter(a => !a.cover_url);
+            let songCovers = {};
+            
+            if (albumsWithoutCover.length > 0) {
+                const albumIds = albumsWithoutCover.map(a => a.id);
+                const { data: songs } = await supabase
+                    .from('songs')
+                    .select('album_id, cover_url')
+                    .in('album_id', albumIds)
+                    .not('cover_url', 'is', null);
+                
+                // Mapear a primeira cover_url encontrada para cada álbum
+                (songs || []).forEach(song => {
+                    if (!songCovers[song.album_id] && song.cover_url) {
+                        songCovers[song.album_id] = song.cover_url;
+                    }
+                });
+            }
+
             const now = new Date();
             const active = [];
             const trashed = [];
 
             (allAlbums || []).forEach(album => {
+                // Usar cover_url do álbum, ou da música, ou default
+                const coverImage = album.cover_url || songCovers[album.id] || '/images/default-album.png';
+                
                 const albumData = {
                     id: album.id,
                     slug: album.slug,
                     title: album.title,
-                    coverImage: album.cover_url || '/images/default-album.png',
+                    coverImage: coverImage,
                     songCount: album.song_count || 0,
                     releaseYear: album.release_year,
                     releaseDate: album.release_date,

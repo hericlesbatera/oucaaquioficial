@@ -55,6 +55,25 @@ const Home = () => {
         const { data: supabaseArtists } = artistsResult;
         
         if (supabaseAlbums && supabaseAlbums.length > 0) {
+           // Para álbuns sem cover_url, buscar a cover_url da primeira música
+           const albumsWithoutCover = supabaseAlbums.filter(a => !a.cover_url);
+           let songCovers = {};
+           
+           if (albumsWithoutCover.length > 0) {
+               const albumIds = albumsWithoutCover.map(a => a.id);
+               const { data: songs } = await supabase
+                   .from('songs')
+                   .select('album_id, cover_url')
+                   .in('album_id', albumIds)
+                   .not('cover_url', 'is', null);
+               
+               (songs || []).forEach(song => {
+                   if (!songCovers[song.album_id] && song.cover_url) {
+                       songCovers[song.album_id] = song.cover_url;
+                   }
+               });
+           }
+           
            const formattedAlbums = supabaseAlbums.map(album => ({
              id: album.id,
              slug: album.slug,
@@ -62,7 +81,7 @@ const Home = () => {
              artist_name: album.artist_name,
              artist_id: album.artist_id,
              artist: { slug: album.artist_id },
-             cover_url: album.cover_url || '/images/default-album.png',
+             cover_url: album.cover_url || songCovers[album.id] || '/images/default-album.png',
              play_count: album.play_count || 0
            }));
            setAllAlbums(formattedAlbums);

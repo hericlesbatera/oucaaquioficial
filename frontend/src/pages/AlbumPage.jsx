@@ -289,7 +289,20 @@ const AlbumPage = () => {
               if (songsError) {
                   console.error('Erro ao carregar músicas:', songsError);
               }
+              
+              // Buscar a cover_url da primeira música se o álbum não tiver
+              let albumCoverFromSong = null;
+              if (!supabaseAlbum.cover_url && songs && songs.length > 0) {
+                  const songWithCover = songs.find(s => s.cover_url);
+                  if (songWithCover) {
+                      albumCoverFromSong = songWithCover.cover_url;
+                      // Atualizar o estado do álbum com a capa da música
+                      setAlbum(prev => prev ? { ...prev, coverImage: albumCoverFromSong } : prev);
+                  }
+              }
+              
               if (songs && songs.length > 0) {
+                  const effectiveCoverUrl = supabaseAlbum.cover_url || albumCoverFromSong;
                   const processedSongs = songs.map(song => {
                       // Garantir que a URL de áudio está completa
                       let audioUrl = song.audio_url;
@@ -309,7 +322,7 @@ const AlbumPage = () => {
                           albumId: song.album_id,
                           albumSlug: supabaseAlbum.slug,
                           albumName: song.album_name,
-                          coverImage: song.cover_url || supabaseAlbum.cover_url || '/images/default-album.png',
+                          coverImage: song.cover_url || effectiveCoverUrl || '/images/default-album.png',
                           audioUrl: audioUrl,
                           duration: song.duration || 0,
                           trackNumber: song.track_number,
