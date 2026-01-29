@@ -549,36 +549,8 @@ const UploadNew = () => {
 
             const result = response;
 
-             // Se preencheu URL do YouTube, adicionar vídeo ao álbum
-             if (formData.youtubeUrl && result.album?.id) {
-                  try {
-                      const videoId = getYouTubeVideoId(formData.youtubeUrl);
-                      if (videoId) {
-                          const response = await fetch(`${API_URL}/api/artist-videos/add`, {
-                              method: 'POST',
-                              headers: {
-                                  'Content-Type': 'application/json',
-                              },
-                              body: JSON.stringify({
-                                  artist_id: user?.id,
-                                  album_id: result.album.id,
-                                  video_url: formData.youtubeUrl,
-                                  video_id: videoId,
-                                  title: result.album.title,
-                                  thumbnail: getYouTubeThumbnail(videoId),
-                                  is_public: true
-                              })
-                          });
-                          
-                          if (!response.ok) {
-                              console.error('Erro ao adicionar vídeo:', await response.text());
-                          }
-                      }
-                  } catch (error) {
-                      console.error('Erro ao adicionar vídeo do YouTube:', error);
-                      // Não falhar o upload por causa disso
-                  }
-              }
+             // O vídeo do YouTube já é criado pelo backend durante o upload
+             // Não precisa chamar novamente aqui para evitar duplicação
 
              setUploadProgress(100);
              setUploading(false);
