@@ -47,48 +47,47 @@ const GenrePage = () => {
   const loadAlbums = async () => {
     setLoading(true);
     
-    const decodedGenre = decodeURIComponent(genre).toLowerCase();
+    const decodedGenre = decodeURIComponent(genre).toLowerCase().replace(/-/g, ' ');
     
-    // Normalizar gênero removendo acentos e hífens para busca
-    const normalizeText = (text) => {
-      return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/-/g, ' ');
-    };
+    // Obter o nome correto do gênero para busca (com acento)
+    const genreDisplayName = getGenreDisplayName(genre);
     
-    const normalizedGenre = normalizeText(decodedGenre);
-    
-    // Buscar todos os artistas e filtrar no cliente
-    const { data: allArtists } = await supabase
-      .from('artists')
-      .select('id, estilo_musical');
-    
-    // Filtrar artistas cujo estilo musical contém o gênero (com ou sem acento)
-    const matchingArtists = (allArtists || []).filter(artist => {
-      if (!artist.estilo_musical) return false;
-      const normalizedStyle = normalizeText(artist.estilo_musical);
-      return normalizedStyle.includes(normalizedGenre) || 
-             normalizedStyle.includes(decodedGenre.replace(/-/g, ' '));
-    });
-    
-    const artistIds = matchingArtists.map(a => a.id);
-    
-    if (artistIds.length === 0) {
-      setAlbums([]);
-      setLoading(false);
-      return;
-    }
-
-    // Buscar álbuns desses artistas - ordenado por data de lançamento
-    const { data, error } = await supabase
+    // Buscar álbuns - primeiro tenta pelo slug (ex: "forro"), depois pelo nome (ex: "Forró")
+    let { data, error } = await supabase
       .from('albums')
       .select(`
         *,
-        artist:artists(id, name, slug, is_verified, avatar_url)
+        artist:artists(id, name, slug, verified, avatar_url)
       `)
-      .in('artist_id', artistIds)
+      .eq('is_private', false)
+      .is('deleted_at', null)
+      .ilike('genre', decodedGenre)
       .order('release_date', { ascending: false });
+
+    console.log('Genre search by slug:', { genre: decodedGenre, results: data?.length });
+
+    // Se não encontrou nada, tenta com o nome formatado
+    if ((!data || data.length === 0) && genreDisplayName !== decodedGenre) {
+      const result = await supabase
+        .from('albums')
+        .select(`
+          *,
+          artist:artists(id, name, slug, verified, avatar_url)
+        `)
+        .eq('is_private', false)
+        .is('deleted_at', null)
+        .ilike('genre', genreDisplayName)
+        .order('release_date', { ascending: false });
+      
+      data = result.data;
+      error = result.error;
+      console.log('Genre search by name:', { genre: genreDisplayName, results: data?.length });
+    }
 
     if (!error && data) {
       setAlbums(data);
+    } else {
+      setAlbums([]);
     }
     setLoading(false);
   };
