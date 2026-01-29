@@ -48,47 +48,50 @@ const GenrePage = () => {
     setLoading(true);
     
     const decodedGenre = decodeURIComponent(genre).toLowerCase().replace(/-/g, ' ');
-    
-    // Obter o nome correto do gênero para busca (com acento)
     const genreDisplayName = getGenreDisplayName(genre);
     
-    // Buscar álbuns - primeiro tenta pelo slug (ex: "forro"), depois pelo nome (ex: "Forró")
+    // Normalizar para busca (sem acentos)
+    const normalizeText = (text) => {
+      return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    };
+    const normalizedGenre = normalizeText(decodedGenre);
+    
+    // Estratégia 1: Buscar pelo campo genre do álbum
     let { data, error } = await supabase
       .from('albums')
       .select(`
         *,
-        artist:artists(id, name, slug, verified, avatar_url)
+        artist:artists(id, name, slug, verified, avatar_url, estilo_musical)
       `)
       .eq('is_private', false)
       .is('deleted_at', null)
-      .ilike('genre', decodedGenre)
-      .order('release_date', { ascending: false });
+      .order('play_count', { ascending: false });
 
-    console.log('Genre search by slug:', { genre: decodedGenre, results: data?.length });
+    console.log('All albums loaded:', data?.length);
 
-    // Se não encontrou nada, tenta com o nome formatado
-    if ((!data || data.length === 0) && genreDisplayName !== decodedGenre) {
-      const result = await supabase
-        .from('albums')
-        .select(`
-          *,
-          artist:artists(id, name, slug, verified, avatar_url)
-        `)
-        .eq('is_private', false)
-        .is('deleted_at', null)
-        .ilike('genre', genreDisplayName)
-        .order('release_date', { ascending: false });
-      
-      data = result.data;
-      error = result.error;
-      console.log('Genre search by name:', { genre: genreDisplayName, results: data?.length });
+    // Filtrar no cliente por gênero (mais flexível)
+    if (data && data.length > 0) {
+      data = data.filter(album => {
+        // Verificar campo genre do álbum
+        if (album.genre) {
+          const albumGenre = normalizeText(album.genre);
+          if (albumGenre.includes(normalizedGenre) || normalizedGenre.includes(albumGenre)) {
+            return true;
+          }
+        }
+        // Verificar estilo_musical do artista
+        if (album.artist?.estilo_musical) {
+          const artistStyle = normalizeText(album.artist.estilo_musical);
+          if (artistStyle.includes(normalizedGenre) || normalizedGenre.includes(artistStyle)) {
+            return true;
+          }
+        }
+        return false;
+      });
+      console.log('Albums after genre filter:', { genre: normalizedGenre, results: data.length });
     }
 
-    if (!error && data) {
-      setAlbums(data);
-    } else {
-      setAlbums([]);
-    }
+    setAlbums(data || []);
     setLoading(false);
   };
 
