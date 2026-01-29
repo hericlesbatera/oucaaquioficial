@@ -56,39 +56,43 @@ const GenrePage = () => {
     };
     const normalizedGenre = normalizeText(decodedGenre);
     
-    // Estratégia 1: Buscar pelo campo genre do álbum
+    // Buscar álbuns públicos
     let { data, error } = await supabase
       .from('albums')
-      .select(`
-        *,
-        artist:artists(id, name, slug, verified, avatar_url, estilo_musical)
-      `)
+      .select('id, slug, title, artist_id, artist_name, cover_url, genre, play_count, download_count, release_year')
       .eq('is_private', false)
       .is('deleted_at', null)
       .order('play_count', { ascending: false });
 
-    console.log('All albums loaded:', data?.length);
+    console.log('All albums loaded:', data?.length, error);
 
-    // Filtrar no cliente por gênero (mais flexível)
+    // Filtrar no cliente por gênero
     if (data && data.length > 0) {
       data = data.filter(album => {
-        // Verificar campo genre do álbum
         if (album.genre) {
           const albumGenre = normalizeText(album.genre);
-          if (albumGenre.includes(normalizedGenre) || normalizedGenre.includes(albumGenre)) {
-            return true;
-          }
-        }
-        // Verificar estilo_musical do artista
-        if (album.artist?.estilo_musical) {
-          const artistStyle = normalizeText(album.artist.estilo_musical);
-          if (artistStyle.includes(normalizedGenre) || normalizedGenre.includes(artistStyle)) {
-            return true;
-          }
+          return albumGenre.includes(normalizedGenre) || normalizedGenre.includes(albumGenre);
         }
         return false;
       });
       console.log('Albums after genre filter:', { genre: normalizedGenre, results: data.length });
+      
+      // Buscar dados dos artistas para os álbuns filtrados
+      if (data.length > 0) {
+        const artistIds = [...new Set(data.map(a => a.artist_id))];
+        const { data: artists } = await supabase
+          .from('artists')
+          .select('id, name, slug, verified, avatar_url')
+          .in('id', artistIds);
+        
+        const artistMap = {};
+        (artists || []).forEach(a => artistMap[a.id] = a);
+        
+        data = data.map(album => ({
+          ...album,
+          artist: artistMap[album.artist_id] || null
+        }));
+      }
     }
 
     setAlbums(data || []);
