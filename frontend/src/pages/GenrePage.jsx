@@ -56,15 +56,15 @@ const GenrePage = () => {
     };
     const normalizedGenre = normalizeText(decodedGenre);
     
-    // Buscar álbuns públicos
+    // Buscar álbuns públicos (sem filtro is_private para debug)
     let { data, error } = await supabase
       .from('albums')
-      .select('id, slug, title, artist_id, artist_name, cover_url, genre, play_count, download_count, release_year')
-      .eq('is_private', false)
+      .select('id, slug, title, artist_id, artist_name, cover_url, genre, play_count, download_count, release_year, is_private')
       .is('deleted_at', null)
       .order('play_count', { ascending: false });
 
-    console.log('All albums loaded:', data?.length, error);
+    console.log('All albums loaded:', data?.length, 'Error:', error);
+    console.log('Sample albums:', data?.slice(0, 5).map(a => ({ title: a.title, genre: a.genre, is_private: a.is_private })));
 
     // Filtrar no cliente por gênero
     if (data && data.length > 0) {
