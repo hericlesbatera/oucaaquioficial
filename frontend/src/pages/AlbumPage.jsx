@@ -131,7 +131,7 @@ const AlbumPage = () => {
                     console.error('Artist slug query error:', slugError);
                 }
             
-                // Se não encontrar por slug, tenta por ID
+                // Se não encontrar por slug, tenta por ID do slug
                 if (!artistData) {
                     const { data: artistById, error: idError } = await supabase
                         .from('artists')
@@ -142,6 +142,19 @@ const AlbumPage = () => {
                         console.error('Artist ID query error:', idError);
                     }
                     artistData = artistById;
+                }
+                
+                // Se ainda não encontrou, tenta pelo artist_id do álbum
+                if (!artistData && supabaseAlbum?.artist_id) {
+                    const { data: artistByAlbum, error: albumArtistError } = await supabase
+                        .from('artists')
+                        .select('id, name, slug, avatar_url, cover_url, verified, bio, followers_count')
+                        .eq('id', supabaseAlbum.artist_id)
+                        .maybeSingle();
+                    if (albumArtistError) {
+                        console.error('Artist by album ID query error:', albumArtistError);
+                    }
+                    artistData = artistByAlbum;
                 }
                 
                 console.log('Artist data loaded:', {
@@ -230,7 +243,7 @@ const AlbumPage = () => {
             
             if (!isMounted) return;
               // Usar dados do artista se encontrado, senão usar dados do álbum
-              setArtist(artistData || { id: supabaseAlbum.artist_id, name: supabaseAlbum.artist_name });
+              setArtist(artistData || { id: supabaseAlbum.artist_id, name: supabaseAlbum.artist_name, verified: false });
 
               setAlbum({
                   id: supabaseAlbum.id,
