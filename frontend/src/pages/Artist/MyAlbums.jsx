@@ -203,8 +203,15 @@ const MyAlbums = () => {
         if (!albumToPermanentDelete) return;
 
     try {
+        // Deletar músicas do álbum
         await supabase
             .from('songs')
+            .delete()
+            .eq('album_id', albumToPermanentDelete.id);
+
+        // Deletar vídeos associados ao álbum
+        await supabase
+            .from('artist_videos')
             .delete()
             .eq('album_id', albumToPermanentDelete.id);
 

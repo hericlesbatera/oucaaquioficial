@@ -345,8 +345,10 @@ const AlbumPage = () => {
               }
 
              // Processar vídeo
-             const { data: videoData } = videoResult;
+             const { data: videoData, error: videoError } = videoResult;
+             console.log('[AlbumPage] Video query result:', { videoData, videoError, albumId: supabaseAlbum.id });
              if (videoData) {
+                 console.log('[AlbumPage] Setting album video:', videoData);
                  setAlbumVideo({
                      id: videoData.id,
                      title: videoData.title,
@@ -354,6 +356,8 @@ const AlbumPage = () => {
                      videoId: videoData.video_id,
                      thumbnail: videoData.thumbnail
                  });
+             } else {
+                 console.log('[AlbumPage] No video found for album');
              }
 
              // Processar colaboradores
