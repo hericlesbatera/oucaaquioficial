@@ -35,7 +35,7 @@ const RecentReleases = () => {
     // Carregar todos os artistas primeiro para criar o mapa
     const { data: artists } = await supabase
       .from('artists')
-      .select('id, name, slug, is_verified, avatar_url');
+      .select('id, name, slug, verified, avatar_url');
     
     if (artists) {
       const map = {};

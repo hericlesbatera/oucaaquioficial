@@ -27,7 +27,7 @@ const Clips = () => {
                 const artistIds = [...new Set(clipsData.map(v => v.artist_id))];
                 const { data: artistsData } = await supabase
                     .from('artists')
-                    .select('id, name, slug, is_verified')
+                    .select('id, name, slug, verified')
                     .in('id', artistIds);
 
                 const artistsMap = {};

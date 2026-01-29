@@ -38,7 +38,7 @@ const CommentSection = ({ albumId, artistId }) => {
           try {
             const { data } = await supabase
               .from('artists')
-              .select('id, name, avatar_url, is_verified')
+              .select('id, name, avatar_url, verified')
               .eq('id', user.id)
               .maybeSingle();
             

@@ -63,7 +63,7 @@ const Search = () => {
           .from('albums')
           .select(`
             *,
-            artist:artists(id, name, slug, is_verified, avatar_url)
+            artist:artists(id, name, slug, verified, avatar_url)
           `)
           .or(`title.ilike.%${searchTerm}%,slug.ilike.%${searchTerm}%${artistIds.length > 0 ? `,artist_id.in.(${artistIds.join(',')})` : ''}`)
           .order('created_at', { ascending: false })

@@ -130,7 +130,7 @@ const PlaylistPage = () => {
 
             const { data: creatorData } = await supabase
                 .from('artists')
-                .select('id, name, slug, avatar_url, is_verified')
+                .select('id, name, slug, avatar_url, verified')
                 .eq('id', playlistData.user_id)
                 .maybeSingle();
 

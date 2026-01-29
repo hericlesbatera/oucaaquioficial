@@ -379,7 +379,7 @@ const AlbumPage = () => {
                  const collabIds = collabData.map(c => c.invited_user_id);
                  const { data: collabArtists } = await supabase
                      .from('artists')
-                     .select('id, name, slug, avatar_url, is_verified')
+                     .select('id, name, slug, avatar_url, verified')
                      .in('id', collabIds);
              
                  if (collabArtists) {
