@@ -370,6 +370,9 @@ const UploadNew = () => {
 
             if (formData.coverImage) {
                 uploadData.append('coverImage', formData.coverImage);
+                console.log('[UPLOAD] Cover image attached:', formData.coverImage.name, formData.coverImage.size, 'bytes');
+            } else {
+                console.log('[UPLOAD] WARNING: No cover image in formData!');
             }
 
             // Usar SSE para rastrear progresso em tempo real
