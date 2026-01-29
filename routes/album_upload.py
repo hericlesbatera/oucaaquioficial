@@ -106,11 +106,26 @@ async def upload_album(request: Request):
         cover_image_file = form_data.get("coverImage")
         album_file = form_data.get("albumFile")
         
+        print(f"[UPLOAD] ========== FILE DEBUG ==========")
+        print(f"[UPLOAD] All form data keys: {list(form_data.keys())}")
         print(f"[UPLOAD] coverImage received: {cover_image_file}")
         print(f"[UPLOAD] coverImage type: {type(cover_image_file)}")
+        print(f"[UPLOAD] coverImage is truthy: {bool(cover_image_file)}")
+        
+        # Check if coverImage is actually a file object
         if cover_image_file:
             print(f"[UPLOAD] coverImage filename: {getattr(cover_image_file, 'filename', 'N/A')}")
             print(f"[UPLOAD] coverImage content_type: {getattr(cover_image_file, 'content_type', 'N/A')}")
+            print(f"[UPLOAD] coverImage size: {getattr(cover_image_file, 'size', 'N/A')}")
+            print(f"[UPLOAD] coverImage has read method: {hasattr(cover_image_file, 'read')}")
+            
+            # Check if filename is empty or None (indicates no file was selected)
+            filename = getattr(cover_image_file, 'filename', None)
+            if not filename or filename == '':
+                print(f"[UPLOAD] WARNING: coverImage has no filename - treating as no file")
+                cover_image_file = None
+        else:
+            print(f"[UPLOAD] coverImage is falsy - no file uploaded")
         
         print(f"[UPLOAD] YouTube URL received: {youtube_url}")
         
