@@ -460,10 +460,12 @@ async def upload_album(request: Request):
             
             # Now upload cover image to Supabase Storage with correct album_id
             cover_url = None
+            cover_upload_success = False
+            
             if cover_data:
+                print(f"[UPLOAD] Starting cover upload - {len(cover_data)} bytes")
                 try:
                     # Sanitize user_id in path - cover is stored per album using album_id
-                    safe_user_id = sanitize_filename(str(user_id))
                     safe_album_id = sanitize_filename(str(album_id))
                     cover_filename = f"albums/{safe_album_id}/cover.jpg"
                     
@@ -477,70 +479,96 @@ async def upload_album(request: Request):
                     }
                     mime_type = mime_types.get(cover_file_ext, 'image/jpeg')
                     
-                    # Use httpx directly with proper headers - use PUT for upsert behavior
-                    async with httpx.AsyncClient(timeout=60.0) as client:
-                        upload_url = f"{SUPABASE_URL}/storage/v1/object/musica/{cover_filename}"
-                        headers = {
+                    # Upload cover to Supabase Storage
+                    async with httpx.AsyncClient(timeout=60.0) as upload_client:
+                        storage_url = f"{SUPABASE_URL}/storage/v1/object/musica/{cover_filename}"
+                        storage_headers = {
                             "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
                             "Content-Type": mime_type,
-                            "x-upsert": "true"  # Allow overwriting existing files
+                            "x-upsert": "true"
                         }
-                        # Try POST first, if file exists (409), use PUT
-                        response = await client.post(upload_url, content=cover_data, headers=headers)
-                        if response.status_code == 409:  # File already exists
-                            print(f"[UPLOAD] Cover file exists, updating with PUT...")
-                            response = await client.put(upload_url, content=cover_data, headers=headers)
                         
-                        if response.status_code not in [200, 201]:
-                            print(f"[UPLOAD] Cover upload error: {response.status_code} - {response.text}")
-                        else:
+                        storage_response = await upload_client.post(storage_url, content=cover_data, headers=storage_headers)
+                        if storage_response.status_code == 409:
+                            print(f"[UPLOAD] Cover file exists, updating with PUT...")
+                            storage_response = await upload_client.put(storage_url, content=cover_data, headers=storage_headers)
+                        
+                        if storage_response.status_code in [200, 201]:
                             cover_url = f"{SUPABASE_URL}/storage/v1/object/public/musica/{cover_filename}"
-                            print(f"[UPLOAD] Cover uploaded successfully: {cover_url}")
-                            print(f"[UPLOAD] Album ID for cover update: {album_id} (type: {type(album_id)})")
+                            cover_upload_success = True
+                            print(f"[UPLOAD] Cover uploaded to storage successfully: {cover_url}")
+                        else:
+                            print(f"[UPLOAD] Cover storage upload FAILED: {storage_response.status_code} - {storage_response.text}")
                             
-                            # Update album with cover URL usando httpx direto para bypass de RLS
-                            try:
-                                album_id_str = str(album_id)
-                                print(f"[UPLOAD] Updating album {album_id_str} with cover_url: {cover_url}")
-                                
-                                # Usar httpx diretamente para garantir que o update funcione
-                                async with httpx.AsyncClient(timeout=30.0) as client:
-                                    update_url = f"{SUPABASE_URL}/rest/v1/albums?id=eq.{album_id_str}"
-                                    headers = {
-                                        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                                        "apikey": SUPABASE_SERVICE_KEY,
-                                        "Content-Type": "application/json",
-                                        "Prefer": "return=representation"
-                                    }
-                                    update_data = {"cover_url": cover_url}
-                                    
-                                    response = await client.patch(update_url, json=update_data, headers=headers)
-                                    print(f"[UPLOAD] Direct PATCH response status: {response.status_code}")
-                                    print(f"[UPLOAD] Direct PATCH response: {response.text}")
-                                    
-                                    if response.status_code == 200:
-                                        result_data = response.json()
-                                        if result_data and len(result_data) > 0:
-                                            print(f"[UPLOAD] SUCCESS: cover_url updated via direct PATCH!")
-                                        else:
-                                            print(f"[UPLOAD] WARNING: PATCH returned empty array")
-                                    else:
-                                        print(f"[UPLOAD] ERROR: PATCH failed with status {response.status_code}")
-                                
-                                # Verificar se realmente atualizou
-                                verify = supabase.table("albums").select("id, cover_url").eq("id", album_id_str).execute()
-                                print(f"[UPLOAD] Album verification after update: {verify.data}")
-                                
-                            except Exception as update_err:
-                                print(f"[UPLOAD] Error updating album cover_url: {update_err}")
-                                import traceback
-                                print(f"[UPLOAD] Update error traceback: {traceback.format_exc()}")
                 except Exception as e:
-                    print(f"[UPLOAD] Error uploading cover: {e}")
+                    print(f"[UPLOAD] Error uploading cover to storage: {e}")
                     import traceback
-                    print(f"[UPLOAD] Cover upload traceback: {traceback.format_exc()}")
+                    print(f"[UPLOAD] Cover storage upload traceback: {traceback.format_exc()}")
             else:
-                print(f"[UPLOAD] No cover image data available")
+                print(f"[UPLOAD] No cover image data available - skipping cover upload")
+            
+            # Update album with cover URL - ALWAYS run this if we have a cover_url
+            if cover_upload_success and cover_url:
+                album_id_str = str(album_id)
+                print(f"[UPLOAD] ========== UPDATING ALBUM COVER_URL ==========")
+                print(f"[UPLOAD] Album ID: {album_id_str}")
+                print(f"[UPLOAD] Cover URL: {cover_url}")
+                
+                try:
+                    # Method 1: Direct HTTP PATCH to Supabase REST API
+                    async with httpx.AsyncClient(timeout=30.0) as patch_client:
+                        patch_url = f"{SUPABASE_URL}/rest/v1/albums?id=eq.{album_id_str}"
+                        patch_headers = {
+                            "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                            "apikey": SUPABASE_SERVICE_KEY,
+                            "Content-Type": "application/json",
+                            "Prefer": "return=representation"
+                        }
+                        patch_data = {"cover_url": cover_url}
+                        
+                        patch_response = await patch_client.patch(patch_url, json=patch_data, headers=patch_headers)
+                        print(f"[UPLOAD] PATCH response status: {patch_response.status_code}")
+                        print(f"[UPLOAD] PATCH response body: {patch_response.text}")
+                        
+                        if patch_response.status_code == 200:
+                            result_data = patch_response.json()
+                            if result_data and len(result_data) > 0:
+                                print(f"[UPLOAD] SUCCESS: cover_url updated via PATCH!")
+                            else:
+                                print(f"[UPLOAD] WARNING: PATCH returned empty array - trying supabase client")
+                                # Fallback to supabase client
+                                fallback1 = supabase.table("albums").update({"cover_url": cover_url}).eq("id", album_id_str).execute()
+                                print(f"[UPLOAD] Fallback 1 result: {fallback1.data if hasattr(fallback1, 'data') else 'No data'}")
+                        else:
+                            print(f"[UPLOAD] PATCH failed - trying supabase client")
+                            fallback2 = supabase.table("albums").update({"cover_url": cover_url}).eq("id", album_id_str).execute()
+                            print(f"[UPLOAD] Fallback 2 result: {fallback2.data if hasattr(fallback2, 'data') else 'No data'}")
+                    
+                    # Verify the update was successful
+                    verify_result = supabase.table("albums").select("id, cover_url").eq("id", album_id_str).execute()
+                    print(f"[UPLOAD] Verification after update: {verify_result.data}")
+                    
+                    if verify_result.data and not verify_result.data[0].get("cover_url"):
+                        print(f"[UPLOAD] CRITICAL: cover_url still NULL! Final attempt...")
+                        final_update = supabase.table("albums").update({"cover_url": cover_url}).eq("id", album_id_str).execute()
+                        print(f"[UPLOAD] Final update result: {final_update.data if hasattr(final_update, 'data') else 'No data'}")
+                        
+                        # Final verification
+                        final_verify = supabase.table("albums").select("id, cover_url").eq("id", album_id_str).execute()
+                        print(f"[UPLOAD] Final verification: {final_verify.data}")
+                        
+                except Exception as update_error:
+                    print(f"[UPLOAD] Error updating album cover_url: {update_error}")
+                    import traceback
+                    print(f"[UPLOAD] Update error traceback: {traceback.format_exc()}")
+                    # Last resort
+                    try:
+                        last_resort = supabase.table("albums").update({"cover_url": cover_url}).eq("id", str(album_id)).execute()
+                        print(f"[UPLOAD] Last resort update: {last_resort.data if hasattr(last_resort, 'data') else 'No data'}")
+                    except Exception as last_err:
+                        print(f"[UPLOAD] Last resort also failed: {last_err}")
+            else:
+                print(f"[UPLOAD] Skipping cover_url update - cover_upload_success={cover_upload_success}, cover_url={cover_url}")
             
             progress_module.update_progress(upload_id, 85, "capa_carregada")
             await asyncio.sleep(0.1)
