@@ -284,10 +284,10 @@ const AlbumPage = () => {
                       .eq('album_id', supabaseAlbum.id)
                       .maybeSingle() : Promise.resolve({ data: null }),
                   
-                  // Buscar recomendados (sem relação com artists)
+                  // Buscar recomendados com dados do artista
                   supabase
                       .from('albums')
-                      .select('id, slug, title, artist_name, artist_id, cover_url, play_count, genre')
+                      .select('id, slug, title, artist_name, artist_id, cover_url, play_count, genre, download_count, artists(slug, verified)')
                       .eq('is_private', false)
                       .is('deleted_at', null)
                       .neq('id', supabaseAlbum.id)
@@ -410,23 +410,23 @@ const AlbumPage = () => {
 
              if (recommendedList.length > 0) {
                  // Garantir que nunca ultrapasse 6 álbuns
-                 const recommended = recommendedList
-                     .slice(0, 6)
-                     .map(recAlbum => {
-                         return {
-                             id: recAlbum.id,
-                             slug: recAlbum.slug,
-                             title: recAlbum.title,
-                             artistName: recAlbum.artist_name,
-                             artistId: recAlbum.artist_id,
-                             coverImage: recAlbum.cover_url || '/images/default-album.png',
-                             playCount: recAlbum.play_count || 0,
-                             downloadCount: recAlbum.download_count || 0,
-                             artistSlug: recAlbum.artist_id, // Usar artist_id como slug
-                             artistVerified: false,
-                             collaborators: []
-                         };
-                     });
+                  const recommended = recommendedList
+                      .slice(0, 6)
+                      .map(recAlbum => {
+                          return {
+                              id: recAlbum.id,
+                              slug: recAlbum.slug,
+                              title: recAlbum.title,
+                              artistName: recAlbum.artist_name,
+                              artistId: recAlbum.artist_id,
+                              coverImage: recAlbum.cover_url || '/images/default-album.png',
+                              playCount: recAlbum.play_count || 0,
+                              downloadCount: recAlbum.download_count || 0,
+                              artistSlug: recAlbum.artists?.slug || recAlbum.artist_id,
+                              artistVerified: recAlbum.artists?.verified || false,
+                              collaborators: []
+                          };
+                      });
                  setRecommendedAlbums(recommended);
              } else {
                  // Garantir que está vazio se não houver recomendados
