@@ -172,19 +172,27 @@ async def upload_album(request: Request):
             cover_file_ext = None
             if cover_image_file:
                 try:
+                    # Seek to beginning of file in case it was partially read
+                    if hasattr(cover_image_file, 'seek'):
+                        await cover_image_file.seek(0)
+                    
                     cover_data = await cover_image_file.read()
                     cover_file_ext = cover_image_file.filename.lower().split('.')[-1] if cover_image_file.filename else 'jpg'
                     print(f"[UPLOAD] Cover image read from form EARLY: {len(cover_data) if cover_data else 0} bytes, ext: {cover_file_ext}")
+                    
                     # Se leu 0 bytes, marcar como None para usar fallback
-                    if cover_data and len(cover_data) == 0:
-                        print(f"[UPLOAD] WARNING: Cover image has 0 bytes, will try fallback")
+                    if not cover_data or len(cover_data) == 0:
+                        print(f"[UPLOAD] WARNING: Cover image has 0 bytes, will try fallback from ZIP")
                         cover_data = None
+                    else:
+                        print(f"[UPLOAD] SUCCESS: Cover image read successfully - {len(cover_data)} bytes")
                 except Exception as e:
                     print(f"[UPLOAD] Error reading cover from form: {e}")
                     import traceback
                     print(f"[UPLOAD] Cover read traceback: {traceback.format_exc()}")
+                    cover_data = None
             else:
-                print(f"[UPLOAD] No cover_image_file provided in form data")
+                print(f"[UPLOAD] No cover_image_file provided in form data - will try fallback from ZIP")
             
             # Save and extract ZIP file
             album_zip_path = temp_dir / f"{album_file.filename}"
