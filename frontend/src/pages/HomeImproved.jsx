@@ -1065,13 +1065,35 @@ const HomeImproved = () => {
                             <Music className="w-8 h-8 text-red-600" />
                             <h2 className="text-3xl font-bold text-black">Gêneros</h2>
                         </div>
+                        {/* Desktop - Navigation Buttons */}
+                        <div className="hidden md:flex items-center gap-3">
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={() => scrollSection(generosRef, 'left')}
+                                    size="icon"
+                                    variant="outline"
+                                    className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                    onClick={() => scrollSection(generosRef, 'right')}
+                                    size="icon"
+                                    variant="outline"
+                                    className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                                >
+                                    <ChevronRight className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                     {/* Desktop */}
                     <div
                         ref={generosRef}
-                        className="hidden md:flex gap-4 overflow-hidden"
+                        className="hidden md:flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
-                        {genres.slice(0, 6).map((genre) => (
+                        {genres.map((genre) => (
                             <Link
                                 key={genre.slug}
                                 to={`/genero/${genre.slug}`}
