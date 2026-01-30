@@ -164,51 +164,63 @@ export const AuthProvider = ({ children }) => {
                       // Se não há modo de login definido (reload de página), não deslogar
                       // O usuário pode estar logado normalmente via sessão
                       
-                      // Se era tentativa de CADASTRO e usuário não existe, criar a conta
+                      // Se era tentativa de CADASTRO, criar ou atualizar a conta
                       console.log('[AUTH] Checking signup:', { pendingGoogleSignupType, userExists });
-                      if (pendingGoogleSignupType && !userExists) {
+                      if (pendingGoogleSignupType) {
                           const userType = pendingGoogleSignupType;
-                          console.log('[AUTH] Creating account for type:', userType);
-                          localStorage.removeItem('pendingGoogleSignupType');
-                          localStorage.removeItem('googleLoginMode');
+                          console.log('[AUTH] Creating/updating account for type:', userType, 'userExists:', userExists);
                           
                           const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Usuário';
                           
                           if (userType === 'artist') {
-                              // Criar registro na tabela artists
+                              // Usar upsert para criar ou atualizar registro na tabela artists
                               const slug = fullName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                              console.log('[AUTH] Inserting artist:', { id: session.user.id, name: fullName, slug });
-                              const { error: artistError } = await supabase.from('artists').insert({
+                              console.log('[AUTH] Upserting artist:', { id: session.user.id, name: fullName, slug });
+                              const { error: artistError } = await supabase.from('artists').upsert({
                                   id: session.user.id,
                                   name: fullName,
                                   slug: slug,
                                   email: session.user.email,
                                   profile_image: avatarUrl,
                                   created_at: new Date().toISOString()
-                              });
+                              }, { onConflict: 'id' });
+                              
                               if (artistError) {
-                                  console.error('[AUTH] Error inserting artist:', artistError);
+                                  console.error('[AUTH] Error upserting artist:', artistError);
                               } else {
-                                  console.log('[AUTH] Artist created successfully');
+                                  console.log('[AUTH] Artist upserted successfully');
+                                  // Atualizar user_metadata no Supabase Auth
+                                  await supabase.auth.updateUser({
+                                      data: { user_type: 'artist', full_name: fullName }
+                                  });
                               }
                           } else {
-                              // Criar registro na tabela users
-                              console.log('[AUTH] Inserting user:', { id: session.user.id, name: fullName });
-                              const { error: userError } = await supabase.from('users').insert({
+                              // Usar upsert para criar ou atualizar registro na tabela users
+                              console.log('[AUTH] Upserting user:', { id: session.user.id, name: fullName });
+                              const { error: userError } = await supabase.from('users').upsert({
                                   id: session.user.id,
                                   name: fullName,
                                   email: session.user.email,
                                   avatar_url: avatarUrl,
                                   created_at: new Date().toISOString()
-                              });
+                              }, { onConflict: 'id' });
+                              
                               if (userError) {
-                                  console.error('[AUTH] Error inserting user:', userError);
+                                  console.error('[AUTH] Error upserting user:', userError);
                               } else {
-                                  console.log('[AUTH] User created successfully');
+                                  console.log('[AUTH] User upserted successfully');
+                                  // Atualizar user_metadata no Supabase Auth
+                                  await supabase.auth.updateUser({
+                                      data: { user_type: 'user', full_name: fullName }
+                                  });
                               }
                           }
                           
                           existingUserType = userType;
+                          
+                          // Limpar localStorage após o processo
+                          localStorage.removeItem('pendingGoogleSignupType');
+                          localStorage.removeItem('googleLoginMode');
                       }
                       
                       localStorage.removeItem('googleLoginMode');
