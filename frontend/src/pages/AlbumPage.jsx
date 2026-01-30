@@ -959,24 +959,20 @@ const AlbumPage = () => {
 
                                 {/* Nomes */}
                                  <div className="flex items-center gap-1">
-                                     <Link to={`/${artist?.slug || artistSlug}`} className="flex items-start hover:opacity-80 transition-opacity">
+                                     <Link to={`/${artist?.slug || artistSlug}`} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
                                          <span className="text-lg">{album.artistName}</span>
                                          {artist?.is_verified && (
-                                             <div className="w-3.5 h-3.5 rounded-full bg-blue-500 flex items-center justify-center ml-0.5 mt-0.5">
-                                                 <BadgeCheck className="w-2 h-2 text-white" />
-                                             </div>
+                                             <BadgeCheck className="w-4 h-4 text-blue-500 flex-shrink-0" />
                                          )}
                                     </Link>
 
                                     {collaborators.map((collab) => (
                                          <React.Fragment key={collab.id}>
                                              <span className="text-gray-400 mx-1">&</span>
-                                             <Link to={`/${collab.slug}`} className="flex items-start hover:opacity-80 transition-opacity">
+                                             <Link to={`/${collab.slug}`} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
                                                  <span className="text-lg">{collab.name}</span>
                                                  {collab.is_verified && (
-                                                     <div className="w-3.5 h-3.5 rounded-full bg-blue-500 flex items-center justify-center ml-0.5 mt-0.5">
-                                                         <BadgeCheck className="w-2 h-2 text-white" />
-                                                     </div>
+                                                     <BadgeCheck className="w-4 h-4 text-blue-500 flex-shrink-0" />
                                                  )}
                                              </Link>
                                          </React.Fragment>
@@ -1016,10 +1012,10 @@ const AlbumPage = () => {
                         <p className="text-sm uppercase tracking-wider mb-2">Álbum</p>
                         <h1 className="text-2xl font-bold mb-3">{album.title}</h1>
                         <div className="flex items-center gap-2 justify-center mb-2">
-                            <Link to={`/${artist?.slug || artistSlug}`} className="flex items-center hover:opacity-80 transition-opacity">
+                            <Link to={`/${artist?.slug || artistSlug}`} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
                                 <span>{album.artistName}</span>
                                 {artist?.is_verified && (
-                                    <BadgeCheck className="w-3.5 h-3.5 text-blue-400 ml-1" />
+                                    <BadgeCheck className="w-4 h-4 text-blue-500 flex-shrink-0" />
                                 )}
                             </Link>
                         </div>
