@@ -214,26 +214,40 @@ export const AuthProvider = ({ children }) => {
                       localStorage.removeItem('googleLoginMode');
                       localStorage.removeItem('pendingGoogleSignupType');
                   } else if (isGoogleLogin && !isRecentGoogleAuth) {
-                      // Reload de página com conta Google - verificar tipo de usuário
+                      // Reload de página com conta Google - verificar tipo de usuário (com timeout)
                       console.log('[AUTH] Page reload with Google account, checking user type');
-                      const { data: artistData } = await supabase
-                          .from('artists')
-                          .select('id')
-                          .eq('id', session.user.id)
-                          .maybeSingle();
-                      
-                      if (artistData) {
-                          existingUserType = 'artist';
-                      } else {
-                          const { data: userData } = await supabase
-                              .from('users')
+                      try {
+                          const artistPromise = supabase
+                              .from('artists')
                               .select('id')
                               .eq('id', session.user.id)
                               .maybeSingle();
                           
-                          if (userData) {
-                              existingUserType = 'user';
+                          const { data: artistData } = await Promise.race([
+                              artistPromise,
+                              new Promise((resolve) => setTimeout(() => resolve({ data: null }), 3000))
+                          ]);
+                          
+                          if (artistData) {
+                              existingUserType = 'artist';
+                          } else {
+                              const userPromise = supabase
+                                  .from('users')
+                                  .select('id')
+                                  .eq('id', session.user.id)
+                                  .maybeSingle();
+                              
+                              const { data: userData } = await Promise.race([
+                                  userPromise,
+                                  new Promise((resolve) => setTimeout(() => resolve({ data: null }), 3000))
+                              ]);
+                              
+                              if (userData) {
+                                  existingUserType = 'user';
+                              }
                           }
+                      } catch (e) {
+                          console.warn('[AUTH] Error checking user type on reload:', e);
                       }
                       console.log('[AUTH] User type on reload:', existingUserType);
                   }
