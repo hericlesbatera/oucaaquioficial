@@ -90,10 +90,10 @@ const MyAlbums = () => {
         setLoading(true);
         
         try {
-            // Query com contagem real de músicas usando join
+            // Query simples sem join para melhor performance
             const {data: allAlbums, error} = await supabase
                 .from('albums')
-                .select('id, slug, title, cover_url, song_count, release_year, release_date, genre, description, deleted_at, created_at, songs(count)')
+                .select('id, slug, title, cover_url, song_count, release_year, release_date, genre, description, deleted_at, created_at')
                 .eq('artist_id', user.id)
                 .order('created_at', {ascending: false});
 
@@ -104,15 +104,12 @@ const MyAlbums = () => {
             const trashed = [];
 
             (allAlbums || []).forEach(album => {
-                // Usar contagem real de músicas do join, fallback para song_count
-                const realSongCount = album.songs?.[0]?.count || album.song_count || 0;
-                
                 const albumData = {
                     id: album.id,
                     slug: album.slug,
                     title: album.title,
                     coverImage: album.cover_url || '/images/default-album.png',
-                    songCount: realSongCount,
+                    songCount: album.song_count || 0,
                     releaseYear: album.release_year,
                     releaseDate: album.release_date,
                     genre: album.genre,
