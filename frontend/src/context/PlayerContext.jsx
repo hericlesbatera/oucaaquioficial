@@ -50,7 +50,7 @@ export const PlayerProvider = ({ children }) => {
 
     if (repeatMode === 'one') {
       audioRef.current.currentTime = 0;
-      audioRef.current.play();
+      audioRef.current.play().catch(err => console.error('Error replaying:', err));
       return;
     }
 
@@ -73,6 +73,8 @@ export const PlayerProvider = ({ children }) => {
       }
     }
 
+    // Garantir que isPlaying seja true para a próxima música tocar automaticamente
+    setIsPlaying(true);
     setCurrentSong(queue[nextIndex]);
   }, [queue, currentSong, repeatMode, isShuffle]);
 
@@ -118,19 +120,35 @@ export const PlayerProvider = ({ children }) => {
 
   useEffect(() => {
     if (currentSong) {
-      audioRef.current.src = currentSong.audioUrl;
-      if (isPlaying) {
-        audioRef.current.play()
-          .then(() => {
-            // Garantir que o Media Session saiba que está tocando (importante para tela bloqueada)
-            if ('mediaSession' in navigator) {
-              navigator.mediaSession.playbackState = 'playing';
-            }
-          })
-          .catch(err => console.error('Error playing audio:', err));
+      const audio = audioRef.current;
+      audio.src = currentSong.audioUrl;
+      
+      // Usar evento canplay para garantir que o áudio está pronto antes de tocar
+      const playWhenReady = () => {
+        if (isPlaying) {
+          audio.play()
+            .then(() => {
+              if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'playing';
+              }
+            })
+            .catch(err => console.error('Error playing audio:', err));
+        }
+        audio.removeEventListener('canplay', playWhenReady);
+      };
+      
+      // Se já está pronto, toca imediatamente; senão, espera carregar
+      if (audio.readyState >= 3) {
+        playWhenReady();
+      } else {
+        audio.addEventListener('canplay', playWhenReady);
       }
+      
+      return () => {
+        audio.removeEventListener('canplay', playWhenReady);
+      };
     }
-  }, [currentSong]);
+  }, [currentSong, isPlaying]);
 
   useEffect(() => {
      if (isPlaying) {
