@@ -287,12 +287,11 @@ const AlbumPage = () => {
                   // Buscar recomendados com dados do artista
                   supabase
                       .from('albums')
-                      .select('id, slug, title, artist_name, artist_id, cover_url, play_count, genre, download_count, artists(slug, verified)')
-                      .or('is_private.is.null,is_private.eq.false')
+                      .select('id, slug, title, artist_name, artist_id, cover_url, play_count, genre, download_count, is_private, artists(slug, verified)')
                       .is('deleted_at', null)
                       .neq('id', supabaseAlbum.id)
                       .order('play_count', { ascending: false })
-                      .limit(30)
+                      .limit(50)
               ]);
 
               // Processar músicas
@@ -392,19 +391,24 @@ const AlbumPage = () => {
              setIsFavorite(!!favoriteAlbum);
 
              // Processar recomendados
-             const { data: allAlbums } = recommendedResult;
+             const { data: allAlbums, error: recError } = recommendedResult;
+             console.log('Recommended albums result:', { count: allAlbums?.length, error: recError });
              let recommendedList = [];
              
              if (allAlbums && allAlbums.length > 0) {
+                 // Filtrar álbuns privados
+                 const publicAlbums = allAlbums.filter(a => !a.is_private);
+                 console.log('Public albums after filter:', publicAlbums.length);
+                 
                  // Filtrar por gênero primeiro
-                 const sameGenreAlbums = allAlbums.filter(a => a.genre === supabaseAlbum.genre);
+                 const sameGenreAlbums = publicAlbums.filter(a => a.genre === supabaseAlbum.genre);
                  
                  if (sameGenreAlbums.length > 0) {
                      // Se tem do mesmo gênero, usar esses
                      recommendedList = sameGenreAlbums.slice(0, 6);
                  } else {
                      // Se não, usar os mais ouvidos geral
-                     recommendedList = allAlbums.slice(0, 6);
+                     recommendedList = publicAlbums.slice(0, 6);
                  }
              }
 
