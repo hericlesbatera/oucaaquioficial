@@ -44,10 +44,11 @@ const Home = () => {
             .order('created_at', { ascending: false })
             .limit(100),
           
-          // Buscar artistas em paralelo
+          // Buscar artistas ordenados por seguidores (mais seguidores primeiro)
           supabase
             .from('artists')
-            .select('id, name, slug, avatar_url, is_verified, monthly_listeners')
+            .select('id, name, slug, avatar_url, is_verified, monthly_listeners, followers_count')
+            .order('followers_count', { ascending: false, nullsFirst: false })
             .limit(50)
         ]);
         
