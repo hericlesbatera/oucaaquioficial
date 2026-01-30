@@ -86,6 +86,10 @@ export const PlayerProvider = ({ children }) => {
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
     const handleLoadedMetadata = () => setDuration(audio.duration);
     const handleEnded = () => {
+      // Atualizar o estado do Media Session antes de pular para a próxima
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'playing';
+      }
       if (handleNextRef.current) {
         handleNextRef.current();
       }
@@ -116,16 +120,32 @@ export const PlayerProvider = ({ children }) => {
     if (currentSong) {
       audioRef.current.src = currentSong.audioUrl;
       if (isPlaying) {
-        audioRef.current.play().catch(err => console.error('Error playing audio:', err));
+        audioRef.current.play()
+          .then(() => {
+            // Garantir que o Media Session saiba que está tocando (importante para tela bloqueada)
+            if ('mediaSession' in navigator) {
+              navigator.mediaSession.playbackState = 'playing';
+            }
+          })
+          .catch(err => console.error('Error playing audio:', err));
       }
     }
   }, [currentSong]);
 
   useEffect(() => {
      if (isPlaying) {
-       audioRef.current.play().catch(err => console.error('Error playing audio:', err));
+       audioRef.current.play()
+         .then(() => {
+           if ('mediaSession' in navigator) {
+             navigator.mediaSession.playbackState = 'playing';
+           }
+         })
+         .catch(err => console.error('Error playing audio:', err));
      } else {
        audioRef.current.pause();
+       if ('mediaSession' in navigator) {
+         navigator.mediaSession.playbackState = 'paused';
+       }
      }
    }, [isPlaying]);
 
@@ -193,22 +213,14 @@ export const PlayerProvider = ({ children }) => {
       }
     });
     
-    // Permitir arrastar a barra para frente/trás
-    mediaSession.setActionHandler('seekforward', (event) => {
-      const skipTime = event.seekOffset || 10;
-      if (audioRef.current) {
-        audioRef.current.currentTime = Math.min(audioRef.current.currentTime + skipTime, duration);
-        setCurrentTime(audioRef.current.currentTime);
-      }
-    });
-    
-    mediaSession.setActionHandler('seekbackward', (event) => {
-      const skipTime = event.seekOffset || 10;
-      if (audioRef.current) {
-        audioRef.current.currentTime = Math.max(audioRef.current.currentTime - skipTime, 0);
-        setCurrentTime(audioRef.current.currentTime);
-      }
-    });
+    // REMOVER seekforward/seekbackward para que o iOS mostre os botões de próxima/anterior
+    // em vez das bolinhas de pular 10 segundos
+    try {
+      mediaSession.setActionHandler('seekforward', null);
+      mediaSession.setActionHandler('seekbackward', null);
+    } catch (e) {
+      // Alguns navegadores podem não suportar
+    }
 
     return () => {
       mediaSession.setActionHandler('play', null);
@@ -216,8 +228,6 @@ export const PlayerProvider = ({ children }) => {
       mediaSession.setActionHandler('previoustrack', null);
       mediaSession.setActionHandler('nexttrack', null);
       mediaSession.setActionHandler('seekto', null);
-      mediaSession.setActionHandler('seekforward', null);
-      mediaSession.setActionHandler('seekbackward', null);
     };
   }, [currentSong, isPlaying, duration]);
   
