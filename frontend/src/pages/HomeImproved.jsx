@@ -445,16 +445,6 @@ const HomeImproved = () => {
                     <HeroSlider />
                 </div>
 
-                {/* Box Adicionar Artista */}
-                <div className="box-adicionar-artista dotted-border">
-                    <div className="inner">
-                        <div className="mensagem">Divulgue sua banda em nosso site <b>www.oucaaqui.com</b></div>
-                        <a href="#" className="btn-twomp">
-                            <span className="icon-lapis-enviar"></span>Entre em contato
-                        </a>
-                    </div>
-                </div>
-
                 {/* Main Content */}
                 <div className="max-w-7xl mx-auto px-4 py-12">
 
@@ -759,17 +749,16 @@ const HomeImproved = () => {
                     {/* Desktop - scroll horizontal - mostra 7 artistas visíveis */}
                     <div 
                         ref={artistasRef}
-                        className="hidden md:flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                        className="hidden md:flex gap-4 overflow-hidden pb-4"
                     >
                         {allArtists.length === 0 ? (
                             <p className="text-gray-500 py-8">Nenhum artista disponível no momento.</p>
                         ) : (
-                            allArtists.slice(0, 10).map((artist) => (
+                            allArtists.slice(0, 8).map((artist) => (
                                 <div
                                     key={artist.id}
                                     className="flex flex-col items-center text-center flex-shrink-0"
-                                    style={{ minWidth: '110px', maxWidth: '130px' }}
+                                    style={{ width: 'calc((100% - 7 * 1rem) / 8)' }}
                                 >
                                     <Link
                                         to={`/${artist.slug || artist.id}`}
@@ -1076,40 +1065,18 @@ const HomeImproved = () => {
                             <Music className="w-8 h-8 text-red-600" />
                             <h2 className="text-3xl font-bold text-black">Gêneros</h2>
                         </div>
-                        {/* Desktop - Navigation Buttons */}
-                        <div className="hidden md:flex items-center gap-3">
-                            <div className="flex gap-2">
-                                <Button
-                                    onClick={() => scrollSection(generosRef, 'left')}
-                                    size="icon"
-                                    variant="outline"
-                                    className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                    onClick={() => scrollSection(generosRef, 'right')}
-                                    size="icon"
-                                    variant="outline"
-                                    className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </Button>
-                            </div>
-                        </div>
                     </div>
                     {/* Desktop */}
                     <div
                         ref={generosRef}
-                        className="hidden md:flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                        className="hidden md:flex gap-4 overflow-hidden"
                     >
-                        {genres.map((genre) => (
+                        {genres.slice(0, 6).map((genre) => (
                             <Link
                                 key={genre.slug}
                                 to={`/genero/${genre.slug}`}
                                 className="flex-shrink-0"
-                                style={{ width: 'calc((100% - 80px) / 6)', minWidth: '140px' }}
+                                style={{ width: 'calc((100% - 5 * 1rem) / 6)' }}
                             >
                                 <div
                                     className="h-32 rounded-lg shadow-lg flex items-center justify-center p-4 cursor-pointer group hover:shadow-xl transition-all duration-300 relative overflow-hidden"
