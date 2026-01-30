@@ -213,9 +213,9 @@ export const AuthProvider = ({ children }) => {
                       
                       localStorage.removeItem('googleLoginMode');
                       localStorage.removeItem('pendingGoogleSignupType');
-                  } else if (isGoogleLogin && !isRecentGoogleAuth) {
-                      // Reload de página com conta Google - verificar tipo de usuário
-                      console.log('[AUTH] Page reload with Google account, checking user type for ID:', session.user.id);
+                  } else {
+                      // Para QUALQUER login (Google reload ou email/senha) - verificar tipo de usuário
+                      console.log('[AUTH] Checking user type for ID:', session.user.id, 'provider:', session.user.app_metadata?.provider);
                       try {
                           // Verificar na tabela artists - buscar nome e avatar também
                           const { data: artistData, error: artistError } = await supabase
