@@ -18,6 +18,7 @@ const HomeImproved = () => {
     const topCdsRef = useRef(null);
     const generosRef = useRef(null);
     const clipsRef = useRef(null);
+    const artistasRef = useRef(null);
     const [topCdsFilter, setTopCdsFilter] = useState('mes');
     const [allAlbums, setAllAlbums] = useState([]);
     const [allArtists, setAllArtists] = useState([]);
@@ -736,13 +737,40 @@ const HomeImproved = () => {
                             <User className="w-8 h-8 text-red-600" />
                             <h2 className="text-3xl font-bold text-black">Artistas em Destaque</h2>
                         </div>
+                        <div className="flex items-center gap-3">
+                            <Link to="/artists" className="text-red-600 hover:text-red-500 font-bold text-sm">
+                                VER TODOS
+                            </Link>
+                            <div className="hidden md:flex gap-2">
+                                <Button
+                                    onClick={() => scrollSection(artistasRef, 'left')}
+                                    size="icon"
+                                    variant="outline"
+                                    className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                    onClick={() => scrollSection(artistasRef, 'right')}
+                                    size="icon"
+                                    variant="outline"
+                                    className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                                >
+                                    <ChevronRight className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        </div>
                     </div>
-                    {/* Desktop */}
-                    <div className="hidden md:grid grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-14">
+                    {/* Desktop - scroll horizontal */}
+                    <div 
+                        ref={artistasRef}
+                        className="hidden md:flex gap-8 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
                         {allArtists.length === 0 ? (
-                            <p className="text-gray-500 py-8 col-span-full">Nenhum artista disponível no momento.</p>
+                            <p className="text-gray-500 py-8">Nenhum artista disponível no momento.</p>
                         ) : (
-                            allArtists.slice(0, 2).map((artist) => (
+                            allArtists.map((artist) => (
                                 <div
                                     key={artist.id}
                                     className="flex flex-col items-center text-center"
@@ -789,11 +817,11 @@ const HomeImproved = () => {
                         )}
                     </div>
                     {/* Mobile */}
-                    <div className="md:hidden flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth">
+                    <div className="md:hidden flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4">
                         {allArtists.length === 0 ? (
                             <p className="text-gray-500 py-8 w-full">Nenhum artista disponível no momento.</p>
                         ) : (
-                            allArtists.slice(0, 6).map((artist) => (
+                            allArtists.map((artist) => (
                                 <div
                                     key={artist.id}
                                     className="flex flex-col items-center text-center flex-shrink-0"
