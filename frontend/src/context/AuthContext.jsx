@@ -217,10 +217,10 @@ export const AuthProvider = ({ children }) => {
                       // Reload de página com conta Google - verificar tipo de usuário
                       console.log('[AUTH] Page reload with Google account, checking user type for ID:', session.user.id);
                       try {
-                          // Verificar na tabela artists
+                          // Verificar na tabela artists - buscar nome e avatar também
                           const { data: artistData, error: artistError } = await supabase
                               .from('artists')
-                              .select('id')
+                              .select('id, name, profile_image')
                               .eq('id', session.user.id)
                               .maybeSingle();
                           
@@ -228,12 +228,23 @@ export const AuthProvider = ({ children }) => {
                           
                           if (artistData) {
                               existingUserType = 'artist';
-                              console.log('[AUTH] Found in artists table');
+                              // Usar nome e avatar da tabela artists
+                              if (artistData.name) {
+                                  session.user.user_metadata = {
+                                      ...session.user.user_metadata,
+                                      full_name: artistData.name,
+                                      name: artistData.name
+                                  };
+                              }
+                              if (artistData.profile_image) {
+                                  avatarUrl = artistData.profile_image;
+                              }
+                              console.log('[AUTH] Found in artists table, using name:', artistData.name);
                           } else {
-                              // Verificar na tabela users
+                              // Verificar na tabela users - buscar nome e avatar também
                               const { data: userData, error: userError } = await supabase
                                   .from('users')
-                                  .select('id')
+                                  .select('id, name, avatar_url')
                                   .eq('id', session.user.id)
                                   .maybeSingle();
                               
@@ -241,7 +252,18 @@ export const AuthProvider = ({ children }) => {
                               
                               if (userData) {
                                   existingUserType = 'user';
-                                  console.log('[AUTH] Found in users table');
+                                  // Usar nome e avatar da tabela users
+                                  if (userData.name) {
+                                      session.user.user_metadata = {
+                                          ...session.user.user_metadata,
+                                          full_name: userData.name,
+                                          name: userData.name
+                                      };
+                                  }
+                                  if (userData.avatar_url) {
+                                      avatarUrl = userData.avatar_url;
+                                  }
+                                  console.log('[AUTH] Found in users table, using name:', userData.name);
                               }
                           }
                       } catch (e) {
