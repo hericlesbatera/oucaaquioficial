@@ -142,8 +142,10 @@ export const AuthProvider = ({ children }) => {
                       }
                       
                       // Se era tentativa de CADASTRO e usuário não existe, criar a conta
+                      console.log('[AUTH] Checking signup:', { pendingGoogleSignupType, userExists });
                       if (pendingGoogleSignupType && !userExists) {
                           const userType = pendingGoogleSignupType;
+                          console.log('[AUTH] Creating account for type:', userType);
                           localStorage.removeItem('pendingGoogleSignupType');
                           localStorage.removeItem('googleLoginMode');
                           
@@ -152,7 +154,8 @@ export const AuthProvider = ({ children }) => {
                           if (userType === 'artist') {
                               // Criar registro na tabela artists
                               const slug = fullName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                              await supabase.from('artists').insert({
+                              console.log('[AUTH] Inserting artist:', { id: session.user.id, name: fullName, slug });
+                              const { error: artistError } = await supabase.from('artists').insert({
                                   id: session.user.id,
                                   name: fullName,
                                   slug: slug,
@@ -160,15 +163,26 @@ export const AuthProvider = ({ children }) => {
                                   profile_image: avatarUrl,
                                   created_at: new Date().toISOString()
                               });
+                              if (artistError) {
+                                  console.error('[AUTH] Error inserting artist:', artistError);
+                              } else {
+                                  console.log('[AUTH] Artist created successfully');
+                              }
                           } else {
                               // Criar registro na tabela users
-                              await supabase.from('users').insert({
+                              console.log('[AUTH] Inserting user:', { id: session.user.id, name: fullName });
+                              const { error: userError } = await supabase.from('users').insert({
                                   id: session.user.id,
                                   name: fullName,
                                   email: session.user.email,
                                   avatar_url: avatarUrl,
                                   created_at: new Date().toISOString()
                               });
+                              if (userError) {
+                                  console.error('[AUTH] Error inserting user:', userError);
+                              } else {
+                                  console.log('[AUTH] User created successfully');
+                              }
                           }
                           
                           existingUserType = userType;
