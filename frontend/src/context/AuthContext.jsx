@@ -214,36 +214,34 @@ export const AuthProvider = ({ children }) => {
                       localStorage.removeItem('googleLoginMode');
                       localStorage.removeItem('pendingGoogleSignupType');
                   } else if (isGoogleLogin && !isRecentGoogleAuth) {
-                      // Reload de página com conta Google - verificar tipo de usuário (com timeout)
-                      console.log('[AUTH] Page reload with Google account, checking user type');
+                      // Reload de página com conta Google - verificar tipo de usuário
+                      console.log('[AUTH] Page reload with Google account, checking user type for ID:', session.user.id);
                       try {
-                          const artistPromise = supabase
+                          // Verificar na tabela artists
+                          const { data: artistData, error: artistError } = await supabase
                               .from('artists')
                               .select('id')
                               .eq('id', session.user.id)
                               .maybeSingle();
                           
-                          const { data: artistData } = await Promise.race([
-                              artistPromise,
-                              new Promise((resolve) => setTimeout(() => resolve({ data: null }), 3000))
-                          ]);
+                          console.log('[AUTH] Artist query result:', { artistData, artistError });
                           
                           if (artistData) {
                               existingUserType = 'artist';
+                              console.log('[AUTH] Found in artists table');
                           } else {
-                              const userPromise = supabase
+                              // Verificar na tabela users
+                              const { data: userData, error: userError } = await supabase
                                   .from('users')
                                   .select('id')
                                   .eq('id', session.user.id)
                                   .maybeSingle();
                               
-                              const { data: userData } = await Promise.race([
-                                  userPromise,
-                                  new Promise((resolve) => setTimeout(() => resolve({ data: null }), 3000))
-                              ]);
+                              console.log('[AUTH] User query result:', { userData, userError });
                               
                               if (userData) {
                                   existingUserType = 'user';
+                                  console.log('[AUTH] Found in users table');
                               }
                           }
                       } catch (e) {
