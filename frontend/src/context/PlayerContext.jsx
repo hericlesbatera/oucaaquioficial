@@ -196,37 +196,42 @@ export const PlayerProvider = ({ children }) => {
     }
   }, [currentTime, duration, queue, currentSong, repeatMode]);
 
+  // Carregar nova música quando currentSong mudar
   useEffect(() => {
     if (currentSong) {
       const audio = audioRef.current;
-      audio.src = currentSong.audioUrl;
       
-      // Usar evento canplay para garantir que o áudio está pronto antes de tocar
-      const playWhenReady = () => {
-        if (isPlaying) {
-          audio.play()
-            .then(() => {
-              if ('mediaSession' in navigator) {
-                navigator.mediaSession.playbackState = 'playing';
-              }
-            })
-            .catch(err => console.error('Error playing audio:', err));
+      // Só atualizar src se for uma música diferente
+      if (audio.src !== currentSong.audioUrl) {
+        audio.src = currentSong.audioUrl;
+        
+        // Usar evento canplay para garantir que o áudio está pronto antes de tocar
+        const playWhenReady = () => {
+          if (isPlaying) {
+            audio.play()
+              .then(() => {
+                if ('mediaSession' in navigator) {
+                  navigator.mediaSession.playbackState = 'playing';
+                }
+              })
+              .catch(err => console.error('Error playing audio:', err));
+          }
+          audio.removeEventListener('canplay', playWhenReady);
+        };
+        
+        // Se já está pronto, toca imediatamente; senão, espera carregar
+        if (audio.readyState >= 3) {
+          playWhenReady();
+        } else {
+          audio.addEventListener('canplay', playWhenReady);
         }
-        audio.removeEventListener('canplay', playWhenReady);
-      };
-      
-      // Se já está pronto, toca imediatamente; senão, espera carregar
-      if (audio.readyState >= 3) {
-        playWhenReady();
-      } else {
-        audio.addEventListener('canplay', playWhenReady);
+        
+        return () => {
+          audio.removeEventListener('canplay', playWhenReady);
+        };
       }
-      
-      return () => {
-        audio.removeEventListener('canplay', playWhenReady);
-      };
     }
-  }, [currentSong, isPlaying]);
+  }, [currentSong]);
 
   useEffect(() => {
      if (isPlaying) {
