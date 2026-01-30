@@ -229,12 +229,17 @@ export const AuthProvider = ({ children }) => {
                       // Para QUALQUER login (Google reload ou email/senha) - verificar tipo de usuário
                       console.log('[AUTH] Checking user type for ID:', session.user.id, 'provider:', session.user.app_metadata?.provider);
                       try {
-                          // Verificar na tabela artists - buscar nome e avatar também
-                          const { data: artistData, error: artistError } = await supabase
+                          // Verificar na tabela artists - buscar nome e avatar também (com timeout de 5s)
+                          const artistPromise = supabase
                               .from('artists')
                               .select('id, name, profile_image')
                               .eq('id', session.user.id)
                               .maybeSingle();
+                          
+                          const { data: artistData, error: artistError } = await Promise.race([
+                              artistPromise,
+                              new Promise((_, reject) => setTimeout(() => reject(new Error('Artist query timeout')), 5000))
+                          ]);
                           
                           console.log('[AUTH] Artist query result:', { artistData, artistError });
                           
@@ -253,12 +258,17 @@ export const AuthProvider = ({ children }) => {
                               }
                               console.log('[AUTH] Found in artists table, using name:', artistData.name);
                           } else {
-                              // Verificar na tabela users - buscar nome e avatar também
-                              const { data: userData, error: userError } = await supabase
+                              // Verificar na tabela users - buscar nome e avatar também (com timeout de 5s)
+                              const userPromise = supabase
                                   .from('users')
                                   .select('id, name, avatar_url')
                                   .eq('id', session.user.id)
                                   .maybeSingle();
+                              
+                              const { data: userData, error: userError } = await Promise.race([
+                                  userPromise,
+                                  new Promise((_, reject) => setTimeout(() => reject(new Error('User query timeout')), 5000))
+                              ]);
                               
                               console.log('[AUTH] User query result:', { userData, userError });
                               
@@ -279,9 +289,11 @@ export const AuthProvider = ({ children }) => {
                               }
                           }
                       } catch (e) {
-                          console.warn('[AUTH] Error checking user type on reload:', e);
+                          console.warn('[AUTH] Error/timeout checking user type:', e.message);
+                          // Em caso de timeout, usar dados do user_metadata como fallback
+                          existingUserType = session.user.user_metadata?.user_type || 'user';
                       }
-                      console.log('[AUTH] User type on reload:', existingUserType);
+                      console.log('[AUTH] User type determined:', existingUserType);
                   }
          
                   // Verificar se é admin (com timeout)
