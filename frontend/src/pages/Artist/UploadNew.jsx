@@ -393,18 +393,14 @@ const UploadNew = () => {
 
              // Enviar arquivo
              console.log('[UPLOAD] Creating upload promise...');
-             const uploadPromise = new Promise(async (resolve, reject) => {
+             // Use token already obtained above (avoid duplicate getSession call that can hang)
+             if (!token) {
+                 throw new Error('Não autenticado. Por favor, faça login novamente.');
+             }
+             
+             const uploadPromise = new Promise((resolve, reject) => {
                  try {
-                     console.log('[UPLOAD] Inside promise, getting auth token...');
-                     // Get auth token
-                     const { data: { session } } = await supabase.auth.getSession();
-                     const token = session?.access_token;
-                     console.log('[UPLOAD] Auth token for XHR:', token ? 'obtained' : 'MISSING');
-                     
-                     if (!token) {
-                         reject(new Error('Não autenticado. Por favor, faça login novamente.'));
-                         return;
-                     }
+                     console.log('[UPLOAD] Inside promise, using existing token');
 
                      console.log('[UPLOAD] Creating XHR...');
                      const xhr = new XMLHttpRequest();
