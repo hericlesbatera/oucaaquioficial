@@ -737,34 +737,29 @@ const HomeImproved = () => {
                             <User className="w-8 h-8 text-red-600" />
                             <h2 className="text-3xl font-bold text-black">Artistas em Destaque</h2>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <Link to="/artists" className="text-red-600 hover:text-red-500 font-bold text-sm">
-                                VER TODOS
-                            </Link>
-                            <div className="hidden md:flex gap-2">
-                                <Button
-                                    onClick={() => scrollSection(artistasRef, 'left')}
-                                    size="icon"
-                                    variant="outline"
-                                    className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                    onClick={() => scrollSection(artistasRef, 'right')}
-                                    size="icon"
-                                    variant="outline"
-                                    className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </Button>
-                            </div>
+                        <div className="hidden md:flex gap-2">
+                            <Button
+                                onClick={() => scrollSection(artistasRef, 'left')}
+                                size="icon"
+                                variant="outline"
+                                className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </Button>
+                            <Button
+                                onClick={() => scrollSection(artistasRef, 'right')}
+                                size="icon"
+                                variant="outline"
+                                className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </Button>
                         </div>
                     </div>
-                    {/* Desktop - scroll horizontal */}
+                    {/* Desktop - scroll horizontal - mostra 7 artistas visíveis */}
                     <div 
                         ref={artistasRef}
-                        className="hidden md:flex gap-8 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+                        className="hidden md:flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {allArtists.length === 0 ? (
@@ -773,17 +768,18 @@ const HomeImproved = () => {
                             allArtists.map((artist) => (
                                 <div
                                     key={artist.id}
-                                    className="flex flex-col items-center text-center"
+                                    className="flex flex-col items-center text-center flex-shrink-0"
+                                    style={{ width: 'calc((100% - 6 * 1.5rem) / 7)' }}
                                 >
                                     <Link
                                         to={`/${artist.slug || artist.id}`}
                                         className="group cursor-pointer mb-1"
                                     >
-                                        <div className="relative inline-block">
+                                        <div className="relative inline-block overflow-visible p-2">
                                             <img
                                                 src={artist.avatar}
                                                 alt={artist.name}
-                                                className="w-28 h-28 rounded-full object-cover transform group-hover:scale-110 transition-transform duration-300 shadow-lg group-hover:ring-2 group-hover:ring-red-600"
+                                                className="w-24 h-24 lg:w-28 lg:h-28 rounded-full object-cover transform group-hover:scale-105 transition-transform duration-300 shadow-lg"
                                             />
                                         </div>
                                     </Link>
