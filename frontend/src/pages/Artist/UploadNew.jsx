@@ -314,16 +314,23 @@ const UploadNew = () => {
             }
 
             // Usar SSE para rastrear progresso em tempo real
+            console.log('[UPLOAD] Starting SSE and XHR setup...');
 
              // Obter token para SSE
+             console.log('[UPLOAD] Getting session...');
              const { data: { session } } = await supabase.auth.getSession();
              const token = session?.access_token;
+             console.log('[UPLOAD] Token obtained:', token ? 'yes' : 'no');
+             
              const sseUrl = token 
                  ? `${API_URL}/api/upload-progress/progress/${uploadId}?token=${encodeURIComponent(token)}`
                  : `${API_URL}/api/upload-progress/progress/${uploadId}`;
+             console.log('[UPLOAD] SSE URL:', sseUrl);
 
              // Abrir conexão SSE para progresso
+             console.log('[UPLOAD] Creating EventSource...');
              const eventSource = new EventSource(sseUrl);
+             console.log('[UPLOAD] EventSource created');
              eventSourceRef = eventSource; // Store reference for cleanup
              let sseConnected = false;
              let uploadCompleted = false;
@@ -385,18 +392,23 @@ const UploadNew = () => {
              });
 
              // Enviar arquivo
+             console.log('[UPLOAD] Creating upload promise...');
              const uploadPromise = new Promise(async (resolve, reject) => {
                  try {
+                     console.log('[UPLOAD] Inside promise, getting auth token...');
                      // Get auth token
                      const { data: { session } } = await supabase.auth.getSession();
                      const token = session?.access_token;
+                     console.log('[UPLOAD] Auth token for XHR:', token ? 'obtained' : 'MISSING');
                      
                      if (!token) {
                          reject(new Error('Não autenticado. Por favor, faça login novamente.'));
                          return;
                      }
 
+                     console.log('[UPLOAD] Creating XHR...');
                      const xhr = new XMLHttpRequest();
+                     console.log('[UPLOAD] XHR created');
                      
                      // Set timeout to 10 minutes (600000ms) for large files
                      xhr.timeout = 600000;
@@ -440,9 +452,12 @@ const UploadNew = () => {
                          reject(new Error('Upload excedeu o tempo limite (10 minutos). Arquivo muito grande?'));
                      });
 
+                     console.log('[UPLOAD] Opening XHR to:', `${API_URL}/api/album-upload/upload`);
                      xhr.open('POST', `${API_URL}/api/album-upload/upload`);
                      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+                     console.log('[UPLOAD] Sending XHR with FormData...');
                      xhr.send(uploadData);
+                     console.log('[UPLOAD] XHR.send() called');
                  } catch (error) {
                      reject(error);
                  }
