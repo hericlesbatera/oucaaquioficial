@@ -330,7 +330,7 @@ export const AlbumSongRow = ({
       try {
         const { data } = await supabase
           .from('artists')
-          .select('name, verified, avatar_url')
+          .select('name, is_verified, avatar_url')
           .eq('id', song.artistId)
           .maybeSingle();
         

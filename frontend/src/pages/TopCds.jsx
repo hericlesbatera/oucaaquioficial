@@ -36,7 +36,7 @@ const TopCds = () => {
             // Buscar artistas primeiro
             const { data: artistsData } = await supabase
                 .from('artists')
-                .select('id, name, slug, verified, avatar_url');
+                .select('id, name, slug, is_verified, avatar_url');
             
             const artistsMap = {};
             if (artistsData) {

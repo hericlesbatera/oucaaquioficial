@@ -82,7 +82,7 @@ const GenrePage = () => {
         const artistIds = [...new Set(data.map(a => a.artist_id))];
         const { data: artists } = await supabase
           .from('artists')
-          .select('id, name, slug, verified, avatar_url')
+          .select('id, name, slug, is_verified, avatar_url')
           .in('id', artistIds);
         
         const artistMap = {};

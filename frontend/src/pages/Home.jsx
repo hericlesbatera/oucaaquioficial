@@ -47,7 +47,7 @@ const Home = () => {
           // Buscar artistas em paralelo
           supabase
             .from('artists')
-            .select('id, name, slug, avatar_url, verified, monthly_listeners')
+            .select('id, name, slug, avatar_url, is_verified, monthly_listeners')
             .limit(50)
         ]);
         

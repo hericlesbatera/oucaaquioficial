@@ -123,7 +123,7 @@ const AlbumPage = () => {
             const artistPromise = (async () => {
                 let { data: artistData, error: slugError } = await supabase
                     .from('artists')
-                    .select('id, name, slug, avatar_url, cover_url, verified, bio, followers_count')
+                    .select('id, name, slug, avatar_url, cover_url, is_verified, bio, followers_count')
                     .eq('slug', artistSlug)
                     .maybeSingle();
                 
@@ -135,7 +135,7 @@ const AlbumPage = () => {
                 if (!artistData) {
                     const { data: artistById, error: idError } = await supabase
                         .from('artists')
-                        .select('id, name, slug, avatar_url, cover_url, verified, bio, followers_count')
+                        .select('id, name, slug, avatar_url, cover_url, is_verified, bio, followers_count')
                         .eq('id', artistSlug)
                         .maybeSingle();
                     if (idError) {
@@ -148,7 +148,7 @@ const AlbumPage = () => {
                 if (!artistData && supabaseAlbum?.artist_id) {
                     const { data: artistByAlbum, error: albumArtistError } = await supabase
                         .from('artists')
-                        .select('id, name, slug, avatar_url, cover_url, verified, bio, followers_count')
+                        .select('id, name, slug, avatar_url, cover_url, is_verified, bio, followers_count')
                         .eq('id', supabaseAlbum.artist_id)
                         .maybeSingle();
                     if (albumArtistError) {
@@ -378,7 +378,7 @@ const AlbumPage = () => {
                  const collabIds = collabData.map(c => c.invited_user_id);
                  const { data: collabArtists } = await supabase
                      .from('artists')
-                     .select('id, name, slug, avatar_url, verified')
+                     .select('id, name, slug, avatar_url, is_verified')
                      .in('id', collabIds);
              
                  if (collabArtists) {
