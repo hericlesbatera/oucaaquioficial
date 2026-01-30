@@ -111,7 +111,11 @@ export const AuthProvider = ({ children }) => {
                   let userExists = false;
                   let existingUserType = null;
                   
-                  if (isGoogleLogin) {
+                  // Só processar lógica especial de Google se for login/cadastro recente
+                  // (não quando é apenas reload de página)
+                  const isRecentGoogleAuth = googleLoginMode || pendingGoogleSignupType;
+                  
+                  if (isGoogleLogin && isRecentGoogleAuth) {
                       // Verificar na tabela artists
                       const { data: artistData, error: artistError } = await supabase
                           .from('artists')
@@ -142,8 +146,10 @@ export const AuthProvider = ({ children }) => {
                           }
                       }
                       
-                      // Se era tentativa de LOGIN mas usuário não existe
+                      // Se era tentativa de LOGIN (primeira vez) mas usuário não existe
+                      // Só fazer isso se googleLoginMode estiver definido (login recente, não reload de página)
                       if (googleLoginMode === 'login' && !userExists) {
+                          console.log('[AUTH] Login attempt but user not found in tables, signing out');
                           localStorage.removeItem('googleLoginMode');
                           localStorage.removeItem('pendingGoogleSignupType');
                           // Deslogar o usuário
@@ -154,6 +160,9 @@ export const AuthProvider = ({ children }) => {
                           setLoading(false);
                           return;
                       }
+                      
+                      // Se não há modo de login definido (reload de página), não deslogar
+                      // O usuário pode estar logado normalmente via sessão
                       
                       // Se era tentativa de CADASTRO e usuário não existe, criar a conta
                       console.log('[AUTH] Checking signup:', { pendingGoogleSignupType, userExists });
@@ -204,6 +213,29 @@ export const AuthProvider = ({ children }) => {
                       
                       localStorage.removeItem('googleLoginMode');
                       localStorage.removeItem('pendingGoogleSignupType');
+                  } else if (isGoogleLogin && !isRecentGoogleAuth) {
+                      // Reload de página com conta Google - verificar tipo de usuário
+                      console.log('[AUTH] Page reload with Google account, checking user type');
+                      const { data: artistData } = await supabase
+                          .from('artists')
+                          .select('id')
+                          .eq('id', session.user.id)
+                          .maybeSingle();
+                      
+                      if (artistData) {
+                          existingUserType = 'artist';
+                      } else {
+                          const { data: userData } = await supabase
+                              .from('users')
+                              .select('id')
+                              .eq('id', session.user.id)
+                              .maybeSingle();
+                          
+                          if (userData) {
+                              existingUserType = 'user';
+                          }
+                      }
+                      console.log('[AUTH] User type on reload:', existingUserType);
                   }
          
                   // Verificar se é admin (com timeout)
