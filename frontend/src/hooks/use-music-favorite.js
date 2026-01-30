@@ -37,13 +37,13 @@ export const useMusicFavorite = (musicId) => {
         console.error('Error checking music_favorites:', error.code);
       }
       
-      // If no data, try old favorites table
+      // If no data, try old favorites table (uses musica_id instead of song_id)
       if (!data || data.length === 0) {
         const { data: oldData, error: oldError } = await supabase
           .from('favorites')
           .select('id')
           .eq('user_id', user.id)
-          .eq('song_id', musicId)
+          .eq('musica_id', musicId)
           .limit(1);
 
         if (!oldError && oldData && oldData.length > 0) {
@@ -77,12 +77,12 @@ export const useMusicFavorite = (musicId) => {
           .eq('music_id', musicId);
 
         if (errorSnake) {
-          // Try old table with snake_case
+          // Try old table (uses musica_id)
           const { error: errorOld } = await supabase
             .from('favorites')
             .delete()
             .eq('user_id', user.id)
-            .eq('song_id', musicId);
+            .eq('musica_id', musicId);
           
           if (errorOld) throw errorOld;
         }
@@ -97,12 +97,12 @@ export const useMusicFavorite = (musicId) => {
           });
 
         if (errorSnake) {
-          // Try old table with snake_case
+          // Try old table (uses musica_id)
           const { error: errorOld } = await supabase
             .from('favorites')
             .insert({
               user_id: user.id,
-              song_id: musicId,
+              musica_id: musicId,
               created_at: new Date().toISOString()
             });
           
