@@ -113,26 +113,32 @@ export const AuthProvider = ({ children }) => {
                   
                   if (isGoogleLogin) {
                       // Verificar na tabela artists
-                      const { data: artistData } = await supabase
+                      const { data: artistData, error: artistError } = await supabase
                           .from('artists')
                           .select('id, name')
                           .eq('id', session.user.id)
                           .maybeSingle();
                       
+                      console.log('[AUTH] Artist check:', { artistData, artistError, searchId: session.user.id });
+                      
                       if (artistData) {
                           userExists = true;
                           existingUserType = 'artist';
+                          console.log('[AUTH] User found as artist');
                       } else {
                           // Verificar na tabela users
-                          const { data: userData } = await supabase
+                          const { data: userData, error: userError } = await supabase
                               .from('users')
                               .select('id, name')
                               .eq('id', session.user.id)
                               .maybeSingle();
                           
+                          console.log('[AUTH] User check:', { userData, userError });
+                          
                           if (userData) {
                               userExists = true;
                               existingUserType = 'user';
+                              console.log('[AUTH] User found as user');
                           }
                       }
                       
