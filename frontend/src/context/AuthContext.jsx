@@ -93,7 +93,91 @@ export const AuthProvider = ({ children }) => {
                   let isAdmin = false;
                   let isAdminOnly = false;
                   let adminAvatar = null;
-    
+
+                  // Verificar se é login via Google (OAuth)
+                  const isGoogleLogin = session.user.app_metadata?.provider === 'google';
+                  const pendingGoogleSignupType = localStorage.getItem('pendingGoogleSignupType');
+                  const googleLoginMode = localStorage.getItem('googleLoginMode');
+                  
+                  // Verificar se o usuário já existe nas tabelas (artists ou users)
+                  let userExists = false;
+                  let existingUserType = null;
+                  
+                  if (isGoogleLogin) {
+                      // Verificar na tabela artists
+                      const { data: artistData } = await supabase
+                          .from('artists')
+                          .select('id, name')
+                          .eq('id', session.user.id)
+                          .maybeSingle();
+                      
+                      if (artistData) {
+                          userExists = true;
+                          existingUserType = 'artist';
+                      } else {
+                          // Verificar na tabela users
+                          const { data: userData } = await supabase
+                              .from('users')
+                              .select('id, name')
+                              .eq('id', session.user.id)
+                              .maybeSingle();
+                          
+                          if (userData) {
+                              userExists = true;
+                              existingUserType = 'user';
+                          }
+                      }
+                      
+                      // Se era tentativa de LOGIN mas usuário não existe
+                      if (googleLoginMode === 'login' && !userExists) {
+                          localStorage.removeItem('googleLoginMode');
+                          localStorage.removeItem('pendingGoogleSignupType');
+                          // Deslogar o usuário
+                          await supabase.auth.signOut();
+                          // Marcar erro para exibir no frontend
+                          sessionStorage.setItem('googleLoginError', 'Conta não encontrada. Por favor, use "Cadastre-se com Google" para criar uma conta.');
+                          setUser(null);
+                          setLoading(false);
+                          return;
+                      }
+                      
+                      // Se era tentativa de CADASTRO e usuário não existe, criar a conta
+                      if (pendingGoogleSignupType && !userExists) {
+                          const userType = pendingGoogleSignupType;
+                          localStorage.removeItem('pendingGoogleSignupType');
+                          localStorage.removeItem('googleLoginMode');
+                          
+                          const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Usuário';
+                          
+                          if (userType === 'artist') {
+                              // Criar registro na tabela artists
+                              const slug = fullName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                              await supabase.from('artists').insert({
+                                  id: session.user.id,
+                                  name: fullName,
+                                  slug: slug,
+                                  email: session.user.email,
+                                  profile_image: avatarUrl,
+                                  created_at: new Date().toISOString()
+                              });
+                          } else {
+                              // Criar registro na tabela users
+                              await supabase.from('users').insert({
+                                  id: session.user.id,
+                                  name: fullName,
+                                  email: session.user.email,
+                                  avatar_url: avatarUrl,
+                                  created_at: new Date().toISOString()
+                              });
+                          }
+                          
+                          existingUserType = userType;
+                      }
+                      
+                      localStorage.removeItem('googleLoginMode');
+                      localStorage.removeItem('pendingGoogleSignupType');
+                  }
+         
                   // Verificar se é admin (com timeout)
                   try {
                       const { data: adminData, error } = await Promise.race([
@@ -106,7 +190,7 @@ export const AuthProvider = ({ children }) => {
                               setTimeout(() => reject(new Error('Admin check timeout')), 15000)
                           )
                       ]);
-    
+         
                       if (adminData) {
                           isAdmin = true;
                           isAdminOnly = adminData.is_admin_only === true;
@@ -116,12 +200,12 @@ export const AuthProvider = ({ children }) => {
                       console.warn('Erro ao verificar status de admin:', adminError);
                       isAdmin = false;
                   }
-    
+         
                   const userData = {
                       id: session.user.id,
                       email: session.user.email,
                       name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Usuário',
-                      type: isAdmin ? 'admin' : (session.user.user_metadata?.user_type || 'user'),
+                      type: isAdmin ? 'admin' : (existingUserType || session.user.user_metadata?.user_type || 'user'),
                       cidade: session.user.user_metadata?.cidade || '',
                       estado: session.user.user_metadata?.estado || '',
                       genero: session.user.user_metadata?.genero || '',

@@ -66,6 +66,15 @@ const Header = () => {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
+    
+    // Verificar se há erro de login Google ao carregar a página
+    useEffect(() => {
+        const googleError = sessionStorage.getItem('googleLoginError');
+        if (googleError) {
+            // Abrir o modal de autenticação para mostrar o erro
+            setIsAuthModalOpen(true);
+        }
+    }, []);
     const [searchQuery, setSearchQuery] = useState('');
     const [showAllGenres, setShowAllGenres] = useState(false);
     const [scrollDirection, setScrollDirection] = useState('down');

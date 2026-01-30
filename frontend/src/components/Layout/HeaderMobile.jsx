@@ -12,6 +12,14 @@ const HeaderMobile = () => {
     const [artistAvatar, setArtistAvatar] = useState(null);
     const [showMenu, setShowMenu] = useState(false);
 
+    // Verificar se há erro de login Google ao carregar a página
+    useEffect(() => {
+        const googleError = sessionStorage.getItem('googleLoginError');
+        if (googleError) {
+            setIsAuthModalOpen(true);
+        }
+    }, []);
+
     useEffect(() => {
         const loadArtistAvatar = async () => {
             if (user?.id && isArtist) {

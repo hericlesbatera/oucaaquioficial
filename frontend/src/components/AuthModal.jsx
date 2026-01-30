@@ -280,8 +280,11 @@ const AuthModal = ({ isOpen, onClose }) => {
 
     const handleGoogleLogin = async () => {
         try {
+            // Marcar que é tentativa de LOGIN (não cadastro)
+            localStorage.setItem('googleLoginMode', 'login');
             await loginWithGoogle();
         } catch (error) {
+            localStorage.removeItem('googleLoginMode');
             toast({
                 title: 'Erro',
                 description: 'Erro ao fazer login com Google',
@@ -289,6 +292,19 @@ const AuthModal = ({ isOpen, onClose }) => {
             });
         }
     };
+    
+    // Verificar se há erro de login Google ao abrir o modal
+    React.useEffect(() => {
+        const googleError = sessionStorage.getItem('googleLoginError');
+        if (googleError) {
+            sessionStorage.removeItem('googleLoginError');
+            toast({
+                title: 'Conta não encontrada',
+                description: googleError,
+                variant: 'destructive'
+            });
+        }
+    }, [isOpen]);
 
     const handleGoogleSignup = () => {
         setShowGoogleSignupTypeModal(true);
