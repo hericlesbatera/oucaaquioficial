@@ -510,10 +510,6 @@ const MyAlbums = () => {
 
             <div className="space-y-2">
                 <h3 className="text-sm font-semibold text-gray-900 truncate">{album.title}</h3>
-                <div className="flex items-center justify-between text-xs text-gray-600">
-                    <span>{album.songCount} músicas</span>
-                    <span>{album.releaseYear}</span>
-                </div>
 
                 {isTrash ? (
                     <div className="flex gap-2 pt-2">
@@ -573,9 +569,9 @@ const MyAlbums = () => {
         <div className="max-w-7xl mx-auto p-4 md:p-8 pb-16">
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Meus Álbuns</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">CDS/SINGLES</h1>
                     <p className="text-gray-600">
-                        {loading ? 'Carregando...' : `${activeAlbums.length} álbuns publicados`}
+                        {loading ? 'Carregando...' : `${activeAlbums.length} ${activeAlbums.length === 1 ? 'CD Publicado' : 'CDs Publicados'}`}
                     </p>
                 </div>
                 <Link to="/artist/upload">
