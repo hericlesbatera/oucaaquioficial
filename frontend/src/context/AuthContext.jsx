@@ -99,6 +99,14 @@ export const AuthProvider = ({ children }) => {
                   const pendingGoogleSignupType = localStorage.getItem('pendingGoogleSignupType');
                   const googleLoginMode = localStorage.getItem('googleLoginMode');
                   
+                  console.log('[AUTH] SIGNED_IN event:', { 
+                      isGoogleLogin, 
+                      pendingGoogleSignupType, 
+                      googleLoginMode,
+                      userId: session.user.id,
+                      provider: session.user.app_metadata?.provider
+                  });
+                  
                   // Verificar se o usuário já existe nas tabelas (artists ou users)
                   let userExists = false;
                   let existingUserType = null;
