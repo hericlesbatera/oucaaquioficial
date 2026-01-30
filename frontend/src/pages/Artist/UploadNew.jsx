@@ -316,7 +316,7 @@ const UploadNew = () => {
             // Usar SSE para rastrear progresso em tempo real
             console.log('[UPLOAD] Starting SSE and XHR setup...');
 
-             // Obter token para SSE com timeout
+             // Obter token para SSE com timeout de 5 segundos
              console.log('[UPLOAD] Getting session...');
              let token = null;
              try {
@@ -326,30 +326,12 @@ const UploadNew = () => {
                  );
                  const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
                  token = session?.access_token;
+                 console.log('[UPLOAD] Token obtained:', token ? 'yes' : 'no');
              } catch (e) {
-                 console.warn('[UPLOAD] getSession timeout/error, trying stored session:', e.message);
-                 // Fallback: try to get token from localStorage directly
-                 // Search for any supabase auth token in localStorage
-                 for (let i = 0; i < localStorage.length; i++) {
-                     const key = localStorage.key(i);
-                     if (key && key.includes('sb-') && key.includes('-auth-token')) {
-                         try {
-                             const storedSession = localStorage.getItem(key);
-                             if (storedSession) {
-                                 const parsed = JSON.parse(storedSession);
-                                 token = parsed?.access_token || parsed?.currentSession?.access_token;
-                                 if (token) {
-                                     console.log('[UPLOAD] Found token in localStorage key:', key);
-                                     break;
-                                 }
-                             }
-                         } catch (parseErr) {
-                             console.error('[UPLOAD] Failed to parse stored session from:', key);
-                         }
-                     }
-                 }
+                 console.warn('[UPLOAD] getSession timeout/error:', e.message);
+                 // If session fails, throw error so user knows to try again
+                 throw new Error('Sessão expirada. Por favor, atualize a página e tente novamente.');
              }
-             console.log('[UPLOAD] Token obtained:', token ? 'yes' : 'no');
              
              const sseUrl = token 
                  ? `${API_URL}/api/upload-progress/progress/${uploadId}?token=${encodeURIComponent(token)}`
