@@ -301,7 +301,7 @@ const UploadNew = () => {
             uploadData.append('needsComposer', needsComposer);
             uploadData.append('needsISRC', needsISRC);
             uploadData.append('songMetadata', JSON.stringify(songMetadata));
-            uploadData.append('collaborators', JSON.stringify(collaborators.map(c => c.id)));
+            uploadData.append('collaborators', JSON.stringify([]));
 
             if (formData.coverImage) {
                 uploadData.append('coverImage', formData.coverImage);
