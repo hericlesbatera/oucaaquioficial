@@ -374,7 +374,7 @@ export const AuthProvider = ({ children }) => {
                      const { data: artistCheck } = await Promise.race([
                          supabase
                              .from('artists')
-                             .select('id, name, avatar_url')
+                             .select('id, name, profile_image')
                              .eq('id', data.user.id)
                              .maybeSingle(),
                          new Promise((_, reject) => 
@@ -383,7 +383,8 @@ export const AuthProvider = ({ children }) => {
                      ]);
     
                      artistData = artistCheck;
-                     isArtist = !!artistData || data.user.user_metadata?.user_type === 'artist';
+                     isArtist = !!artistData;
+                     console.log('[LOGIN] Artist check result:', { artistData, isArtist });
                  } catch (artistError) {
                      console.warn('Erro ao verificar artist status:', artistError);
                  }
@@ -409,8 +410,9 @@ export const AuthProvider = ({ children }) => {
                  isPremium: false,
                  isAdmin: isAdmin,
                  isAdminOnly: isAdminOnly,
-                 avatar: artistData?.avatar_url || DEFAULT_AVATAR
+                 avatar: artistData?.profile_image || data.user.user_metadata?.avatar_url || DEFAULT_AVATAR
              };
+             console.log('[LOGIN] Final userData:', userData);
              setUser(userData);
              localStorage.setItem('currentUser', JSON.stringify(userData));
              return { data: userData, isArtist, isAdmin };
