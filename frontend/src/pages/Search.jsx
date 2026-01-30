@@ -197,7 +197,7 @@ const Search = () => {
                                 alt={artist.name}
                                 className="w-full aspect-square rounded-full object-cover transform group-hover:scale-105 transition-transform duration-300 shadow-md"
                                 badgeClassName="w-6 h-6"
-                                showBadge={artist.is_verified}
+                                showBadge={artist.verified}
                               />
                             </div>
                             <h3 className="text-gray-900 font-semibold text-xs mb-0.5 truncate group-hover:text-red-600 transition-colors">

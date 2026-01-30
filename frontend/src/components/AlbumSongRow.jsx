@@ -522,7 +522,7 @@ export const AlbumSongRow = ({
                     />
                   )}
                   <span className="text-xs text-gray-600">{artistData?.name || song?.artistName}</span>
-                  {artistData?.is_verified && (
+                  {artistData?.verified && (
                     <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
                   )}
                 </div>

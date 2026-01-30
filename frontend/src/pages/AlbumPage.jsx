@@ -288,7 +288,7 @@ const AlbumPage = () => {
                   supabase
                       .from('albums')
                       .select('id, slug, title, artist_name, artist_id, cover_url, play_count, genre, download_count, artists(slug, verified)')
-                      .eq('is_private', false)
+                      .or('is_private.is.null,is_private.eq.false')
                       .is('deleted_at', null)
                       .neq('id', supabaseAlbum.id)
                       .order('play_count', { ascending: false })
@@ -959,7 +959,7 @@ const AlbumPage = () => {
                                              <span className="text-gray-400 mx-1">&</span>
                                              <Link to={`/${collab.slug}`} className="flex items-start hover:opacity-80 transition-opacity">
                                                  <span className="text-lg">{collab.name}</span>
-                                                 {collab.is_verified && (
+                                                 {collab.verified && (
                                                      <div className="w-3.5 h-3.5 rounded-full bg-blue-500 flex items-center justify-center ml-0.5 mt-0.5">
                                                          <BadgeCheck className="w-2 h-2 text-white" />
                                                      </div>
@@ -1380,9 +1380,12 @@ const AlbumPage = () => {
                                 </Link>
                                 <Link
                                     to={`/${recAlbum.artistSlug}`}
-                                    className="flex items-center gap-1 text-gray-500 text-xs truncate hover:text-red-600 transition-colors mb-1 md:mb-2"
+                                    className="flex items-center gap-1 text-gray-500 text-xs hover:text-red-600 transition-colors mb-1 md:mb-2"
                                 >
                                     <span className="truncate">{recAlbum.artistName}</span>
+                                    {recAlbum.artistVerified && (
+                                        <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                                    )}
                                 </Link>
                                 <div className="flex items-center gap-1 md:gap-2 text-xs flex-wrap">
                                     <div className="flex items-center gap-1 px-1.5 md:px-2 py-0.5 md:py-1 bg-gray-100 rounded">

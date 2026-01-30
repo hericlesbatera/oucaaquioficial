@@ -387,7 +387,7 @@ const PlaylistPage = () => {
                                 {creator && (
                                     <Link to={`/${creator.slug || creator.id}`} className="flex items-start hover:opacity-80 transition-opacity">
                                         <span className="text-lg">{creator.name}</span>
-                                        {creator.is_verified && (
+                                        {creator.verified && (
                                             <div className="w-3.5 h-3.5 rounded-full bg-blue-500 flex items-center justify-center ml-0.5 mt-0.5">
                                                 <BadgeCheck className="w-2 h-2 text-white" />
                                             </div>

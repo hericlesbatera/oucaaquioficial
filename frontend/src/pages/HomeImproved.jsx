@@ -129,7 +129,7 @@ const HomeImproved = () => {
                                     id: artist.id,
                                     name: artist.name,
                                     slug: artist.slug,
-                                    is_verified: artist.is_verified
+                                    verified: artist.verified
                                 });
                             }
                         });
@@ -144,7 +144,7 @@ const HomeImproved = () => {
                             artistName: artist.name || album.artist_name || 'Artista',
                             artistId: album.artist_id,
                             artistSlug: artist.slug || album.artist_id,
-                            artistVerified: artist.is_verified || false,
+                            artistVerified: artist.verified || false,
                             collaborators: collaboratorsByAlbum[album.id] || [],
                             coverImage: album.cover_url || '/images/default-album.png',
                             releaseYear: album.release_year,
@@ -176,7 +176,7 @@ const HomeImproved = () => {
                     name: a.name,
                     avatar: a.avatar_url || '/images/default-avatar.png',
                     coverImage: a.cover_url || '',
-                    verified: a.is_verified,
+                    verified: a.verified,
                     bio: a.bio
                 }));
                 setAllArtists(formattedSupabaseArtists);
@@ -228,7 +228,7 @@ const HomeImproved = () => {
                             thumbnail: video.thumbnail || '/images/default-album.png',
                             artistName: artist.name || 'Artista Desconhecido',
                             artistSlug: artist.slug || video.artist_id,
-                            artistVerified: artist.is_verified || false,
+                            artistVerified: artist.verified || false,
                             createdAt: video.created_at,
                             views: video.views_count || 0
                         };
@@ -557,7 +557,7 @@ const HomeImproved = () => {
                                                         className="flex items-center gap-0.5 hover:text-red-600 transition-colors"
                                                     >
                                                         <span>{collab.name}</span>
-                                                        {collab.is_verified && (
+                                                        {collab.verified && (
                                                             <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
                                                         )}
                                                     </Link>
@@ -705,7 +705,7 @@ const HomeImproved = () => {
                                                         className="flex items-center gap-0.5 hover:text-red-600 transition-colors"
                                                     >
                                                         <span>{collab.name}</span>
-                                                        {collab.is_verified && (
+                                                        {collab.verified && (
                                                             <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
                                                         )}
                                                     </Link>
@@ -901,7 +901,7 @@ const HomeImproved = () => {
                                                           className="flex items-center gap-0.5 hover:text-red-600 transition-colors"
                                                       >
                                                           <span>{collab.name}</span>
-                                                          {collab.is_verified && (
+                                                          {collab.verified && (
                                                               <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
                                                           )}
                                                       </Link>

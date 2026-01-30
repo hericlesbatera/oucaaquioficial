@@ -46,7 +46,7 @@ const Clips = () => {
                         thumbnail: video.thumbnail || '/images/default-album.png',
                         artistName: artist.name || 'Artista Desconhecido',
                         artistSlug: artist.slug || video.artist_id,
-                        artistVerified: artist.is_verified || false,
+                        artistVerified: artist.verified || false,
                         createdAt: video.created_at,
                         views: video.views_count || 0
                     };

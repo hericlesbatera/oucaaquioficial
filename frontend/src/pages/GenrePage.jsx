@@ -155,10 +155,10 @@ const GenrePage = () => {
                 </Link>
                 <Link
                   to={`/${album.artist?.slug || album.artist_id}`}
-                  className="flex items-center gap-1 text-gray-500 text-xs truncate hover:text-red-600 transition-colors mb-2"
+                  className="flex items-center gap-1 text-gray-500 text-xs hover:text-red-600 transition-colors mb-2"
                 >
                   <span className="truncate">{album.artist?.name || album.artist_name}</span>
-                  {album.artist?.is_verified && (
+                  {album.artist?.verified && (
                     <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
                   )}
                 </Link>
