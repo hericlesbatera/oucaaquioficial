@@ -136,14 +136,28 @@ export const PlayerProvider = ({ children }) => {
     const mediaSession = navigator.mediaSession;
     
     if (currentSong) {
+      const artistName = currentSong.artist_name || currentSong.artistName || currentSong.artist || 'Artista';
+      const albumName = currentSong.albumName || currentSong.album || 'Álbum';
+      const coverImage = currentSong.cover_url || currentSong.coverImage || currentSong.image || currentSong.artwork;
+      
       mediaSession.metadata = new MediaMetadata({
-        title: currentSong.title || 'Unknown',
-        artist: currentSong.artist || 'Unknown Artist',
-        album: currentSong.album || 'Unknown Album',
-        artwork: currentSong.image ? [
+        title: currentSong.title || 'Música',
+        artist: artistName,
+        album: albumName,
+        artwork: coverImage ? [
           {
-            src: currentSong.image,
+            src: coverImage,
+            sizes: '512x512',
+            type: 'image/jpeg'
+          },
+          {
+            src: coverImage,
             sizes: '256x256',
+            type: 'image/jpeg'
+          },
+          {
+            src: coverImage,
+            sizes: '128x128',
             type: 'image/jpeg'
           }
         ] : []
