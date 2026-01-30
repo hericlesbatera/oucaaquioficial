@@ -509,7 +509,7 @@ const HomeImproved = () => {
                         {allAlbums.length === 0 ? (
                             <p className="text-gray-500 py-8 w-full">Nenhum lançamento disponível no momento.</p>
                         ) : (
-                            allAlbums.map((album) => (
+                            allAlbums.slice(0, 12).map((album) => (
                                 <div
                                     key={album.id}
                                     className="flex-shrink-0"
@@ -654,7 +654,7 @@ const HomeImproved = () => {
                         {topCdsAlbums.length === 0 ? (
                             <p className="text-gray-500 py-8 w-full">Nenhum CD disponível para este período.</p>
                         ) : (
-                            topCdsAlbums.map((album, index) => (
+                            topCdsAlbums.slice(0, 12).map((album, index) => (
                                 <div
                                     key={`${album.id}-${topCdsFilter}`}
                                     className="flex-shrink-0"
@@ -765,11 +765,11 @@ const HomeImproved = () => {
                         {allArtists.length === 0 ? (
                             <p className="text-gray-500 py-8">Nenhum artista disponível no momento.</p>
                         ) : (
-                            allArtists.map((artist) => (
+                            allArtists.slice(0, 10).map((artist) => (
                                 <div
                                     key={artist.id}
                                     className="flex flex-col items-center text-center flex-shrink-0"
-                                    style={{ minWidth: '120px', maxWidth: '150px' }}
+                                    style={{ minWidth: '110px', maxWidth: '130px' }}
                                 >
                                     <Link
                                         to={`/${artist.slug || artist.id}`}
@@ -877,7 +877,7 @@ const HomeImproved = () => {
                         {recommendedAlbums.length === 0 ? (
                             <p className="text-gray-500 py-8 col-span-full">Nenhum álbum disponível no momento.</p>
                         ) : (
-                            recommendedAlbums.map((album) => (
+                            recommendedAlbums.slice(0, 12).map((album) => (
                                 <div
                                     key={album.id}
                                     className="flex-shrink-0"
@@ -1109,7 +1109,7 @@ const HomeImproved = () => {
                                 key={genre.slug}
                                 to={`/genero/${genre.slug}`}
                                 className="flex-shrink-0"
-                                style={{ width: 'calc((100% - 80px) / 6)' }}
+                                style={{ width: 'calc((100% - 80px) / 6)', minWidth: '140px' }}
                             >
                                 <div
                                     className="h-32 rounded-lg shadow-lg flex items-center justify-center p-4 cursor-pointer group hover:shadow-xl transition-all duration-300 relative overflow-hidden"

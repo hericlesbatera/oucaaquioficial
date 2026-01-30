@@ -91,23 +91,30 @@ body.player-active {
     line-height: 23px;
     margin-left: auto;
     margin-right: auto;
-    padding: 10px;
+    padding: 10px 20px;
     position: relative;
-    width: 1130px;
+    max-width: 1130px;
+    width: 100%;
     z-index: 1;
+    box-sizing: border-box;
 }
 
 .box-adicionar-artista .inner {
-    display: table-cell;
-    height: 57px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 57px;
     overflow: hidden;
-    vertical-align: middle;
-    width: 1130px;
+    width: 100%;
+    flex-wrap: wrap;
 }
 
 .box-adicionar-artista .btn-twomp {
-    margin-top: 8px;
-    width: 500px;
+    margin-top: 0;
+    width: auto;
+    min-width: 200px;
+    flex-shrink: 0;
 }
 
 .box-adicionar-artista .btn-twomp .icon-lapis-enviar {
@@ -117,15 +124,25 @@ body.player-active {
 
 .box-adicionar-artista .mensagem {
     color: #333;
-    float: left;
     font-family: ProximaNova, Arial;
     font-size: 18px;
     font-weight: 100;
-    line-height: 55px;
-    padding-left: 20px;
-    padding-right: 30px;
+    line-height: 1.4;
+    padding: 8px 0;
     text-transform: uppercase;
-    width: auto;
+    flex: 1;
+    min-width: 200px;
+}
+
+/* Tablet Responsivo */
+@media (max-width: 1024px) {
+    .box-adicionar-artista .mensagem {
+        font-size: 16px;
+    }
+    
+    .box-adicionar-artista .btn-twomp {
+        min-width: 180px;
+    }
 }
 
 /* Mobile Responsivo */
