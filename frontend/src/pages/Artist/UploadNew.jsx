@@ -316,10 +316,29 @@ const UploadNew = () => {
             // Usar SSE para rastrear progresso em tempo real
             console.log('[UPLOAD] Starting SSE and XHR setup...');
 
-             // Obter token para SSE
+             // Obter token para SSE com timeout
              console.log('[UPLOAD] Getting session...');
-             const { data: { session } } = await supabase.auth.getSession();
-             const token = session?.access_token;
+             let token = null;
+             try {
+                 const sessionPromise = supabase.auth.getSession();
+                 const timeoutPromise = new Promise((_, reject) => 
+                     setTimeout(() => reject(new Error('Session timeout')), 5000)
+                 );
+                 const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
+                 token = session?.access_token;
+             } catch (e) {
+                 console.warn('[UPLOAD] getSession timeout/error, trying stored session:', e.message);
+                 // Fallback: try to get token from localStorage directly
+                 const storedSession = localStorage.getItem('sb-' + new URL(import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co').hostname.split('.')[0] + '-auth-token');
+                 if (storedSession) {
+                     try {
+                         const parsed = JSON.parse(storedSession);
+                         token = parsed?.access_token || parsed?.currentSession?.access_token;
+                     } catch (parseErr) {
+                         console.error('[UPLOAD] Failed to parse stored session');
+                     }
+                 }
+             }
              console.log('[UPLOAD] Token obtained:', token ? 'yes' : 'no');
              
              const sseUrl = token 
