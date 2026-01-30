@@ -241,12 +241,15 @@ const UploadNew = () => {
     };
 
     const performUpload = async (goToStep4 = false) => {
+        // Reset state completely before starting
         setUploading(true);
         setUploadProgress(0);
         setUploadSuccess(false);
 
-        const uploadId = Math.random().toString(36).substring(7); // ID único para rastrear progresso
+        const uploadId = Math.random().toString(36).substring(7) + Date.now(); // ID único com timestamp
         let currentProgress = 0; // Use local variable instead of state
+        let eventSourceRef = null; // Track EventSource for cleanup
+        let pollingIntervalRef = null; // Track polling interval for cleanup
 
         try {
             // Criar FormData para enviar ao backend
@@ -321,6 +324,7 @@ const UploadNew = () => {
 
              // Abrir conexão SSE para progresso
              const eventSource = new EventSource(sseUrl);
+             eventSourceRef = eventSource; // Store reference for cleanup
              let sseConnected = false;
              let uploadCompleted = false;
              let lastProgressTime = Date.now();
@@ -446,7 +450,7 @@ const UploadNew = () => {
 
              // Polling fallback - começar imediatamente
              // Não esperar SSE, fazer polling a cada 1 segundo
-             const pollingInterval = setInterval(async () => {
+             pollingIntervalRef = setInterval(async () => {
                 try {
                     if (!uploadCompleted) {
                         const statusUrl = `${API_URL}/api/upload-progress/status/${uploadId}`;
@@ -465,7 +469,7 @@ const UploadNew = () => {
                             if (data.progress >= 100 || data.status === 'completed') {
                                 console.log('Upload completed via polling');
                                 uploadCompleted = true;
-                                clearInterval(pollingInterval);
+                                clearInterval(pollingIntervalRef);
                             }
                         } else {
                             console.log(`Polling returned status ${response.status}`);
@@ -478,7 +482,7 @@ const UploadNew = () => {
 
              // Aguardar ambas as promises
              const response = await uploadPromise;
-             clearInterval(pollingInterval);
+             clearInterval(pollingIntervalRef);
              await ssePromise; // Aguardar SSE fechar
              try { eventSource.close(); } catch(e) {}
 
@@ -510,6 +514,10 @@ const UploadNew = () => {
             }
 
         } catch (error) {
+            // Cleanup on error
+            try { if (eventSourceRef) eventSourceRef.close(); } catch(e) {}
+            try { if (pollingIntervalRef) clearInterval(pollingIntervalRef); } catch(e) {}
+            
             setUploading(false);
             setUploadProgress(0);
             toast({
