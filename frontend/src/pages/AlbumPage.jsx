@@ -243,7 +243,7 @@ const AlbumPage = () => {
             
             if (!isMounted) return;
               // Usar dados do artista se encontrado, senão usar dados do álbum
-              setArtist(artistData || { id: supabaseAlbum.artist_id, name: supabaseAlbum.artist_name, verified: false });
+              setArtist(artistData || { id: supabaseAlbum.artist_id, name: supabaseAlbum.artist_name, is_verified: false });
 
               setAlbum({
                   id: supabaseAlbum.id,
@@ -961,7 +961,7 @@ const AlbumPage = () => {
                                  <div className="flex items-center gap-1">
                                      <Link to={`/${artist?.slug || artistSlug}`} className="flex items-start hover:opacity-80 transition-opacity">
                                          <span className="text-lg">{album.artistName}</span>
-                                         {artist?.verified && (
+                                         {artist?.is_verified && (
                                              <div className="w-3.5 h-3.5 rounded-full bg-blue-500 flex items-center justify-center ml-0.5 mt-0.5">
                                                  <BadgeCheck className="w-2 h-2 text-white" />
                                              </div>
@@ -1018,7 +1018,7 @@ const AlbumPage = () => {
                         <div className="flex items-center gap-2 justify-center mb-2">
                             <Link to={`/${artist?.slug || artistSlug}`} className="flex items-center hover:opacity-80 transition-opacity">
                                 <span>{album.artistName}</span>
-                                {artist?.verified && (
+                                {artist?.is_verified && (
                                     <BadgeCheck className="w-3.5 h-3.5 text-blue-400 ml-1" />
                                 )}
                             </Link>
