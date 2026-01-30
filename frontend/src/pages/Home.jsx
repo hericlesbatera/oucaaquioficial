@@ -74,7 +74,7 @@ const Home = () => {
             slug: artist.slug,
             name: artist.name || artist.display_name,
             avatar: artist.avatar_url || '/images/default-avatar.png',
-            verified: artist.verified || false,
+            verified: artist.is_verified || false,
             monthlyListeners: artist.monthly_listeners || 0
           }));
           setArtists(formattedArtists);

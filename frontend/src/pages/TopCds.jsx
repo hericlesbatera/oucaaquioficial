@@ -94,7 +94,7 @@ const TopCds = () => {
                     artist: artist,
                     artistName: artist.name || album.artist_name || 'Artista',
                     artistSlug: artist.slug || album.artist_id,
-                    artistVerified: artist.verified || false,
+                    artistVerified: artist.is_verified || false,
                     collaborators
                 };
             });
@@ -250,7 +250,7 @@ const TopCds = () => {
                                             className="flex items-center gap-0.5 hover:text-red-600 transition-colors"
                                         >
                                             <span>{album.artist?.name || album.artist_name}</span>
-                                            {album.artist?.verified && (
+                                            {album.artist?.is_verified && (
                                                 <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
                                             )}
                                         </Link>
@@ -266,7 +266,7 @@ const TopCds = () => {
                                                         className="flex items-center gap-0.5 hover:text-red-600 transition-colors"
                                                     >
                                                         <span>{collab.name}</span>
-                                                        {collab.verified && (
+                                                        {collab.is_verified && (
                                                             <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
                                                         )}
                                                     </Link>

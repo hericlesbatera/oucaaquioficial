@@ -131,7 +131,7 @@ const CommentSection = ({ albumId, artistId }) => {
       if (data && data.length > 0) {
         const newComment = {
           ...data[0],
-          user_verified: isAdmin ? false : userInfo?.verified
+          user_verified: isAdmin ? false : userInfo?.is_verified
         };
         setComments([newComment, ...comments]);
         setCommentText('');
@@ -229,7 +229,7 @@ const CommentSection = ({ albumId, artistId }) => {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-3">
                 <p className="text-black font-semibold">{isAdmin ? 'Ouça Aqui' : (userInfo?.name || user.email)}</p>
-                {userInfo?.verified && (
+                {userInfo?.is_verified && (
                   <BadgeCheck className="w-4 h-4 text-blue-500" />
                 )}
               </div>

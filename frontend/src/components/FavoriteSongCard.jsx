@@ -70,7 +70,7 @@ export const FavoriteSongCard = ({
           <p className="text-gray-600 text-sm truncate hover:text-gray-900">
             {song.songs?.artist_name}
           </p>
-          {song.songs?.artist?.verified && (
+          {song.songs?.artist?.is_verified && (
             <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0 hover:text-blue-600" />
           )}
         </div>

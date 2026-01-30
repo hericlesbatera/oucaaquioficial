@@ -963,7 +963,7 @@ const AlbumPage = () => {
                                              <span className="text-gray-400 mx-1">&</span>
                                              <Link to={`/${collab.slug}`} className="flex items-start hover:opacity-80 transition-opacity">
                                                  <span className="text-lg">{collab.name}</span>
-                                                 {collab.verified && (
+                                                 {collab.is_verified && (
                                                      <div className="w-3.5 h-3.5 rounded-full bg-blue-500 flex items-center justify-center ml-0.5 mt-0.5">
                                                          <BadgeCheck className="w-2 h-2 text-white" />
                                                      </div>

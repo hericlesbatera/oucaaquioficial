@@ -129,7 +129,7 @@ const HomeImproved = () => {
                                     id: artist.id,
                                     name: artist.name,
                                     slug: artist.slug,
-                                    verified: artist.verified
+                                    verified: artist.is_verified
                                 });
                             }
                         });
@@ -144,7 +144,7 @@ const HomeImproved = () => {
                             artistName: artist.name || album.artist_name || 'Artista',
                             artistId: album.artist_id,
                             artistSlug: artist.slug || album.artist_id,
-                            artistVerified: artist.verified || false,
+                            artistVerified: artist.is_verified || false,
                             collaborators: collaboratorsByAlbum[album.id] || [],
                             coverImage: album.cover_url || '/images/default-album.png',
                             releaseYear: album.release_year,
@@ -176,7 +176,7 @@ const HomeImproved = () => {
                     name: a.name,
                     avatar: a.avatar_url || '/images/default-avatar.png',
                     coverImage: a.cover_url || '',
-                    verified: a.verified,
+                    verified: a.is_verified,
                     bio: a.bio
                 }));
                 setAllArtists(formattedSupabaseArtists);
@@ -228,7 +228,7 @@ const HomeImproved = () => {
                             thumbnail: video.thumbnail || '/images/default-album.png',
                             artistName: artist.name || 'Artista Desconhecido',
                             artistSlug: artist.slug || video.artist_id,
-                            artistVerified: artist.verified || false,
+                            artistVerified: artist.is_verified || false,
                             createdAt: video.created_at,
                             views: video.views_count || 0
                         };

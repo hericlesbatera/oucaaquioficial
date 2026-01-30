@@ -158,7 +158,7 @@ const GenrePage = () => {
                   className="flex items-center gap-1 text-gray-500 text-xs hover:text-red-600 transition-colors mb-2"
                 >
                   <span className="truncate">{album.artist?.name || album.artist_name}</span>
-                  {album.artist?.verified && (
+                  {album.artist?.is_verified && (
                     <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
                   )}
                 </Link>

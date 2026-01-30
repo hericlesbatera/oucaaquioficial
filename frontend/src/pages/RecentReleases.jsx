@@ -87,7 +87,7 @@ const RecentReleases = () => {
 
   // Helper para obter dados do artista
   const getArtist = (album) => {
-    return artistsMap[album.artist_id] || { name: album.artist_name || 'Artista', slug: album.artist_id, verified: false };
+    return artistsMap[album.artist_id] || { name: album.artist_name || 'Artista', slug: album.artist_id, is_verified: false };
   };
 
   const formatNumber = (num) => {
@@ -160,7 +160,7 @@ const RecentReleases = () => {
                     className="flex items-center gap-1 text-gray-500 text-xs hover:text-red-600 transition-colors mb-2"
                   >
                     <span className="truncate">{artist.name}</span>
-                    {artist.verified && (
+                    {artist.is_verified && (
                       <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
                     )}
                   </Link>

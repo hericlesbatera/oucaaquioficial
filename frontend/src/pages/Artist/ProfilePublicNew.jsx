@@ -164,7 +164,7 @@ const ProfilePublicNew = () => {
           bio: supabaseArtist.bio,
           avatar: supabaseArtist.avatar_url || '/images/default-avatar.png',
           coverImage: supabaseArtist.cover_url || '',
-          verified: supabaseArtist.verified,
+          verified: supabaseArtist.is_verified,
           followers: followersCount || 0,
           monthlyListeners: totalPlays,
           genre: supabaseArtist.estilo_musical,
