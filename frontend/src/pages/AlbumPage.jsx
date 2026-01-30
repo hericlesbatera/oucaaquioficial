@@ -287,7 +287,7 @@ const AlbumPage = () => {
                   // Buscar recomendados com dados do artista
                   supabase
                       .from('albums')
-                      .select('id, slug, title, artist_name, artist_id, cover_url, play_count, genre, download_count, is_private, artists(slug, verified)')
+                      .select('id, slug, title, artist_name, artist_id, cover_url, play_count, genre, download_count, is_private, artists(slug, is_verified)')
                       .is('deleted_at', null)
                       .neq('id', supabaseAlbum.id)
                       .order('play_count', { ascending: false })
@@ -427,7 +427,7 @@ const AlbumPage = () => {
                               playCount: recAlbum.play_count || 0,
                               downloadCount: recAlbum.download_count || 0,
                               artistSlug: recAlbum.artists?.slug || recAlbum.artist_id,
-                              artistVerified: recAlbum.artists?.verified || false,
+                              artistVerified: recAlbum.artists?.is_verified || false,
                               collaborators: []
                           };
                       });
