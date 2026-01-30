@@ -15,6 +15,7 @@ const Home = () => {
   const { playSong } = usePlayer();
   const lancamentosRef = useRef(null);
   const topCdsRef = useRef(null);
+  const artistasRef = useRef(null);
   
   // Lançamentos
   const [allAlbums, setAllAlbums] = useState([]);
@@ -76,7 +77,8 @@ const Home = () => {
             name: artist.name || artist.display_name,
             avatar: artist.avatar_url || '/images/default-avatar.png',
             verified: artist.is_verified || false,
-            monthlyListeners: artist.monthly_listeners || 0
+            monthlyListeners: artist.monthly_listeners || 0,
+            followersCount: artist.followers_count || 0
           }));
           setArtists(formattedArtists);
         } else {
@@ -240,13 +242,40 @@ const Home = () => {
               <User className="w-8 h-8 text-red-600" />
               <h2 className="text-2xl md:text-3xl font-bold text-black">Artistas em Destaque</h2>
             </div>
+            <div className="flex items-center gap-3">
+              <Link to="/artists" className="text-red-600 hover:text-red-500 font-bold text-sm">
+                VER TODOS
+              </Link>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => scrollSection(artistasRef, 'left')}
+                  size="icon"
+                  variant="outline"
+                  className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button
+                  onClick={() => scrollSection(artistasRef, 'right')}
+                  size="icon"
+                  variant="outline"
+                  className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
+          <div 
+            ref={artistasRef}
+            className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
             {artists.map((artist) => (
               <Link
                 key={artist.id}
                 to={`/${artist.slug || artist.id}`}
-                className="group cursor-pointer text-center"
+                className="group cursor-pointer text-center flex-shrink-0 w-32 md:w-40"
               >
                 <div className="relative mb-3">
                   <VerifiedAvatar
@@ -261,7 +290,7 @@ const Home = () => {
                   {artist.name}
                 </h3>
                 <p className="text-gray-600 text-xs">
-                  {artist.monthlyListeners?.toLocaleString()} ouvintes
+                  {artist.followersCount?.toLocaleString() || 0} seguidores
                 </p>
               </Link>
             ))}
