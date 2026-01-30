@@ -284,10 +284,10 @@ const AlbumPage = () => {
                       .eq('album_id', supabaseAlbum.id)
                       .maybeSingle() : Promise.resolve({ data: null }),
                   
-                  // Buscar recomendados com dados do artista
+                  // Buscar recomendados - sem join com artists para evitar erro 400
                   supabase
                       .from('albums')
-                      .select('id, slug, title, artist_name, artist_id, cover_url, play_count, genre, download_count, is_private, artists(slug, is_verified)')
+                      .select('id, slug, title, artist_name, artist_id, cover_url, play_count, genre, download_count, is_private')
                       .is('deleted_at', null)
                       .neq('id', supabaseAlbum.id)
                       .order('play_count', { ascending: false })
@@ -413,10 +413,20 @@ const AlbumPage = () => {
              }
 
              if (recommendedList.length > 0) {
-                 // Garantir que nunca ultrapasse 6 álbuns
-                  const recommended = recommendedList
+                 // Buscar dados dos artistas para os álbuns recomendados
+                 const artistIds = [...new Set(recommendedList.map(a => a.artist_id))];
+                 const { data: artistsData } = await supabase
+                     .from('artists')
+                     .select('id, slug, is_verified')
+                     .in('id', artistIds);
+                 
+                 const artistsMap = {};
+                 (artistsData || []).forEach(a => artistsMap[a.id] = a);
+                 
+                 const recommended = recommendedList
                       .slice(0, 6)
                       .map(recAlbum => {
+                          const artist = artistsMap[recAlbum.artist_id] || {};
                           return {
                               id: recAlbum.id,
                               slug: recAlbum.slug,
@@ -426,8 +436,8 @@ const AlbumPage = () => {
                               coverImage: recAlbum.cover_url || '/images/default-album.png',
                               playCount: recAlbum.play_count || 0,
                               downloadCount: recAlbum.download_count || 0,
-                              artistSlug: recAlbum.artists?.slug || recAlbum.artist_id,
-                              artistVerified: recAlbum.artists?.is_verified || false,
+                              artistSlug: artist.slug || recAlbum.artist_id,
+                              artistVerified: artist.is_verified || false,
                               collaborators: []
                           };
                       });
