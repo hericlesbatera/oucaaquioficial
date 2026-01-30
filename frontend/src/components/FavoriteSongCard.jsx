@@ -52,7 +52,7 @@ export const FavoriteSongCard = ({
     >
       {/* Capa */}
       <img
-        src={song.songs?.cover_url || '/placeholder-album.jpg'}
+        src={song.songs?.cover_url || song.songs?.album?.cover_url || '/placeholder-album.jpg'}
         alt={song.songs?.title}
         className="w-16 h-16 rounded object-cover flex-shrink-0 cursor-pointer"
         onClick={handlePlaySong}

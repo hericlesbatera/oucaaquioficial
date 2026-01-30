@@ -73,6 +73,10 @@ const Favoritos = () => {
                id,
                is_verified,
                slug
+             ),
+             album:album_id (
+               id,
+               cover_url
              )
            )
          `)
@@ -107,6 +111,10 @@ const Favoritos = () => {
                 id,
                 is_verified,
                 slug
+              ),
+              album:album_id (
+                id,
+                cover_url
               )
             )
           `)
@@ -497,13 +505,14 @@ const Favoritos = () => {
                           onRemove={() => handleRemoveFavorite('musica', item.song_id)}
                           onPlay={() => {
                             // Mapear música atual com formato esperado pelo player
+                            const coverUrl = item.songs?.cover_url || item.songs?.album?.cover_url;
                             const formattedSong = {
                               id: item.songs?.id,
                               title: item.songs?.title,
                               artist_name: item.songs?.artist_name,
                               artistName: item.songs?.artist_name,
-                              cover_url: item.songs?.cover_url,
-                              coverImage: item.songs?.cover_url,
+                              cover_url: coverUrl,
+                              coverImage: coverUrl,
                               duration: item.songs?.duration,
                               audioUrl: item.songs?.audio_url,
                               albumId: item.songs?.album_id
