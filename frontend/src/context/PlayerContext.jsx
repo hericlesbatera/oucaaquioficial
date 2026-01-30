@@ -187,8 +187,26 @@ export const PlayerProvider = ({ children }) => {
     });
 
     mediaSession.setActionHandler('seekto', (event) => {
-      if (event.time !== undefined) {
-        seekTo(event.time);
+      if (event.time !== undefined && audioRef.current) {
+        audioRef.current.currentTime = event.time;
+        setCurrentTime(event.time);
+      }
+    });
+    
+    // Permitir arrastar a barra para frente/trás
+    mediaSession.setActionHandler('seekforward', (event) => {
+      const skipTime = event.seekOffset || 10;
+      if (audioRef.current) {
+        audioRef.current.currentTime = Math.min(audioRef.current.currentTime + skipTime, duration);
+        setCurrentTime(audioRef.current.currentTime);
+      }
+    });
+    
+    mediaSession.setActionHandler('seekbackward', (event) => {
+      const skipTime = event.seekOffset || 10;
+      if (audioRef.current) {
+        audioRef.current.currentTime = Math.max(audioRef.current.currentTime - skipTime, 0);
+        setCurrentTime(audioRef.current.currentTime);
       }
     });
 
@@ -198,8 +216,25 @@ export const PlayerProvider = ({ children }) => {
       mediaSession.setActionHandler('previoustrack', null);
       mediaSession.setActionHandler('nexttrack', null);
       mediaSession.setActionHandler('seekto', null);
+      mediaSession.setActionHandler('seekforward', null);
+      mediaSession.setActionHandler('seekbackward', null);
     };
-  }, [currentSong, isPlaying]);
+  }, [currentSong, isPlaying, duration]);
+  
+  // Atualizar posição da barra de progresso no Media Session (tela de bloqueio)
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !currentSong || !duration) return;
+    
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: duration,
+        playbackRate: 1,
+        position: currentTime
+      });
+    } catch (e) {
+      // Alguns navegadores não suportam setPositionState
+    }
+  }, [currentTime, duration, currentSong]);
 
   const playSong = async (song, songQueue = [], playlistId = null) => {
    setCurrentSong(song);
