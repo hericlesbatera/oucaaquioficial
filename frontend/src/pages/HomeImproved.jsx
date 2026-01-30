@@ -513,7 +513,7 @@ const HomeImproved = () => {
                                 <div
                                     key={album.id}
                                     className="flex-shrink-0"
-                                    style={{ width: 'calc((100% - 80px) / 6)' }}
+                                    style={{ width: 'calc((100% - 80px) / 6)', minWidth: '160px' }}
                                 >
                                     <Link
                                         to={`/${album.artistSlug}/${album.slug || album.id}`}
@@ -658,7 +658,7 @@ const HomeImproved = () => {
                                 <div
                                     key={`${album.id}-${topCdsFilter}`}
                                     className="flex-shrink-0"
-                                    style={{ width: 'calc((100% - 80px) / 6)' }}
+                                    style={{ width: 'calc((100% - 80px) / 6)', minWidth: '160px' }}
                                 >
                                     <Link
                                         to={`/${album.artistSlug}/${album.slug || album.id}`}
@@ -769,32 +769,32 @@ const HomeImproved = () => {
                                 <div
                                     key={artist.id}
                                     className="flex flex-col items-center text-center flex-shrink-0"
-                                    style={{ width: 'calc((100% - 6 * 1.5rem) / 7)' }}
+                                    style={{ minWidth: '120px', maxWidth: '150px' }}
                                 >
                                     <Link
                                         to={`/${artist.slug || artist.id}`}
-                                        className="group cursor-pointer mb-1"
+                                        className="group cursor-pointer mb-2"
                                     >
-                                        <div className="relative inline-block overflow-visible p-2">
+                                        <div className="relative inline-block overflow-visible">
                                             <img
                                                 src={artist.avatar}
                                                 alt={artist.name}
-                                                className="w-24 h-24 lg:w-28 lg:h-28 rounded-full object-cover transform group-hover:scale-105 transition-transform duration-300 shadow-lg"
+                                                className="w-20 h-20 lg:w-24 lg:h-24 rounded-full object-cover transform group-hover:scale-105 transition-transform duration-300 shadow-lg"
                                             />
                                         </div>
                                     </Link>
                                     <Link
                                         to={`/${artist.slug || artist.id}`}
-                                        className="flex items-center gap-1 justify-center text-black font-semibold text-sm mb-1 hover:text-red-600 transition-colors w-full whitespace-nowrap"
+                                        className="flex items-center gap-1 justify-center text-black font-semibold text-xs mb-2 hover:text-red-600 transition-colors w-full"
                                     >
-                                        <span className="text-sm">{artist.name}</span>
+                                        <span className="text-xs truncate">{artist.name}</span>
                                         {artist.verified && (
-                                            <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                                            <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
                                         )}
                                     </Link>
                                     <button
                                          onClick={(e) => handleFollow(artist.id, e)}
-                                         className={`inline-flex items-center justify-center gap-1.5 whitespace-nowrap text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 shadow py-1.5 px-4 h-9 w-[130px] rounded-full font-semibold ${followingArtists.has(artist.id)
+                                         className={`inline-flex items-center justify-center gap-1 whitespace-nowrap text-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-3 [&_svg]:shrink-0 shadow py-1 px-3 h-7 rounded-full font-semibold ${followingArtists.has(artist.id)
                                               ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                               : 'bg-red-600 text-white hover:bg-red-700'
                                               }`}
@@ -803,7 +803,7 @@ const HomeImproved = () => {
                                              'SEGUINDO'
                                          ) : (
                                              <>
-                                                 <Plus className="w-3.5 h-3.5" />
+                                                 <Plus className="w-3 h-3" />
                                                  SEGUIR
                                              </>
                                          )}
@@ -873,7 +873,7 @@ const HomeImproved = () => {
                         <h2 className="text-2xl md:text-3xl font-bold text-black whitespace-nowrap">Ouça Aqui Recomenda!</h2>
                     </div>
                     {/* Desktop */}
-                    <div className="hidden md:grid grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div className="hidden md:flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                         {recommendedAlbums.length === 0 ? (
                             <p className="text-gray-500 py-8 col-span-full">Nenhum álbum disponível no momento.</p>
                         ) : (
@@ -881,6 +881,7 @@ const HomeImproved = () => {
                                 <div
                                     key={album.id}
                                     className="flex-shrink-0"
+                                    style={{ width: 'calc((100% - 80px) / 6)', minWidth: '160px' }}
                                 >
                                     <Link
                                         to={`/${album.artistSlug}/${album.slug || album.id}`}
