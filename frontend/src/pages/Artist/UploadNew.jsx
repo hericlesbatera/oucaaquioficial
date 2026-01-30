@@ -329,13 +329,23 @@ const UploadNew = () => {
              } catch (e) {
                  console.warn('[UPLOAD] getSession timeout/error, trying stored session:', e.message);
                  // Fallback: try to get token from localStorage directly
-                 const storedSession = localStorage.getItem('sb-' + new URL(import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co').hostname.split('.')[0] + '-auth-token');
-                 if (storedSession) {
-                     try {
-                         const parsed = JSON.parse(storedSession);
-                         token = parsed?.access_token || parsed?.currentSession?.access_token;
-                     } catch (parseErr) {
-                         console.error('[UPLOAD] Failed to parse stored session');
+                 // Search for any supabase auth token in localStorage
+                 for (let i = 0; i < localStorage.length; i++) {
+                     const key = localStorage.key(i);
+                     if (key && key.includes('sb-') && key.includes('-auth-token')) {
+                         try {
+                             const storedSession = localStorage.getItem(key);
+                             if (storedSession) {
+                                 const parsed = JSON.parse(storedSession);
+                                 token = parsed?.access_token || parsed?.currentSession?.access_token;
+                                 if (token) {
+                                     console.log('[UPLOAD] Found token in localStorage key:', key);
+                                     break;
+                                 }
+                             }
+                         } catch (parseErr) {
+                             console.error('[UPLOAD] Failed to parse stored session from:', key);
+                         }
                      }
                  }
              }
