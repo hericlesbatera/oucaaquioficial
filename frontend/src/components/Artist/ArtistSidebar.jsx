@@ -59,7 +59,7 @@ const ArtistSidebar = () => {
           />
           <div>
             <div className="flex items-center gap-1">
-              <p className="font-semibold text-gray-900">{user?.name}</p>
+              <p className="font-semibold text-gray-900">{artistData?.name || user?.name}</p>
               {artistData?.is_verified && (
                 <BadgeCheck className="w-4 h-4 text-blue-500 flex-shrink-0" />
               )}

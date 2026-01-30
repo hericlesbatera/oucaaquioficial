@@ -279,7 +279,7 @@ const Header = () => {
                                                 }
                                             }}
                                         />
-                                        <span className="text-white font-medium hidden md:block">{isAdmin ? (adminName || 'Ouça Aqui') : user.name}</span>
+                                        <span className="text-white font-medium hidden md:block">{isAdmin ? (adminName || 'Ouça Aqui') : (artistForUser?.name || user.name)}</span>
                                     </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="bg-white w-auto min-w-[180px]">
