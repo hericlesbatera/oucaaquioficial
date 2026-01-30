@@ -9,6 +9,7 @@ const HeroSlider = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
     const [slides, setSlides] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [firstImageLoaded, setFirstImageLoaded] = useState(false);
 
     useEffect(() => {
         const loadSlides = async () => {
@@ -45,11 +46,14 @@ const HeroSlider = () => {
     }, []);
 
     useEffect(() => {
+        // Só inicia o autoplay após a primeira imagem carregar
+        if (!firstImageLoaded || slides.length === 0) return;
+        
         const timer = setInterval(() => {
             setCurrentSlide((prev) => (prev + 1) % slides.length);
         }, 5000);
         return () => clearInterval(timer);
-    }, [slides.length]);
+    }, [slides.length, firstImageLoaded]);
 
     const nextSlide = () => {
         setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -86,6 +90,7 @@ const HeroSlider = () => {
                                 loading={index === 0 ? "eager" : "lazy"}
                                 decoding="async"
                                 className="w-full h-full object-cover"
+                                onLoad={index === 0 ? () => setFirstImageLoaded(true) : undefined}
                             />
                         </div>
                     ))}
@@ -157,6 +162,7 @@ const HeroSlider = () => {
                                 loading={index === 0 ? "eager" : "lazy"}
                                 decoding="async"
                                 className="w-full h-full object-cover"
+                                onLoad={index === 0 ? () => setFirstImageLoaded(true) : undefined}
                             />
                         </div>
                     ))}
