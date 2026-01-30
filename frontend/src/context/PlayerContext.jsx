@@ -27,20 +27,34 @@ export const PlayerProvider = ({ children }) => {
     const [isFullPlayerOpen, setIsFullPlayerOpen] = useState(false);
   
   const audioRef = useRef(null);
+  const nextAudioRef = useRef(null); // Para pré-carregar próxima música
   
   if (!audioRef.current) {
     audioRef.current = new Audio();
     audioRef.current.preload = 'auto';
     audioRef.current.crossOrigin = 'anonymous';
-    // Remover qualquer elemento de áudio do DOM se existir
-    const existingAudio = document.getElementById('hidden-audio-player');
-    if (existingAudio) {
-      existingAudio.remove();
-    }
+  }
+  
+  if (!nextAudioRef.current) {
+    nextAudioRef.current = new Audio();
+    nextAudioRef.current.preload = 'auto';
+    nextAudioRef.current.crossOrigin = 'anonymous';
   }
   
   const handleNextRef = useRef(null);
   const handlePreviousRef = useRef(null);
+  const queueRef = useRef(queue);
+  const currentSongRef = useRef(currentSong);
+  const repeatModeRef = useRef(repeatMode);
+  const isShuffleRef = useRef(isShuffle);
+  
+  // Manter refs atualizados
+  useEffect(() => {
+    queueRef.current = queue;
+    currentSongRef.current = currentSong;
+    repeatModeRef.current = repeatMode;
+    isShuffleRef.current = isShuffle;
+  }, [queue, currentSong, repeatMode, isShuffle]);
 
   const handleNext = useCallback(() => {
     if (!queue.length) return;
@@ -87,36 +101,100 @@ export const PlayerProvider = ({ children }) => {
 
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
     const handleLoadedMetadata = () => setDuration(audio.duration);
+    
     const handleEnded = () => {
-      // Atualizar o estado do Media Session antes de pular para a próxima
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.playbackState = 'playing';
+      // IMPORTANTE: Executar a lógica de próxima música diretamente aqui
+      // para garantir que funcione em segundo plano no iOS
+      const queue = queueRef.current;
+      const currentSong = currentSongRef.current;
+      const repeatMode = repeatModeRef.current;
+      const isShuffle = isShuffleRef.current;
+      
+      if (!queue.length) return;
+      
+      const currentIndex = queue.findIndex(s => s.id === currentSong?.id);
+      let nextIndex;
+      
+      if (repeatMode === 'one') {
+        audio.currentTime = 0;
+        audio.play().catch(err => console.error('Error replaying:', err));
+        return;
       }
-      if (handleNextRef.current) {
-        handleNextRef.current();
+      
+      if (isShuffle) {
+        nextIndex = Math.floor(Math.random() * queue.length);
+      } else {
+        nextIndex = currentIndex + 1;
+        if (nextIndex >= queue.length) {
+          if (repeatMode === 'all') {
+            nextIndex = 0;
+          } else {
+            setIsPlaying(false);
+            setCurrentSong(null);
+            setQueue([]);
+            audio.pause();
+            audio.src = '';
+            return;
+          }
+        }
+      }
+      
+      const nextSong = queue[nextIndex];
+      if (nextSong) {
+        // Atualizar o src e tocar imediatamente - crítico para iOS em segundo plano
+        audio.src = nextSong.audioUrl;
+        audio.play()
+          .then(() => {
+            if ('mediaSession' in navigator) {
+              navigator.mediaSession.playbackState = 'playing';
+            }
+          })
+          .catch(err => console.error('Error playing next:', err));
+        
+        // Atualizar o estado do React depois
+        setIsPlaying(true);
+        setCurrentSong(nextSong);
       }
     };
+    
     const handleError = () => console.error('Erro ao carregar áudio:', audio.error);
-    const handleCanPlay = () => console.log('Áudio pronto para reproduzir');
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
-    audio.addEventListener('canplay', handleCanPlay);
 
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
-      audio.removeEventListener('canplay', handleCanPlay);
     };
   }, []);
 
   useEffect(() => {
     audioRef.current.volume = volume;
   }, [volume]);
+  
+  // Pré-carregar próxima música quando faltar 30 segundos para acabar
+  useEffect(() => {
+    if (!currentSong || !duration || duration === 0) return;
+    
+    const timeRemaining = duration - currentTime;
+    if (timeRemaining <= 30 && timeRemaining > 0) {
+      const currentIndex = queue.findIndex(s => s.id === currentSong?.id);
+      let nextIndex = currentIndex + 1;
+      
+      if (nextIndex >= queue.length && repeatMode === 'all') {
+        nextIndex = 0;
+      }
+      
+      if (queue[nextIndex] && nextAudioRef.current.src !== queue[nextIndex].audioUrl) {
+        nextAudioRef.current.src = queue[nextIndex].audioUrl;
+        nextAudioRef.current.load();
+      }
+    }
+  }, [currentTime, duration, queue, currentSong, repeatMode]);
 
   useEffect(() => {
     if (currentSong) {
