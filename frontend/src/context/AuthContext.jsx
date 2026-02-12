@@ -147,16 +147,16 @@ export const AuthProvider = ({ children }) => {
                       }
                       
                       // Se era tentativa de LOGIN (primeira vez) mas usuário não existe
-                      // Só fazer isso se googleLoginMode estiver definido (login recente, não reload de página)
+                      // Mostrar modal para escolher tipo de conta (usuário ou artista)
                       if (googleLoginMode === 'login' && !userExists) {
-                          console.log('[AUTH] Login attempt but user not found in tables, signing out');
+                          console.log('[AUTH] Login attempt but user not found in tables, prompting for account type');
                           localStorage.removeItem('googleLoginMode');
-                          localStorage.removeItem('pendingGoogleSignupType');
-                          // Deslogar o usuário
-                          await supabase.auth.signOut();
-                          // Marcar erro para exibir no frontend
-                          sessionStorage.setItem('googleLoginError', 'Conta não encontrada. Por favor, use "Cadastre-se com Google" para criar uma conta.');
-                          setUser(null);
+                          // Marcar que precisa escolher tipo de conta
+                          sessionStorage.setItem('googleNeedsAccountType', 'true');
+                          sessionStorage.setItem('googlePendingUserId', session.user.id);
+                          sessionStorage.setItem('googlePendingEmail', session.user.email);
+                          sessionStorage.setItem('googlePendingName', session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Usuário');
+                          sessionStorage.setItem('googlePendingAvatar', avatarUrl);
                           setLoading(false);
                           return;
                       }
@@ -461,6 +461,85 @@ export const AuthProvider = ({ children }) => {
         return { data, error };
     };
 
+    // Completar cadastro Google quando usuário escolhe tipo de conta
+    const completeGoogleSignup = async (accountType) => {
+        const userId = sessionStorage.getItem('googlePendingUserId');
+        const email = sessionStorage.getItem('googlePendingEmail');
+        const name = sessionStorage.getItem('googlePendingName');
+        const avatar = sessionStorage.getItem('googlePendingAvatar');
+        
+        if (!userId) {
+            console.error('[AUTH] No pending Google signup data');
+            return { error: { message: 'Dados de cadastro não encontrados' } };
+        }
+        
+        try {
+            if (accountType === 'artist') {
+                const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                const { error: artistError } = await supabase.from('artists').upsert({
+                    id: userId,
+                    name: name,
+                    slug: slug,
+                    email: email,
+                    profile_image: avatar,
+                    created_at: new Date().toISOString()
+                }, { onConflict: 'id' });
+                
+                if (artistError) {
+                    console.error('[AUTH] Error creating artist:', artistError);
+                    return { error: artistError };
+                }
+                
+                await supabase.auth.updateUser({
+                    data: { user_type: 'artist', full_name: name }
+                });
+            } else {
+                const { error: userError } = await supabase.from('users').upsert({
+                    id: userId,
+                    name: name,
+                    email: email,
+                    avatar_url: avatar,
+                    created_at: new Date().toISOString()
+                }, { onConflict: 'id' });
+                
+                if (userError) {
+                    console.error('[AUTH] Error creating user:', userError);
+                    return { error: userError };
+                }
+                
+                await supabase.auth.updateUser({
+                    data: { user_type: 'user', full_name: name }
+                });
+            }
+            
+            // Limpar dados pendentes
+            sessionStorage.removeItem('googleNeedsAccountType');
+            sessionStorage.removeItem('googlePendingUserId');
+            sessionStorage.removeItem('googlePendingEmail');
+            sessionStorage.removeItem('googlePendingName');
+            sessionStorage.removeItem('googlePendingAvatar');
+            
+            // Atualizar estado do usuário
+            const userData = {
+                id: userId,
+                email: email,
+                name: name,
+                type: accountType,
+                avatar: avatar,
+                isPremium: false,
+                isAdmin: false
+            };
+            
+            setUser(userData);
+            localStorage.setItem('currentUser', JSON.stringify(userData));
+            
+            return { data: userData };
+        } catch (error) {
+            console.error('[AUTH] Error completing Google signup:', error);
+            return { error };
+        }
+    };
+
     const logout = async () => {
         await supabase.auth.signOut();
         setUser(null);
@@ -486,6 +565,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         login,
         loginWithGoogle,
+        completeGoogleSignup,
         logout,
         upgradeToPremium,
         updateUser,

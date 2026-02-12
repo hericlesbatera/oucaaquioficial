@@ -34,10 +34,12 @@ const AuthModal = ({ isOpen, onClose }) => {
     const [showSignupPassword, setShowSignupPassword] = useState(false);
     const [showSignupConfirmPassword, setShowSignupConfirmPassword] = useState(false);
     
-    const { loginWithGoogle } = useAuth();
+    const { loginWithGoogle, completeGoogleSignup } = useAuth();
 
     const [showGoogleSignupTypeModal, setShowGoogleSignupTypeModal] = useState(false);
     const [googleSignupType, setGoogleSignupType] = useState('user');
+    const [showGoogleAccountTypeModal, setShowGoogleAccountTypeModal] = useState(false);
+    const [googleAccountTypeLoading, setGoogleAccountTypeLoading] = useState(false);
 
     const termosDeUso = (
         <div style={{ whiteSpace: 'pre-wrap', fontSize: 13, lineHeight: 1.6 }}>
@@ -293,7 +295,7 @@ const AuthModal = ({ isOpen, onClose }) => {
         }
     };
     
-    // Verificar se há erro de login Google ao abrir o modal
+    // Verificar se há erro de login Google ou se precisa escolher tipo de conta
     React.useEffect(() => {
         const googleError = sessionStorage.getItem('googleLoginError');
         if (googleError) {
@@ -304,7 +306,43 @@ const AuthModal = ({ isOpen, onClose }) => {
                 variant: 'destructive'
             });
         }
+        
+        // Verificar se precisa escolher tipo de conta (login Google com conta nova)
+        const needsAccountType = sessionStorage.getItem('googleNeedsAccountType');
+        if (needsAccountType === 'true') {
+            setShowGoogleAccountTypeModal(true);
+        }
     }, [isOpen]);
+    
+    // Função para completar cadastro Google com tipo escolhido
+    const handleGoogleAccountTypeConfirm = async () => {
+        setGoogleAccountTypeLoading(true);
+        try {
+            const result = await completeGoogleSignup(googleSignupType);
+            if (result.error) {
+                toast({
+                    title: 'Erro ao criar conta',
+                    description: result.error.message || 'Erro ao completar cadastro',
+                    variant: 'destructive'
+                });
+            } else {
+                toast({
+                    title: 'Conta criada com sucesso!',
+                    description: `Bem-vindo ao Ouça Aqui!`,
+                });
+                setShowGoogleAccountTypeModal(false);
+                onClose();
+            }
+        } catch (error) {
+            toast({
+                title: 'Erro',
+                description: 'Erro ao criar conta',
+                variant: 'destructive'
+            });
+        } finally {
+            setGoogleAccountTypeLoading(false);
+        }
+    };
 
     const handleGoogleSignup = () => {
         setShowGoogleSignupTypeModal(true);
@@ -1359,7 +1397,7 @@ const AuthModal = ({ isOpen, onClose }) => {
 
 
 
-            {/* Modal de Tipo de Conta para Google */}
+            {/* Modal de Tipo de Conta para Google (cadastro) */}
             {showGoogleSignupTypeModal && (
                 <Dialog open={showGoogleSignupTypeModal} onOpenChange={setShowGoogleSignupTypeModal}>
                     <DialogContent className="max-w-md">
@@ -1400,6 +1438,65 @@ const AuthModal = ({ isOpen, onClose }) => {
                                 <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                             </svg>
                             Continuar com Google
+                        </button>
+                    </DialogContent>
+                </Dialog>
+            )}
+            
+            {/* Modal de Tipo de Conta - Login Google sem conta existente */}
+            {showGoogleAccountTypeModal && (
+                <Dialog open={showGoogleAccountTypeModal} onOpenChange={(open) => {
+                    if (!open) {
+                        // Se fechar sem escolher, deslogar
+                        sessionStorage.removeItem('googleNeedsAccountType');
+                        sessionStorage.removeItem('googlePendingUserId');
+                        sessionStorage.removeItem('googlePendingEmail');
+                        sessionStorage.removeItem('googlePendingName');
+                        sessionStorage.removeItem('googlePendingAvatar');
+                    }
+                    setShowGoogleAccountTypeModal(open);
+                }}>
+                    <DialogContent className="max-w-md">
+                        <DialogTitle className="text-xl font-bold text-center">Criar sua conta</DialogTitle>
+                        <DialogDescription className="text-center text-gray-600 mb-4">
+                            Não encontramos uma conta com esse email. Deseja criar uma nova conta?
+                        </DialogDescription>
+                        <div className="flex gap-4 mb-6">
+                            <button
+                                onClick={() => setGoogleSignupType('user')}
+                                className={`flex-1 px-4 py-4 rounded-lg font-bold text-sm transition-colors ${
+                                    googleSignupType === 'user'
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                <div className="text-lg mb-1">👤</div>
+                                Usuário
+                                <div className="text-xs font-normal mt-1 opacity-80">Ouvir músicas e criar playlists</div>
+                            </button>
+                            <button
+                                onClick={() => setGoogleSignupType('artist')}
+                                className={`flex-1 px-4 py-4 rounded-lg font-bold text-sm transition-colors ${
+                                    googleSignupType === 'artist'
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                <div className="text-lg mb-1">🎤</div>
+                                Artista
+                                <div className="text-xs font-normal mt-1 opacity-80">Publicar músicas e álbuns</div>
+                            </button>
+                        </div>
+                        <button
+                            onClick={handleGoogleAccountTypeConfirm}
+                            disabled={googleAccountTypeLoading}
+                            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-full transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                            {googleAccountTypeLoading ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                'Criar Conta'
+                            )}
                         </button>
                     </DialogContent>
                 </Dialog>
