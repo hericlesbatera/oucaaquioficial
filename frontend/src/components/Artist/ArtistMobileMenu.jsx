@@ -71,14 +71,14 @@ const ArtistMobileMenu = () => {
 
   return (
     <>
-      {/* Mobile Header com navegação */}
-      <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-40">
+      {/* Mobile Header com navegação - barra fixa no topo */}
+      <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between fixed top-14 left-0 right-0 z-40">
         <button
           onClick={() => setIsOpen(true)}
           className="flex items-center gap-2 text-gray-700"
         >
           <Menu className="w-6 h-6" />
-          <span className="font-medium">{currentItem?.label || 'Menu'}</span>
+          <span className="font-medium text-sm">{currentItem?.label || 'Menu'}</span>
         </button>
         
         <div className="flex items-center gap-2">
@@ -94,6 +94,8 @@ const ArtistMobileMenu = () => {
           />
         </div>
       </div>
+      {/* Spacer para compensar a barra fixa */}
+      <div className="md:hidden h-14" />
 
       {/* Overlay */}
       {isOpen && (

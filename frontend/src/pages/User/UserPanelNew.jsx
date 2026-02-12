@@ -1160,105 +1160,141 @@ const UserPanelNew = () => {
         }
     };
 
+    const menuTabs = [
+        { id: 'playlists', label: 'Minhas Playlists', icon: ListMusic },
+        { id: 'favoritos', label: 'Favoritos', icon: Heart },
+        { id: 'suporte', label: 'Suporte', icon: MessageCircle },
+        { id: 'configuracoes', label: 'Configurações', icon: Settings },
+    ];
+
+    const currentTab = menuTabs.find(t => t.id === activeTab);
+
     // ====== RENDER ======
     return (
         <div className="min-h-screen bg-gray-50">
-            <Header />
-            <div className="flex flex-col lg:flex-row">
-                {/* Sidebar Menu */}
-                <div className={`fixed lg:static inset-0 z-50 lg:z-0 transition-all ${isSidebarOpen ? 'block' : 'hidden lg:block'}`}>
-                    <div onClick={() => setIsSidebarOpen(false)} className="lg:hidden absolute inset-0 bg-black/50"></div>
-                    <div className="relative w-64 bg-white h-screen border-r border-gray-200 overflow-y-auto">
-                        <div className="p-6">
-                            <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden mb-4">
-                                <X className="w-6 h-6" />
-                            </button>
-                            
-                            <div className="flex items-center gap-4 mb-8">
+            {/* Desktop Header */}
+            <div className="hidden md:block">
+                <Header />
+            </div>
+            
+            {/* Mobile Header com Menu */}
+            <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-40">
+                <button
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="flex items-center gap-2 text-gray-700"
+                >
+                    <Menu className="w-6 h-6" />
+                    <span className="font-medium text-sm">{currentTab?.label || 'Menu'}</span>
+                </button>
+                <img
+                    src={userAvatar || '/images/default-avatar.png'}
+                    alt="Avatar"
+                    className="w-8 h-8 rounded-full object-cover bg-gray-200"
+                    onError={(e) => e.target.src = '/images/default-avatar.png'}
+                />
+            </div>
+            
+            <div className="flex flex-col md:flex-row">
+                {/* Sidebar Menu - Drawer no mobile */}
+                {isSidebarOpen && (
+                    <div className="md:hidden fixed inset-0 bg-black/50 z-50" onClick={() => setIsSidebarOpen(false)} />
+                )}
+                <div className={`fixed md:static top-0 left-0 h-full w-72 bg-white z-50 transform transition-transform duration-300 ease-in-out md:transform-none md:border-r border-gray-200 ${
+                    isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+                }`}>
+                    <div className="p-4 md:p-6 h-full overflow-y-auto">
+                        {/* Header do Menu Mobile */}
+                        <div className="flex items-center justify-between mb-6 md:hidden">
+                            <div className="flex items-center gap-3">
                                 <img
                                     src={userAvatar || '/images/default-avatar.png'}
                                     alt="Avatar"
-                                    className="w-12 h-12 rounded-full object-cover bg-gray-200"
+                                    className="w-10 h-10 rounded-full object-cover bg-gray-200"
                                     onError={(e) => e.target.src = '/images/default-avatar.png'}
                                 />
                                 <div className="min-w-0">
-                                    <p className="font-semibold text-gray-900 truncate">{displayName || 'Usuário'}</p>
-                                    <p className="text-xs text-gray-600 truncate">{user?.email}</p>
+                                    <p className="font-semibold text-gray-900 truncate text-sm">{displayName || 'Usuário'}</p>
+                                    <p className="text-xs text-gray-500">Usuário</p>
                                 </div>
                             </div>
-
-                            <nav className="space-y-2">
-                                {[
-                                    { id: 'playlists', label: 'Minhas Playlists', icon: ListMusic },
-                                    { id: 'favoritos', label: 'Favoritos', icon: Heart },
-                                    { id: 'suporte', label: 'Suporte', icon: MessageCircle },
-                                    { id: 'configuracoes', label: 'Configurações', icon: Settings },
-                                ].map(tab => {
-                                    const Icon = tab.icon;
-                                    return (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => {
-                                                setActiveTab(tab.id);
-                                                setIsSidebarOpen(false);
-                                            }}
-                                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                                                activeTab === tab.id
-                                                    ? 'bg-red-50 text-red-600 font-semibold'
-                                                    : 'text-gray-700 hover:bg-gray-100'
-                                            }`}
-                                        >
-                                            <Icon className="w-5 h-5" />
-                                            {tab.label}
-                                        </button>
-                                    );
-                                })}
-
-                                <button
-                                    onClick={() => {
-                                        logout();
-                                        navigate('/');
-                                    }}
-                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors mt-8"
-                                >
-                                    <LogOut className="w-5 h-5" />
-                                    Sair
-                                </button>
-                            </nav>
+                            <button onClick={() => setIsSidebarOpen(false)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
+                                <X className="w-5 h-5" />
+                            </button>
                         </div>
+                        
+                        {/* Desktop User Info */}
+                        <div className="hidden md:flex items-center gap-4 mb-8">
+                            <img
+                                src={userAvatar || '/images/default-avatar.png'}
+                                alt="Avatar"
+                                className="w-12 h-12 rounded-full object-cover bg-gray-200"
+                                onError={(e) => e.target.src = '/images/default-avatar.png'}
+                            />
+                            <div className="min-w-0">
+                                <p className="font-semibold text-gray-900 truncate">{displayName || 'Usuário'}</p>
+                                <p className="text-xs text-gray-600 truncate">{user?.email}</p>
+                            </div>
+                        </div>
+
+                        <nav className="space-y-1">
+                            {menuTabs.map(tab => {
+                                const Icon = tab.icon;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => {
+                                            setActiveTab(tab.id);
+                                            setIsSidebarOpen(false);
+                                        }}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                                            activeTab === tab.id
+                                                ? 'bg-red-50 text-red-600 font-semibold'
+                                                : 'text-gray-700 hover:bg-gray-100'
+                                        }`}
+                                    >
+                                        <Icon className="w-5 h-5" />
+                                        {tab.label}
+                                    </button>
+                                );
+                            })}
+
+                            <button
+                                onClick={() => {
+                                    logout();
+                                    navigate('/');
+                                }}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors mt-6"
+                            >
+                                <LogOut className="w-5 h-5" />
+                                Sair da conta
+                            </button>
+                        </nav>
                     </div>
                 </div>
 
                 {/* Main Content */}
-                <main className="flex-1">
-                    <div className="p-6 max-w-6xl mx-auto">
-                        {/* Mobile Menu Button */}
-                        <button
-                            onClick={() => setIsSidebarOpen(true)}
-                            className="lg:hidden mb-4 p-2"
-                        >
-                            <Menu className="w-6 h-6" />
-                        </button>
+                <main className="flex-1 pb-24 md:pb-0">
+                    <div className="p-4 md:p-6 max-w-6xl mx-auto">
 
                         {/* MINHAS PLAYLISTS */}
                         {activeTab === 'playlists' && (
                             <div>
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                                        <ListMusic className="w-8 h-8 text-red-600" />
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                                    <h2 className="text-xl md:text-3xl font-bold text-gray-900 flex items-center gap-2 md:gap-3">
+                                        <ListMusic className="w-6 md:w-8 h-6 md:h-8 text-red-600 flex-shrink-0" />
                                         Minhas Playlists
                                     </h2>
                                     <Button
                                         onClick={() => setCreateModalOpen(true)}
-                                        className="bg-red-600 hover:bg-red-700 text-white rounded-full"
+                                        className="bg-red-600 hover:bg-red-700 text-white rounded-full text-sm"
                                     >
-                                        <Plus className="w-4 h-4 mr-2" />
+                                        <Plus className="w-4 h-4 mr-1 md:mr-2" />
                                         Nova Playlist
                                     </Button>
                                 </div>
 
                                 {/* Toolbar */}
-                                <div className="flex items-center justify-between mb-8 gap-4">
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mb-6 gap-3">
                                     <div className="flex-1 relative">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                         <Input
@@ -1266,12 +1302,12 @@ const UserPanelNew = () => {
                                             placeholder="Buscar Playlists"
                                             value={searchPlaylistQuery}
                                             onChange={(e) => setSearchPlaylistQuery(e.target.value)}
-                                            className="pl-10 rounded-full border-gray-300"
+                                            className="pl-10 rounded-full border-gray-300 text-sm"
                                         />
                                     </div>
                                     
                                     <DropdownMenu modal={false}>
-                                        <DropdownMenuTrigger className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-sm text-gray-700 transition-colors whitespace-nowrap">
+                                        <DropdownMenuTrigger className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-sm text-gray-700 transition-colors whitespace-nowrap">
                                             <SlidersHorizontal className="w-4 h-4" />
                                             Filtros
                                             <ChevronDown className="w-4 h-4" />
@@ -2364,6 +2400,11 @@ const UserPanelNew = () => {
                     </div>
                 </DialogContent>
             </Dialog>
+            
+            {/* Mobile Bottom Nav */}
+            <div className="md:hidden">
+                <MobileBottomNav />
+            </div>
         </div>
     );
 };

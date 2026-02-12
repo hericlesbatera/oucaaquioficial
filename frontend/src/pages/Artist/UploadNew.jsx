@@ -11,7 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import { toast } from '../../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Clock } from 'lucide-react';
-import ArtistSidebar from '../../components/Artist/ArtistSidebar';
+// ArtistSidebar já é incluído pelo ArtistPanelLayout
 import { supabase } from '../../lib/supabaseClient';
 import { API_URL } from '../../config/api';
 
