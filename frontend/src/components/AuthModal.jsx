@@ -314,6 +314,28 @@ const AuthModal = ({ isOpen, onClose }) => {
         }
     }, [isOpen]);
     
+    // Verificar ao montar o componente (pós-redirect do Google)
+    React.useEffect(() => {
+        const checkPendingGoogleSignup = () => {
+            const needsAccountType = sessionStorage.getItem('googleNeedsAccountType');
+            if (needsAccountType === 'true') {
+                setShowGoogleAccountTypeModal(true);
+            }
+        };
+        
+        // Verificar imediatamente
+        checkPendingGoogleSignup();
+        
+        // Verificar a cada 500ms por 5 segundos (para pegar o caso do redirect demorar)
+        const interval = setInterval(checkPendingGoogleSignup, 500);
+        const timeout = setTimeout(() => clearInterval(interval), 5000);
+        
+        return () => {
+            clearInterval(interval);
+            clearTimeout(timeout);
+        };
+    }, []);
+    
     // Função para completar cadastro Google com tipo escolhido
     const handleGoogleAccountTypeConfirm = async () => {
         setGoogleAccountTypeLoading(true);

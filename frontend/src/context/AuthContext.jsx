@@ -26,6 +26,26 @@ export const AuthProvider = ({ children }) => {
                      // Se há sessão válida no Supabase, restaurar usuário
                      let avatarUrl = session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || DEFAULT_AVATAR;
                      
+                     const isGoogleProvider = session.user.app_metadata?.provider === 'google';
+                     
+                     // Para login Google, verificar se o usuário existe nas tabelas
+                     if (isGoogleProvider) {
+                         const { data: artistExists } = await supabase.from('artists').select('id').eq('id', session.user.id).maybeSingle();
+                         const { data: userExists } = !artistExists ? await supabase.from('users').select('id').eq('id', session.user.id).maybeSingle() : { data: null };
+                         
+                         if (!artistExists && !userExists) {
+                             // Usuário Google sem conta - mostrar modal de escolha
+                             console.log('[AUTH] getSession: Google user not in tables, showing account type modal');
+                             sessionStorage.setItem('googleNeedsAccountType', 'true');
+                             sessionStorage.setItem('googlePendingUserId', session.user.id);
+                             sessionStorage.setItem('googlePendingEmail', session.user.email);
+                             sessionStorage.setItem('googlePendingName', session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Usuário');
+                             sessionStorage.setItem('googlePendingAvatar', avatarUrl);
+                             setLoading(false);
+                             return;
+                         }
+                     }
+                     
                      let isAdmin = false;
                      let isAdminOnly = false;
                      let adminAvatar = null;
@@ -228,6 +248,7 @@ export const AuthProvider = ({ children }) => {
                   } else {
                       // Para QUALQUER login (Google reload ou email/senha) - verificar tipo de usuário
                       console.log('[AUTH] Checking user type for ID:', session.user.id, 'provider:', session.user.app_metadata?.provider);
+                      let foundInTables = false;
                       try {
                           // Verificar na tabela artists - buscar nome e avatar também (com timeout de 5s)
                           const artistPromise = supabase
@@ -245,6 +266,7 @@ export const AuthProvider = ({ children }) => {
                           
                           if (artistData) {
                               existingUserType = 'artist';
+                              foundInTables = true;
                               // Usar nome e avatar da tabela artists
                               if (artistData.name) {
                                   session.user.user_metadata = {
@@ -274,6 +296,7 @@ export const AuthProvider = ({ children }) => {
                               
                               if (userData) {
                                   existingUserType = 'user';
+                                  foundInTables = true;
                                   // Usar nome e avatar da tabela users
                                   if (userData.name) {
                                       session.user.user_metadata = {
@@ -287,6 +310,18 @@ export const AuthProvider = ({ children }) => {
                                   }
                                   console.log('[AUTH] Found in users table, using name:', userData.name);
                               }
+                          }
+                          
+                          // Se é Google e não encontrou em nenhuma tabela, pedir tipo de conta
+                          if (isGoogleLogin && !foundInTables) {
+                              console.log('[AUTH] Google user not found in any table, prompting for account type');
+                              sessionStorage.setItem('googleNeedsAccountType', 'true');
+                              sessionStorage.setItem('googlePendingUserId', session.user.id);
+                              sessionStorage.setItem('googlePendingEmail', session.user.email);
+                              sessionStorage.setItem('googlePendingName', session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Usuário');
+                              sessionStorage.setItem('googlePendingAvatar', avatarUrl);
+                              setLoading(false);
+                              return;
                           }
                       } catch (e) {
                           console.warn('[AUTH] Error/timeout checking user type:', e.message);
