@@ -42,7 +42,7 @@ const Home = () => {
             .eq('is_private', false)
             .is('deleted_at', null)
             .is('is_scheduled', false)
-            .order('created_at', { ascending: false })
+            .order('published_at', { ascending: false, nullsFirst: false })
             .limit(100),
           
           // Buscar artistas ordenados por seguidores (mais seguidores primeiro)
@@ -187,7 +187,7 @@ const Home = () => {
         .eq('is_private', false)
         .is('deleted_at', null)
         .is('is_scheduled', false)
-        .order('created_at', { ascending: false })
+        .order('published_at', { ascending: false, nullsFirst: false })
         .limit(100);
       
       if (supabaseAlbums && supabaseAlbums.length > 0) {

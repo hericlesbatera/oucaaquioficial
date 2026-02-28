@@ -75,13 +75,13 @@ const HomeImproved = () => {
 
                 // Paralelizar as queries principais sem timeout
                 const [albumsResult, artistsResult, collabResult, clipsResult] = await Promise.all([
-                    // Query 1: Álbuns com limite - ordenado por data de lançamento (release_date)
+                    // Query 1: Álbuns com limite - ordenado por data de publicação real (published_at)
                     supabase
                         .from('albums')
                         .select('*')
                         .eq('is_private', false)
                         .is('deleted_at', null)
-                        .order('release_date', { ascending: false, nullsFirst: false })
+                        .order('published_at', { ascending: false, nullsFirst: false })
                         .limit(50),
                     
                     // Query 2: Artistas
