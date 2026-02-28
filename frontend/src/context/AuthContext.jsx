@@ -13,8 +13,18 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    // FAST LOAD: carregar usuário do cache imediatamente para evitar tela de loading
+    const getCachedUser = () => {
+        try {
+            const cached = localStorage.getItem('currentUser');
+            return cached ? JSON.parse(cached) : null;
+        } catch (e) {
+            return null;
+        }
+    };
+    const [user, setUser] = useState(getCachedUser);
+    // Se há usuário em cache, não mostrar loading (evita tela branca)
+    const [loading, setLoading] = useState(!getCachedUser());
     // Ref para debounce do SIGNED_IN (evitar múltiplos disparos)
     const signedInDebounceRef = useRef(null);
     const lastSignedInUserRef = useRef(null);
@@ -29,15 +39,48 @@ export const AuthProvider = ({ children }) => {
                      // Se há sessão válida no Supabase, restaurar usuário
                      let avatarUrl = session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || DEFAULT_AVATAR;
                      
-                     const isGoogleProvider = session.user.app_metadata?.provider === 'google';
+                     // FAST LOAD: se já temos usuário em cache com o mesmo ID, liberar loading imediatamente
+                     const cachedUser = getCachedUser();
+                     if (cachedUser && cachedUser.id === session.user.id) {
+                         setUser(cachedUser);
+                         setLoading(false);
+                         // Continuar verificações em background sem bloquear a UI
+                     }
                      
-                     // Para login Google, verificar se o usuário existe nas tabelas
+                     const isGoogleProvider = session.user.app_metadata?.provider === 'google';
+                     let isAdmin = false;
+                     let isAdminOnly = false;
+                     let adminAvatar = null;
+
+                     // Paralelizar verificações de Google + admin para reduzir tempo de carregamento
+                     const timeout5s = (msg) => new Promise((_, reject) =>
+                         setTimeout(() => reject(new Error(msg)), 5000)
+                     );
+
+                     // Para login Google, verificar se o usuário existe nas tabelas (em paralelo com admin)
+                     const [adminResult, artistExistsResult, userExistsResult] = await Promise.allSettled([
+                         Promise.race([
+                             supabase.from('admin_users').select('id, avatar_url, is_admin_only').eq('id', session.user.id).maybeSingle(),
+                             timeout5s('Admin check timeout')
+                         ]),
+                         isGoogleProvider
+                             ? Promise.race([supabase.from('artists').select('id').eq('id', session.user.id).maybeSingle(), timeout5s('Artist exists timeout')])
+                             : Promise.resolve({ data: null }),
+                         isGoogleProvider
+                             ? Promise.race([supabase.from('users').select('id').eq('id', session.user.id).maybeSingle(), timeout5s('User exists timeout')])
+                             : Promise.resolve({ data: null })
+                     ]);
+
+                     if (adminResult.status === 'fulfilled' && adminResult.value?.data) {
+                         isAdmin = true;
+                         isAdminOnly = adminResult.value.data.is_admin_only === true;
+                         adminAvatar = adminResult.value.data.avatar_url;
+                     }
+
                      if (isGoogleProvider) {
-                         const { data: artistExists } = await supabase.from('artists').select('id').eq('id', session.user.id).maybeSingle();
-                         const { data: userExists } = !artistExists ? await supabase.from('users').select('id').eq('id', session.user.id).maybeSingle() : { data: null };
-                         
+                         const artistExists = artistExistsResult.status === 'fulfilled' ? artistExistsResult.value?.data : null;
+                         const userExists = userExistsResult.status === 'fulfilled' ? userExistsResult.value?.data : null;
                          if (!artistExists && !userExists) {
-                             // Usuário Google sem conta - mostrar modal de escolha
                              console.log('[AUTH] getSession: Google user not in tables, showing account type modal');
                              sessionStorage.setItem('googleNeedsAccountType', 'true');
                              sessionStorage.setItem('googlePendingUserId', session.user.id);
@@ -47,33 +90,6 @@ export const AuthProvider = ({ children }) => {
                              setLoading(false);
                              return;
                          }
-                     }
-                     
-                     let isAdmin = false;
-                     let isAdminOnly = false;
-                     let adminAvatar = null;
-
-                     // Verificar se é ADMIN (com timeout)
-                     try {
-                         const { data: adminData, error } = await Promise.race([
-                             supabase
-                                 .from('admin_users')
-                                 .select('id, avatar_url, is_admin_only')
-                                 .eq('id', session.user.id)
-                                 .maybeSingle(),
-                             new Promise((_, reject) => 
-                                 setTimeout(() => reject(new Error('Admin check timeout')), 15000)
-                             )
-                         ]);
-
-                         if (adminData) {
-                             isAdmin = true;
-                             isAdminOnly = adminData.is_admin_only === true;
-                             adminAvatar = adminData.avatar_url;
-                         }
-                     } catch (adminError) {
-                         console.warn('Erro ao verificar status de admin:', adminError);
-                         isAdmin = false;
                      }
     
                      const userData = {
@@ -267,73 +283,42 @@ export const AuthProvider = ({ children }) => {
                       localStorage.removeItem('pendingGoogleSignupType');
                   } else {
                       // Para QUALQUER login (Google reload ou email/senha) - verificar tipo de usuário
-                      console.log('[AUTH] Checking user type for ID:', session.user.id, 'provider:', session.user.app_metadata?.provider);
-                      let foundInTables = false;
+                      // Paralelizar queries de artist, users e admin para reduzir tempo
+                      console.log('[AUTH] Checking user type for ID:', session.user.id);
                       try {
-                          // Verificar na tabela artists - buscar nome e avatar também (com timeout de 5s)
-                          const artistPromise = supabase
-                              .from('artists')
-                              .select('id, name, avatar_url')
-                              .eq('id', session.user.id)
-                              .maybeSingle();
-                          
-                          const { data: artistData, error: artistError } = await Promise.race([
-                              artistPromise,
-                              new Promise((_, reject) => setTimeout(() => reject(new Error('Artist query timeout')), 5000))
+                          const t5s = (msg) => new Promise((_, reject) => setTimeout(() => reject(new Error(msg)), 5000));
+                          const [artistRes, userRes, adminRes] = await Promise.allSettled([
+                              Promise.race([supabase.from('artists').select('id, name, avatar_url').eq('id', session.user.id).maybeSingle(), t5s('Artist timeout')]),
+                              Promise.race([supabase.from('users').select('id, name, avatar_url').eq('id', session.user.id).maybeSingle(), t5s('User timeout')]),
+                              Promise.race([supabase.from('admin_users').select('id, avatar_url, is_admin_only').eq('id', session.user.id).maybeSingle(), t5s('Admin timeout')])
                           ]);
-                          
-                          console.log('[AUTH] Artist query result:', { artistData, artistError });
-                          
+
+                          const artistData = artistRes.status === 'fulfilled' ? artistRes.value?.data : null;
+                          const userData2 = userRes.status === 'fulfilled' ? userRes.value?.data : null;
+                          const adminData = adminRes.status === 'fulfilled' ? adminRes.value?.data : null;
+
+                          if (adminData) {
+                              isAdmin = true;
+                              isAdminOnly = adminData.is_admin_only === true;
+                              adminAvatar = adminData.avatar_url;
+                          }
+
                           if (artistData) {
                               existingUserType = 'artist';
-                              foundInTables = true;
-                              // Usar nome e avatar da tabela artists
                               if (artistData.name) {
-                                  session.user.user_metadata = {
-                                      ...session.user.user_metadata,
-                                      full_name: artistData.name,
-                                      name: artistData.name
-                                  };
+                                  session.user.user_metadata = { ...session.user.user_metadata, full_name: artistData.name, name: artistData.name };
                               }
-                              if (artistData.avatar_url) {
-                                  avatarUrl = artistData.avatar_url;
+                              if (artistData.avatar_url) avatarUrl = artistData.avatar_url;
+                              console.log('[AUTH] Found in artists table:', artistData.name);
+                          } else if (userData2) {
+                              existingUserType = 'user';
+                              if (userData2.name) {
+                                  session.user.user_metadata = { ...session.user.user_metadata, full_name: userData2.name, name: userData2.name };
                               }
-                              console.log('[AUTH] Found in artists table, using name:', artistData.name);
-                          } else {
-                              // Verificar na tabela users - buscar nome e avatar também (com timeout de 5s)
-                              const userPromise = supabase
-                                  .from('users')
-                                  .select('id, name, avatar_url')
-                                  .eq('id', session.user.id)
-                                  .maybeSingle();
-                              
-                              const { data: userData, error: userError } = await Promise.race([
-                                  userPromise,
-                                  new Promise((_, reject) => setTimeout(() => reject(new Error('User query timeout')), 5000))
-                              ]);
-                              
-                              console.log('[AUTH] User query result:', { userData, userError });
-                              
-                              if (userData) {
-                                  existingUserType = 'user';
-                                  foundInTables = true;
-                                  // Usar nome e avatar da tabela users
-                                  if (userData.name) {
-                                      session.user.user_metadata = {
-                                          ...session.user.user_metadata,
-                                          full_name: userData.name,
-                                          name: userData.name
-                                      };
-                                  }
-                                  if (userData.avatar_url) {
-                                      avatarUrl = userData.avatar_url;
-                                  }
-                                  console.log('[AUTH] Found in users table, using name:', userData.name);
-                              }
-                          }
-                          
-                          // Se é Google e não encontrou em nenhuma tabela, pedir tipo de conta
-                          if (isGoogleLogin && !foundInTables) {
+                              if (userData2.avatar_url) avatarUrl = userData2.avatar_url;
+                              console.log('[AUTH] Found in users table:', userData2.name);
+                          } else if (isGoogleLogin) {
+                              // Google user não encontrado em nenhuma tabela
                               console.log('[AUTH] Google user not found in any table, prompting for account type');
                               sessionStorage.setItem('googleNeedsAccountType', 'true');
                               sessionStorage.setItem('googlePendingUserId', session.user.id);
@@ -343,35 +328,11 @@ export const AuthProvider = ({ children }) => {
                               setLoading(false);
                               return;
                           }
+                          console.log('[AUTH] User type determined:', existingUserType);
                       } catch (e) {
                           console.warn('[AUTH] Error/timeout checking user type:', e.message);
-                          // Em caso de timeout, usar dados do user_metadata como fallback
                           existingUserType = session.user.user_metadata?.user_type || 'user';
                       }
-                      console.log('[AUTH] User type determined:', existingUserType);
-                  }
-         
-                  // Verificar se é admin (com timeout)
-                  try {
-                      const { data: adminData, error } = await Promise.race([
-                          supabase
-                              .from('admin_users')
-                              .select('id, avatar_url, is_admin_only')
-                              .eq('id', session.user.id)
-                              .maybeSingle(),
-                          new Promise((_, reject) => 
-                              setTimeout(() => reject(new Error('Admin check timeout')), 15000)
-                          )
-                      ]);
-         
-                      if (adminData) {
-                          isAdmin = true;
-                          isAdminOnly = adminData.is_admin_only === true;
-                          adminAvatar = adminData.avatar_url;
-                      }
-                  } catch (adminError) {
-                      console.warn('Erro ao verificar status de admin:', adminError);
-                      isAdmin = false;
                   }
          
                   const userData = {
@@ -422,51 +383,36 @@ export const AuthProvider = ({ children }) => {
     
              let isAdmin = false;
              let isAdminOnly = false;
-             
-             // Verificar se é ADMIN com timeout
-             try {
-                 const { data: adminData } = await Promise.race([
-                     supabase
-                         .from('admin_users')
-                         .select('id, is_admin_only')
-                         .eq('id', data.user.id)
-                         .maybeSingle(),
-                     new Promise((_, reject) => 
-                         setTimeout(() => reject(new Error('Admin check timeout')), 15000)
-                     )
-                 ]);
-    
-                 if (adminData) {
-                     isAdmin = true;
-                     isAdminOnly = adminData.is_admin_only === true;
-                 }
-             } catch (adminError) {
-                 console.warn('Erro ao verificar admin status:', adminError);
-             }
-    
-             // Verificar se é ARTISTA (apenas se não for admin-only)
              let artistData = null;
              let isArtist = false;
-             
-             if (!isAdminOnly) {
-                 try {
-                     const { data: artistCheck } = await Promise.race([
-                         supabase
-                             .from('artists')
-                             .select('id, name, avatar_url')
-                             .eq('id', data.user.id)
-                             .maybeSingle(),
-                         new Promise((_, reject) => 
-                             setTimeout(() => reject(new Error('Artist check timeout')), 15000)
-                         )
-                     ]);
-    
-                     artistData = artistCheck;
-                     isArtist = !!artistData;
-                     console.log('[LOGIN] Artist check result:', { artistData, isArtist });
-                 } catch (artistError) {
-                     console.warn('Erro ao verificar artist status:', artistError);
+
+             // Paralelizar verificações de admin e artista para reduzir tempo de login
+             try {
+                 const timeout5s = (msg) => new Promise((_, reject) =>
+                     setTimeout(() => reject(new Error(msg)), 5000)
+                 );
+                 const [adminResult, artistResult] = await Promise.allSettled([
+                     Promise.race([
+                         supabase.from('admin_users').select('id, is_admin_only').eq('id', data.user.id).maybeSingle(),
+                         timeout5s('Admin check timeout')
+                     ]),
+                     Promise.race([
+                         supabase.from('artists').select('id, name, avatar_url').eq('id', data.user.id).maybeSingle(),
+                         timeout5s('Artist check timeout')
+                     ])
+                 ]);
+
+                 if (adminResult.status === 'fulfilled' && adminResult.value?.data) {
+                     isAdmin = true;
+                     isAdminOnly = adminResult.value.data.is_admin_only === true;
                  }
+                 if (!isAdminOnly && artistResult.status === 'fulfilled' && artistResult.value?.data) {
+                     artistData = artistResult.value.data;
+                     isArtist = true;
+                 }
+                 console.log('[LOGIN] Admin/Artist check results:', { isAdmin, isArtist });
+             } catch (checkError) {
+                 console.warn('Erro ao verificar admin/artist status:', checkError);
              }
     
              // Determinar tipo: admin > artist > user
