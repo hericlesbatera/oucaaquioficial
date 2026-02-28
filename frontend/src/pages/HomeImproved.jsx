@@ -20,6 +20,7 @@ const HomeImproved = () => {
     const clipsRef = useRef(null);
     const artistasRef = useRef(null);
     const recomendaRef = useRef(null);
+    const recomendaMobileRef = useRef(null);
     const [topCdsFilter, setTopCdsFilter] = useState('mes');
     const [allAlbums, setAllAlbums] = useState([]);
     const [allArtists, setAllArtists] = useState([]);
@@ -991,33 +992,39 @@ const HomeImproved = () => {
                         </div>
                         <div className="flex gap-1">
                             <button
-                                onClick={() => scrollSection(recomendaRef, 'left')}
+                                onClick={() => {
+                                    const ref = window.innerWidth >= 768 ? recomendaRef : recomendaMobileRef;
+                                    scrollSection(ref, 'left');
+                                }}
                                 className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                             >
                                 <ChevronLeft className="w-4 h-4" />
                             </button>
                             <button
-                                onClick={() => scrollSection(recomendaRef, 'right')}
+                                onClick={() => {
+                                    const ref = window.innerWidth >= 768 ? recomendaRef : recomendaMobileRef;
+                                    scrollSection(ref, 'right');
+                                }}
                                 className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                             >
                                 <ChevronRight className="w-4 h-4" />
                             </button>
                         </div>
                     </div>
-                    {/* Carrossel unificado - 3 cards visíveis no desktop, scroll lateral no mobile */}
+                    {/* Desktop - 6 cards visíveis igual ao TOP CDS */}
                     <div
                         ref={recomendaRef}
-                        className="flex gap-3 md:gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-4 md:px-0"
+                        className="hidden md:flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {recommendedAlbums.length === 0 ? (
-                            <p className="text-gray-500 py-8 col-span-full">Nenhum álbum disponível no momento.</p>
+                            <p className="text-gray-500 py-8">Nenhum álbum disponível no momento.</p>
                         ) : (
                             recommendedAlbums.slice(0, 12).map((album) => (
                                 <div
                                     key={album.id}
                                     className="flex-shrink-0"
-                                    style={{ width: '140px', minWidth: '140px' }}
+                                    style={{ width: 'calc((100% - 80px) / 6)', minWidth: '160px' }}
                                 >
                                     <Link
                                         to={`/${album.artistSlug}/${album.slug || album.id}`}
@@ -1075,6 +1082,51 @@ const HomeImproved = () => {
                                         <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded">
                                             <span className="font-bold text-gray-700">{formatNumber(album.downloadCount)}</span>
                                             <span className="text-gray-500">Downloads</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    {/* Mobile - carrossel de 140px igual a Lançamentos Recentes */}
+                    <div
+                        ref={recomendaMobileRef}
+                        className="md:hidden flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth px-4"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
+                        {recommendedAlbums.length === 0 ? (
+                            <p className="text-gray-500 py-4 w-full text-sm">Nenhum álbum disponível no momento.</p>
+                        ) : (
+                            recommendedAlbums.slice(0, 12).map((album) => (
+                                <div key={album.id} className="flex-shrink-0" style={{ width: '140px' }}>
+                                    <Link to={`/${album.artistSlug}/${album.slug || album.id}`} className="block">
+                                        <div className="relative mb-1.5 overflow-hidden rounded-lg shadow" style={{ width: '140px', height: '140px' }}>
+                                            <img
+                                                src={album.coverImage}
+                                                alt={album.title}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <h3 className="text-black font-semibold text-xs mb-0.5 line-clamp-2 leading-tight">
+                                            {album.title}
+                                        </h3>
+                                    </Link>
+                                    <div className="flex items-center gap-0.5 text-gray-500 text-xs mb-1">
+                                        <Link to={`/${album.artistSlug}`} className="truncate hover:text-red-600">
+                                            {album.artistName}
+                                        </Link>
+                                        {album.artistVerified && (
+                                            <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-xs">
+                                        <div className="flex items-center gap-0.5 text-gray-500">
+                                            <Play className="w-2.5 h-2.5" />
+                                            <span>{formatNumber(album.playCount)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-0.5 text-gray-500">
+                                            <span>↓</span>
+                                            <span>{formatNumber(album.downloadCount)}</span>
                                         </div>
                                     </div>
                                 </div>
