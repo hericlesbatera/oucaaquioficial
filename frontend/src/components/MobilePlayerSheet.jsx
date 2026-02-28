@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Volume2 } from 'lucide-react';
 import { Button } from './ui/button';
-import { usePlayer } from '../context/PlayerContext';
+import { usePlayer, usePlayerTime } from '../context/PlayerContext';
 
 const cleanTitle = (title) => {
   return title?.replace(/\.mp3$/i, '') || '';
@@ -15,7 +15,8 @@ const MobilePlayerSheet = ({
   formatDuration,
   onClose
 }) => {
-  const { isPlaying, togglePlay, handlePrevious, handleNext, currentTime, duration, seekTo, isShuffle, repeatMode, toggleShuffle, toggleRepeat, volume, setVolume } = usePlayer();
+  const { isPlaying, togglePlay, handlePrevious, handleNext, seekTo, isShuffle, repeatMode, toggleShuffle, toggleRepeat, volume, setVolume } = usePlayer();
+  const { currentTime, duration } = usePlayerTime();
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [showVolumeControl, setShowVolumeControl] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);

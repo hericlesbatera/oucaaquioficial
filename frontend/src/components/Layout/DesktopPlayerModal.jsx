@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX, Heart } from 'lucide-react';
-import { usePlayer } from '../../context/PlayerContext';
+import { usePlayer, usePlayerTime } from '../../context/PlayerContext';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/button';
 import { Slider } from '../ui/slider';
@@ -11,8 +11,6 @@ const DesktopPlayerModal = ({ isOpen, onClose }) => {
   const {
     currentSong,
     isPlaying,
-    currentTime,
-    duration,
     volume,
     isShuffle,
     repeatMode,
@@ -25,6 +23,7 @@ const DesktopPlayerModal = ({ isOpen, onClose }) => {
     toggleRepeat,
     queue,
   } = usePlayer();
+  const { currentTime, duration } = usePlayerTime();
 
   const { isFavorite, toggleFavorite } = useMusicFavorite(currentSong?.id);
   const { user } = useAuth();

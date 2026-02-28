@@ -1,14 +1,26 @@
-import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { mockSongs } from '../mock';
 import { supabase } from '../lib/supabaseClient';
 import { recordSongPlay } from '../lib/statsHelper';
 
+// Contexto principal: dados estáveis (não muda a cada segundo)
 const PlayerContext = createContext();
+// Contexto de tempo: currentTime e duration (muda ~1x por segundo, isolado)
+const PlayerTimeContext = createContext();
 
 export const usePlayer = () => {
   const context = useContext(PlayerContext);
   if (!context) {
     throw new Error('usePlayer must be used within PlayerProvider');
+  }
+  return context;
+};
+
+// Hook separado para quem precisa de currentTime/duration (apenas Player.jsx e modais)
+export const usePlayerTime = () => {
+  const context = useContext(PlayerTimeContext);
+  if (!context) {
+    throw new Error('usePlayerTime must be used within PlayerProvider');
   }
   return context;
 };
@@ -177,24 +189,39 @@ export const PlayerProvider = ({ children }) => {
   }, [volume]);
   
   // Pré-carregar próxima música quando faltar 30 segundos para acabar
+  // Usa refs para não causar re-render
+  const durationRef = useRef(duration);
+  const currentTimeRef = useRef(currentTime);
+  useEffect(() => { durationRef.current = duration; }, [duration]);
+  useEffect(() => { currentTimeRef.current = currentTime; }, [currentTime]);
+
   useEffect(() => {
-    if (!currentSong || !duration || duration === 0) return;
+    const audio = audioRef.current;
+    const handleTimeUpdateForPreload = () => {
+      const dur = durationRef.current;
+      const ct = audio.currentTime;
+      if (!currentSongRef.current || !dur || dur === 0) return;
+      
+      const timeRemaining = dur - ct;
+      if (timeRemaining <= 30 && timeRemaining > 0) {
+        const queue = queueRef.current;
+        const currentIndex = queue.findIndex(s => s.id === currentSongRef.current?.id);
+        let nextIndex = currentIndex + 1;
+        
+        if (nextIndex >= queue.length && repeatModeRef.current === 'all') {
+          nextIndex = 0;
+        }
+        
+        if (queue[nextIndex] && nextAudioRef.current.src !== queue[nextIndex].audioUrl) {
+          nextAudioRef.current.src = queue[nextIndex].audioUrl;
+          nextAudioRef.current.load();
+        }
+      }
+    };
     
-    const timeRemaining = duration - currentTime;
-    if (timeRemaining <= 30 && timeRemaining > 0) {
-      const currentIndex = queue.findIndex(s => s.id === currentSong?.id);
-      let nextIndex = currentIndex + 1;
-      
-      if (nextIndex >= queue.length && repeatMode === 'all') {
-        nextIndex = 0;
-      }
-      
-      if (queue[nextIndex] && nextAudioRef.current.src !== queue[nextIndex].audioUrl) {
-        nextAudioRef.current.src = queue[nextIndex].audioUrl;
-        nextAudioRef.current.load();
-      }
-    }
-  }, [currentTime, duration, queue, currentSong, repeatMode]);
+    audio.addEventListener('timeupdate', handleTimeUpdateForPreload);
+    return () => audio.removeEventListener('timeupdate', handleTimeUpdateForPreload);
+  }, []);
 
   // Carregar nova música quando currentSong mudar
   useEffect(() => {
@@ -432,17 +459,18 @@ export const PlayerProvider = ({ children }) => {
     audioRef.current.src = '';
   };
 
-  const value = {
+  // Valor estável: não inclui currentTime/duration para evitar re-renders a cada segundo
+  // useMemo garante que o objeto só muda quando os dados realmente mudam
+  const stableValue = useMemo(() => ({
     currentSong,
     isPlaying,
     queue,
-    currentTime,
-    duration,
     volume,
     isShuffle,
     repeatMode,
     isCompactMode,
     isFullPlayerOpen,
+    currentPlaylistId,
     playSong,
     togglePlay,
     handleNext,
@@ -454,7 +482,22 @@ export const PlayerProvider = ({ children }) => {
     clearQueue,
     setIsCompactMode,
     setIsFullPlayerOpen
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [currentSong, isPlaying, queue, volume, isShuffle, repeatMode, isCompactMode, isFullPlayerOpen, currentPlaylistId, handleNext, handlePrevious]);
 
-  return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
+  // Valor de tempo: muda a cada segundo, mas só afeta Player.jsx e modais
+  const timeValue = useMemo(() => ({
+    currentTime,
+    duration,
+    seekTo
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [currentTime, duration]);
+
+  return (
+    <PlayerContext.Provider value={stableValue}>
+      <PlayerTimeContext.Provider value={timeValue}>
+        {children}
+      </PlayerTimeContext.Provider>
+    </PlayerContext.Provider>
+  );
 };

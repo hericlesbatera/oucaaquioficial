@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX, Download, Heart, List, ChevronUp, ChevronDown, Trash2, X, WifiOff } from 'lucide-react';
-import { usePlayer } from '../../context/PlayerContext';
+import { usePlayer, usePlayerTime } from '../../context/PlayerContext';
 import { useAuth } from '../../context/AuthContext';
 import { recordSongDownload } from '../../lib/statsHelper';
 import { Slider } from '../ui/slider';
@@ -25,8 +25,6 @@ const Player = () => {
     const {
         currentSong,
         isPlaying,
-        currentTime,
-        duration,
         volume,
         isShuffle,
         repeatMode,
@@ -42,6 +40,7 @@ const Player = () => {
         playSong,
         setIsCompactMode
     } = usePlayer();
+    const { currentTime, duration } = usePlayerTime();
 
     const { isPremium, user } = useAuth();
     const [showQueue, setShowQueue] = useState(false);
