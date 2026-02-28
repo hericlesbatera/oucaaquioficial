@@ -4,7 +4,7 @@ nixPkgs = ["nodejs_20", "bash"]
 [phases.install]
 cmds = [
     "npm install",
-    "cd frontend && npm install"
+    "cd frontend && npm install --include=dev --legacy-peer-deps"
 ]
 
 [phases.build]
