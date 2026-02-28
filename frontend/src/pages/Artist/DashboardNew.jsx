@@ -64,22 +64,23 @@ const DashboardNew = () => {
     console.log('  playlists:', playlists.length);
 
     try {
-      // Buscar álbuns do artista ordenados por data de lançamento
-      let { data: albumsData, error: albumsError } = await supabase
-        .from('albums')
-        .select('*')
-        .eq('artist_id', user.id)
-        .order('created_at', { ascending: false });
+      // Paralelizar: buscar álbuns e playlists ao mesmo tempo
+      const [albumsResult, playlistsResult] = await Promise.all([
+        supabase
+          .from('albums')
+          .select('id, slug, title, cover_url, play_count, download_count, release_year, created_at, published_at, is_private, tracks')
+          .eq('artist_id', user.id)
+          .order('published_at', { ascending: false, nullsFirst: false }),
+        supabase
+          .from('playlists')
+          .select('id, title, slug, cover_url, song_count, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+      ]);
+      const albumsData = albumsResult.data;
+      const playlistsData = playlistsResult.data;
 
       setAlbums(albumsData || []);
-
-      // Buscar playlists do artista
-      let { data: playlistsData } = await supabase
-        .from('playlists')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
       setPlaylists(playlistsData || []);
       
       console.log('\n*** AUTO-SELECT LOGIC START ***');

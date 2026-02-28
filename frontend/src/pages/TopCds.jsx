@@ -33,25 +33,30 @@ const TopCds = () => {
         setLoading(true);
 
         try {
-            // Buscar artistas primeiro
-            const { data: artistsData } = await supabase
-                .from('artists')
-                .select('id, name, slug, is_verified, avatar_url');
-            
+            // Paralelizar as 3 queries para reduzir tempo de carregamento
+            const [artistsResult, albumsResult, collabResult] = await Promise.all([
+                supabase.from('artists').select('id, name, slug, is_verified, avatar_url').limit(500),
+                supabase
+                    .from('albums')
+                    .select('id, slug, title, artist_id, artist_name, cover_url, genre, play_count, download_count, release_year, is_private, published_at, created_at, tracks')
+                    .eq('is_private', false)
+                    .is('deleted_at', null)
+                    .order('published_at', { ascending: false, nullsFirst: false })
+                    .limit(200),
+                supabase.from('collaboration_invites').select('album_id, invited_user_id').eq('status', 'accepted')
+            ]);
+
+            const artistsData = artistsResult.data;
+            const allAlbums = albumsResult.data;
+            const allCollabInvites = collabResult.data;
+            const error = albumsResult.error;
+
             const artistsMap = {};
             if (artistsData) {
                 artistsData.forEach(artist => {
                     artistsMap[artist.id] = artist;
                 });
             }
-
-            // Buscar todos os álbuns públicos não deletados
-            const { data: allAlbums, error } = await supabase
-                .from('albums')
-                .select('*')
-                .or(`is_private.is.null,is_private.eq.false`)
-                .is('deleted_at', null)
-                .order('created_at', { ascending: false });
 
             if (error) throw error;
 
@@ -63,12 +68,6 @@ const TopCds = () => {
 
             // Filtrar localmente para garantir que não há privados
             const publicAlbums = allAlbums.filter(album => !album.is_private);
-
-            // Buscar colaboradores aceitos usando collaboration_invites
-            const { data: allCollabInvites } = await supabase
-                .from('collaboration_invites')
-                .select('album_id, invited_user_id')
-                .eq('status', 'accepted');
 
             // Agrupar colaboradores por album
             const collaboratorsByAlbum = {};

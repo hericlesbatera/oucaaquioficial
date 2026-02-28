@@ -78,7 +78,7 @@ const HomeImproved = () => {
                     // Query 1: Álbuns com limite - ordenado por data de publicação real (published_at)
                     supabase
                         .from('albums')
-                        .select('*')
+                        .select('id, slug, title, artist_id, artist_name, cover_url, genre, play_count, download_count, release_year, is_private, published_at, created_at, tracks')
                         .eq('is_private', false)
                         .is('deleted_at', null)
                         .order('published_at', { ascending: false, nullsFirst: false })
@@ -87,7 +87,7 @@ const HomeImproved = () => {
                     // Query 2: Artistas
                     supabase
                         .from('artists')
-                        .select('*')
+                        .select('id, name, slug, avatar_url, is_verified, followers_count, genre')
                         .order('followers_count', { ascending: false })
                         .limit(100),
                     
@@ -100,7 +100,7 @@ const HomeImproved = () => {
                     // Query 4: Vídeos/Clips
                     supabase
                         .from('artist_videos')
-                        .select('*')
+                        .select('id, title, url, thumbnail_url, artist_id, created_at')
                         .order('created_at', { ascending: false })
                         .limit(12)
                 ]);

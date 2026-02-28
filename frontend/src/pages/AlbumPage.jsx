@@ -93,20 +93,21 @@ const AlbumPage = () => {
                 }
 
             // Buscar álbum primeiro (mais importante)
+            const albumCols = 'id, slug, title, artist_id, artist_name, cover_url, genre, play_count, download_count, release_year, is_private, published_at, created_at, tracks, description, total_duration, is_collaboration';
             let { data: supabaseAlbum } = await supabase
                 .from('albums')
-                .select('*')
+                .select(albumCols)
                 .eq('slug', albumSlug)
-                .is('deleted_at', null)  // Excluir álbuns deletados
+                .is('deleted_at', null)
                 .maybeSingle();
 
             // Se não encontrar por slug, tenta por ID do álbum
             if (!supabaseAlbum) {
                 const { data: albumById } = await supabase
                     .from('albums')
-                    .select('*')
+                    .select(albumCols)
                     .eq('id', albumSlug)
-                    .is('deleted_at', null)  // Excluir álbuns deletados
+                    .is('deleted_at', null)
                     .maybeSingle();
                 supabaseAlbum = albumById;
             }
@@ -172,7 +173,7 @@ const AlbumPage = () => {
                 // Primeiro, tentar com album_id
                 let result = await supabase
                     .from('songs')
-                    .select('*')
+                    .select('id, album_id, artist_id, title, duration, track_number, file_url, play_count, download_count, is_downloadable')
                     .eq('album_id', supabaseAlbum.id)
                     .order('track_number', { ascending: true });
                 
