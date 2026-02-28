@@ -836,13 +836,13 @@ const HomeImproved = () => {
                             <div className="flex gap-1">
                                 <button
                                     onClick={() => scrollSection(lancamentosRef, 'left')}
-                                    className="w-7 h-7 border border-red-600 text-red-600 rounded flex items-center justify-center"
+                                    className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                                 >
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={() => scrollSection(lancamentosRef, 'right')}
-                                    className="w-7 h-7 border border-red-600 text-red-600 rounded flex items-center justify-center"
+                                    className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                                 >
                                     <ChevronRight className="w-4 h-4" />
                                 </button>
@@ -905,13 +905,13 @@ const HomeImproved = () => {
                         <div className="flex gap-1">
                             <button
                                 onClick={() => scrollSection(topCdsRef, 'left')}
-                                className="w-7 h-7 border border-red-600 text-red-600 rounded flex items-center justify-center"
+                                className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                             >
                                 <ChevronLeft className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => scrollSection(topCdsRef, 'right')}
-                                className="w-7 h-7 border border-red-600 text-red-600 rounded flex items-center justify-center"
+                                className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                             >
                                 <ChevronRight className="w-4 h-4" />
                             </button>
@@ -989,7 +989,7 @@ const HomeImproved = () => {
                             <ThumbsUp className="w-5 h-5 text-red-600 flex-shrink-0" />
                             <h2 className="text-base md:text-xl font-bold text-black whitespace-nowrap">Ouça Aqui Recomenda!</h2>
                         </div>
-                        <div className="hidden md:flex gap-1">
+                        <div className="flex gap-1">
                             <button
                                 onClick={() => scrollSection(recomendaRef, 'left')}
                                 className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
@@ -1004,10 +1004,10 @@ const HomeImproved = () => {
                             </button>
                         </div>
                     </div>
-                    {/* Desktop - carrossel com 3 cards visíveis */}
+                    {/* Carrossel unificado - 3 cards visíveis no desktop, scroll lateral no mobile */}
                     <div
                         ref={recomendaRef}
-                        className="hidden md:flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
+                        className="flex gap-3 md:gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-4 md:px-0"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {recommendedAlbums.length === 0 ? (
@@ -1017,7 +1017,7 @@ const HomeImproved = () => {
                                 <div
                                     key={album.id}
                                     className="flex-shrink-0"
-                                    style={{ width: 'calc((100% - 32px) / 3)', minWidth: '200px' }}
+                                    style={{ width: '140px', minWidth: '140px' }}
                                 >
                                     <Link
                                         to={`/${album.artistSlug}/${album.slug || album.id}`}
@@ -1081,52 +1081,7 @@ const HomeImproved = () => {
                             ))
                         )}
                     </div>
-                    {/* Mobile */}
-                    <div className="md:hidden grid grid-cols-3 gap-2">
-                        {recommendedAlbums.length === 0 ? (
-                            <p className="text-gray-500 py-8 col-span-full">Nenhum álbum disponível no momento.</p>
-                        ) : (
-                            recommendedAlbums.map((album) => (
-                                <div
-                                    key={album.id}
-                                    className="flex-shrink-0"
-                                >
-                                    <Link
-                                        to={`/${album.artistSlug}/${album.slug || album.id}`}
-                                        className="group cursor-pointer block"
-                                    >
-                                        <div className="relative mb-2 overflow-hidden rounded-lg shadow-lg">
-                                            <img
-                                                src={album.coverImage}
-                                                alt={album.title}
-                                                className="w-full aspect-square object-cover transform group-hover:scale-110 transition-transform duration-300"
-                                            />
-                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
-                                                <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transform scale-75 group-hover:scale-100 transition-all duration-300">
-                                                    <Play className="w-3 h-3 text-white ml-0.5" fill="white" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <h3 className="text-black font-semibold text-xs mb-1 truncate group-hover:text-red-600 transition-colors">
-                                            {album.title}
-                                        </h3>
-                                    </Link>
-                                    <div className="flex items-center gap-0.5 text-gray-600 text-xs flex-wrap">
-                                        {/* Artista Principal */}
-                                        <Link
-                                            to={`/${album.artistSlug}`}
-                                            className="flex items-center gap-0.5 hover:text-red-600 transition-colors truncate"
-                                        >
-                                            <span className="truncate text-xs">{album.artistName}</span>
-                                            {album.artistVerified && (
-                                                <BadgeCheck className="w-2.5 h-2.5 text-blue-500 flex-shrink-0" />
-                                            )}
-                                        </Link>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
+
                 </section>
 
                 {/* CLIPS - Mobile (padrão app) */}
