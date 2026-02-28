@@ -33,12 +33,6 @@ const MobileBottomNav = () => {
             lucideIcon: Search,
         },
         {
-            path: '/library',
-            label: 'Biblioteca',
-            lucideIcon: Download,
-            protected: true,
-        },
-        {
             path: user ? (user.artistSlug ? `/${user.artistSlug}` : '/artist/dashboard') : '/login',
             label: 'Perfil',
             svgIcon: IconArtistasDestaque,
@@ -57,13 +51,14 @@ const MobileBottomNav = () => {
                     }
 
                     const active = isActive(item.path);
-                    const colorClass = active ? 'text-red-600' : 'text-gray-500';
+                    const colorClass = active ? '' : 'text-gray-500';
 
                     return (
                         <button
                             key={item.label}
                             onClick={() => navigate(item.path)}
                             className={`flex flex-col items-center justify-center gap-0.5 py-2 px-3 flex-1 transition-colors ${colorClass}`}
+                            style={active ? { color: '#E53935' } : {}}
                         >
                             {item.svgIcon ? (
                                 <img
@@ -72,7 +67,7 @@ const MobileBottomNav = () => {
                                     className="w-6 h-6"
                                     style={{
                                         filter: active
-                                            ? 'invert(18%) sepia(95%) saturate(7494%) hue-rotate(356deg) brightness(97%) contrast(109%)'
+                                            ? 'invert(20%) sepia(90%) saturate(5000%) hue-rotate(350deg) brightness(95%) contrast(110%)'
                                             : 'invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(80%) contrast(90%)',
                                     }}
                                 />

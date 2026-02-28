@@ -24,6 +24,7 @@ const HomeImproved = () => {
     const generosRef = useRef(null);
     const clipsRef = useRef(null);
     const artistasRef = useRef(null);
+    const artistasMobileRef = useRef(null);
     const recomendaRef = useRef(null);
     const recomendaMobileRef = useRef(null);
     const [topCdsFilter, setTopCdsFilter] = useState('mes');
@@ -728,15 +729,15 @@ const HomeImproved = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Link to="/artistas" className="text-red-600 font-bold text-xs md:text-sm whitespace-nowrap">VER TODOS</Link>
-                            <div className="hidden md:flex gap-1">
+                            <div className="flex gap-1">
                             <button
-                                onClick={() => scrollSection(artistasRef, 'left')}
+                                onClick={() => scrollSection(window.innerWidth < 768 ? artistasMobileRef : artistasRef, 'left')}
                                 className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                             >
                                 <ChevronLeft className="w-4 h-4" />
                             </button>
                             <button
-                                onClick={() => scrollSection(artistasRef, 'right')}
+                                onClick={() => scrollSection(window.innerWidth < 768 ? artistasMobileRef : artistasRef, 'right')}
                                 className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                             >
                                 <ChevronRight className="w-4 h-4" />
@@ -800,7 +801,7 @@ const HomeImproved = () => {
                         )}
                     </div>
                     {/* Mobile - igual ao app: apenas foto circular + nome + badge, sem botão seguir */}
-                    <div className="md:hidden flex gap-5 overflow-x-auto scrollbar-hide scroll-smooth pb-2 px-4">
+                    <div ref={artistasMobileRef} className="md:hidden flex gap-5 overflow-x-auto scrollbar-hide scroll-smooth pb-2 px-4">
                         {allArtists.length === 0 ? (
                             <p className="text-gray-500 py-8 w-full">Nenhum artista disponível no momento.</p>
                         ) : (
