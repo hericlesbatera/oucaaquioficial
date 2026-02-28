@@ -19,6 +19,7 @@ const HomeImproved = () => {
     const generosRef = useRef(null);
     const clipsRef = useRef(null);
     const artistasRef = useRef(null);
+    const recomendaRef = useRef(null);
     const [topCdsFilter, setTopCdsFilter] = useState('mes');
     const [allAlbums, setAllAlbums] = useState([]);
     const [allArtists, setAllArtists] = useState([]);
@@ -463,31 +464,27 @@ const HomeImproved = () => {
                 {/* Lançamentos Recentes - Desktop */}
                 <section className="mb-16 hidden md:block">
                     <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <Disc3 className="w-8 h-8 text-red-600" />
-                            <h2 className="text-3xl font-bold text-black">Lançamentos Recentes</h2>
+                        <div className="flex items-center gap-2">
+                            <Music className="w-5 h-5 text-red-600" />
+                            <h2 className="text-xl font-bold text-black">Lançamentos Recentes</h2>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                             <Link to="/lancamentos" className="text-red-600 hover:text-red-500 font-bold text-sm">
                                 VER TODOS
                             </Link>
-                            <div className="flex gap-2">
-                                <Button
+                            <div className="flex gap-1">
+                                <button
                                     onClick={() => scrollSection(lancamentosRef, 'left')}
-                                    size="icon"
-                                    variant="outline"
-                                    className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                                    className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                                 >
                                     <ChevronLeft className="w-4 h-4" />
-                                </Button>
-                                <Button
+                                </button>
+                                <button
                                     onClick={() => scrollSection(lancamentosRef, 'right')}
-                                    size="icon"
-                                    variant="outline"
-                                    className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                                    className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                                 >
                                     <ChevronRight className="w-4 h-4" />
-                                </Button>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -575,9 +572,9 @@ const HomeImproved = () => {
                 {/* TOP CDS - Desktop */}
                 <section className="mb-16 hidden md:block">
                     <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <TrendingUp className="w-8 h-8 text-red-600" />
-                            <h2 className="text-3xl font-bold text-black">TOP CDS</h2>
+                        <div className="flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5 text-red-600" />
+                            <h2 className="text-xl font-bold text-black">TOP CDS</h2>
                             <div className="flex items-center gap-2 text-sm ml-4">
                                 <button
                                     onClick={() => setTopCdsFilter('dia')}
@@ -612,27 +609,23 @@ const HomeImproved = () => {
                                 </button>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                             <Link to="/top-cds" className="text-red-600 hover:text-red-500 font-bold text-sm">
                                 VER TODOS
                             </Link>
-                            <div className="flex gap-2">
-                                <Button
+                            <div className="flex gap-1">
+                                <button
                                     onClick={() => scrollSection(topCdsRef, 'left')}
-                                    size="icon"
-                                    variant="outline"
-                                    className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                                    className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                                 >
                                     <ChevronLeft className="w-4 h-4" />
-                                </Button>
-                                <Button
+                                </button>
+                                <button
                                     onClick={() => scrollSection(topCdsRef, 'right')}
-                                    size="icon"
-                                    variant="outline"
-                                    className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                                    className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                                 >
                                     <ChevronRight className="w-4 h-4" />
-                                </Button>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -723,29 +716,25 @@ const HomeImproved = () => {
                 {/* Artistas em Destaque */}
                 <section className="mb-4 md:mb-16">
                     <div className="flex items-center justify-between mb-3 md:mb-6 px-4 md:px-0">
-                        <div className="flex items-center gap-2 md:gap-3">
-                            <Users className="w-5 h-5 md:w-8 md:h-8 text-red-600" />
-                            <h2 className="text-base md:text-3xl font-bold text-black">Artistas em Destaque</h2>
+                        <div className="flex items-center gap-2">
+                            <Users className="w-5 h-5 text-red-600" />
+                            <h2 className="text-base md:text-xl font-bold text-black">Artistas em Destaque</h2>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Link to="/artistas" className="md:hidden text-red-600 font-bold text-xs">VER TODOS</Link>
-                            <div className="hidden md:flex gap-2">
-                            <Button
+                            <Link to="/artistas" className="text-red-600 font-bold text-xs md:text-sm">VER TODOS</Link>
+                            <div className="hidden md:flex gap-1">
+                            <button
                                 onClick={() => scrollSection(artistasRef, 'left')}
-                                size="icon"
-                                variant="outline"
-                                className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                                className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                             >
                                 <ChevronLeft className="w-4 h-4" />
-                            </Button>
-                            <Button
+                            </button>
+                            <button
                                 onClick={() => scrollSection(artistasRef, 'right')}
-                                size="icon"
-                                variant="outline"
-                                className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                                className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                             >
                                 <ChevronRight className="w-4 h-4" />
-                            </Button>
+                            </button>
                             </div>
                         </div>
                     </div>
@@ -995,12 +984,32 @@ const HomeImproved = () => {
 
                 {/* Ouça Aqui Recomenda */}
                 <section className="mb-8 md:mb-16">
-                    <div className="flex items-center gap-2 mb-6 flex-wrap">
-                        <ThumbsUp className="w-8 h-8 text-red-600 flex-shrink-0" />
-                        <h2 className="text-2xl md:text-3xl font-bold text-black whitespace-nowrap">Ouça Aqui Recomenda!</h2>
+                    <div className="flex items-center justify-between mb-3 md:mb-6 px-4 md:px-0">
+                        <div className="flex items-center gap-2">
+                            <ThumbsUp className="w-5 h-5 text-red-600 flex-shrink-0" />
+                            <h2 className="text-base md:text-xl font-bold text-black whitespace-nowrap">Ouça Aqui Recomenda!</h2>
+                        </div>
+                        <div className="hidden md:flex gap-1">
+                            <button
+                                onClick={() => scrollSection(recomendaRef, 'left')}
+                                className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => scrollSection(recomendaRef, 'right')}
+                                className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
-                    {/* Desktop */}
-                    <div className="hidden md:flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    {/* Desktop - carrossel com 3 cards visíveis */}
+                    <div
+                        ref={recomendaRef}
+                        className="hidden md:flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
                         {recommendedAlbums.length === 0 ? (
                             <p className="text-gray-500 py-8 col-span-full">Nenhum álbum disponível no momento.</p>
                         ) : (
@@ -1008,7 +1017,7 @@ const HomeImproved = () => {
                                 <div
                                     key={album.id}
                                     className="flex-shrink-0"
-                                    style={{ width: 'calc((100% - 80px) / 6)', minWidth: '160px' }}
+                                    style={{ width: 'calc((100% - 32px) / 3)', minWidth: '200px' }}
                                 >
                                     <Link
                                         to={`/${album.artistSlug}/${album.slug || album.id}`}
@@ -1031,7 +1040,6 @@ const HomeImproved = () => {
                                         </h3>
                                     </Link>
                                     <div className="flex items-center gap-1 text-gray-600 text-xs mb-2 flex-wrap">
-                                        {/* Artista Principal */}
                                         <Link
                                             to={`/${album.artistSlug}`}
                                             className="flex items-center gap-0.5 hover:text-red-600 transition-colors"
@@ -1041,8 +1049,6 @@ const HomeImproved = () => {
                                                 <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
                                             )}
                                         </Link>
-
-                                        {/* Colaboradores */}
                                         {album.collaborators && album.collaborators.length > 0 && (
                                              <>
                                                   <span>&</span>
@@ -1182,9 +1188,9 @@ const HomeImproved = () => {
                 {/* CLIPS - Desktop */}
                 {clips.length > 0 && (
                     <section className="mb-16 hidden md:block">
-                        <div className="flex items-center gap-3 mb-6">
-                            <Video className="w-8 h-8 text-red-600" />
-                            <h2 className="text-3xl font-bold text-black">CLIPS</h2>
+                        <div className="flex items-center gap-2 mb-6">
+                            <Video className="w-5 h-5 text-red-600" />
+                            <h2 className="text-xl font-bold text-black">CLIPS</h2>
                         </div>
                         
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1255,29 +1261,25 @@ const HomeImproved = () => {
                 {/* Gêneros */}
                 <section className="mb-4 md:mb-16">
                     <div className="flex items-center justify-between mb-3 md:mb-6 px-4 md:px-0">
-                        <div className="flex items-center gap-2 md:gap-3">
-                            <Music className="w-5 h-5 md:w-8 md:h-8 text-red-600" />
-                            <h2 className="text-base md:text-3xl font-bold text-black">Gêneros</h2>
+                        <div className="flex items-center gap-2">
+                            <Music className="w-5 h-5 text-red-600" />
+                            <h2 className="text-base md:text-xl font-bold text-black">Gêneros</h2>
                         </div>
                         {/* Desktop - Navigation Buttons */}
-                        <div className="hidden md:flex items-center gap-3">
-                            <div className="flex gap-2">
-                                <Button
+                        <div className="hidden md:flex items-center gap-2">
+                            <div className="flex gap-1">
+                                <button
                                     onClick={() => scrollSection(generosRef, 'left')}
-                                    size="icon"
-                                    variant="outline"
-                                    className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                                    className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                                 >
                                     <ChevronLeft className="w-4 h-4" />
-                                </Button>
-                                <Button
+                                </button>
+                                <button
                                     onClick={() => scrollSection(generosRef, 'right')}
-                                    size="icon"
-                                    variant="outline"
-                                    className="w-8 h-8 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                                    className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                                 >
                                     <ChevronRight className="w-4 h-4" />
-                                </Button>
+                                </button>
                             </div>
                         </div>
                     </div>
