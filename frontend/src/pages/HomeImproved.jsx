@@ -460,7 +460,78 @@ const HomeImproved = () => {
                     </div>
                 )}
 
-                {/* Lançamentos Recentes */}
+                {/* Lançamentos Recentes - Mobile (padrão app) */}
+                <section className="mb-4 md:hidden">
+                    <div className="flex items-center justify-between mb-3 px-4">
+                        <div className="flex items-center gap-2">
+                            <Disc3 className="w-5 h-5 text-red-600" />
+                            <h2 className="text-base font-bold text-black">Lançamentos Recentes</h2>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Link to="/lancamentos" className="text-red-600 font-bold text-xs">VER TODOS</Link>
+                            <div className="flex gap-1">
+                                <button
+                                    onClick={() => scrollSection(lancamentosRef, 'left')}
+                                    className="w-7 h-7 border border-red-600 text-red-600 rounded flex items-center justify-center"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => scrollSection(lancamentosRef, 'right')}
+                                    className="w-7 h-7 border border-red-600 text-red-600 rounded flex items-center justify-center"
+                                >
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        ref={lancamentosRef}
+                        className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth px-4"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
+                        {allAlbums.length === 0 ? (
+                            <p className="text-gray-500 py-4 w-full text-sm">Nenhum lançamento disponível no momento.</p>
+                        ) : (
+                            allAlbums.slice(0, 20).map((album) => (
+                                <div key={album.id} className="flex-shrink-0" style={{ width: '140px' }}>
+                                    <Link to={`/${album.artistSlug}/${album.slug || album.id}`} className="block">
+                                        <div className="relative mb-1.5 overflow-hidden rounded-lg shadow" style={{ width: '140px', height: '140px' }}>
+                                            <img
+                                                src={album.coverImage}
+                                                alt={album.title}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <h3 className="text-black font-semibold text-xs mb-0.5 line-clamp-2 leading-tight">
+                                            {album.title}
+                                        </h3>
+                                    </Link>
+                                    <div className="flex items-center gap-0.5 text-gray-500 text-xs mb-1">
+                                        <Link to={`/${album.artistSlug}`} className="truncate hover:text-red-600">
+                                            {album.artistName}
+                                        </Link>
+                                        {album.artistVerified && (
+                                            <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-xs">
+                                        <div className="flex items-center gap-0.5 text-gray-500">
+                                            <Play className="w-2.5 h-2.5" />
+                                            <span>{formatNumber(album.playCount)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-0.5 text-gray-500">
+                                            <span>↓</span>
+                                            <span>{formatNumber(album.downloadCount)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </section>
+
+                {/* Lançamentos Recentes - Desktop */}
                 <section className="mb-16 hidden md:block">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
@@ -572,7 +643,94 @@ const HomeImproved = () => {
                     </div>
                 </section>
 
-                {/* TOP CDS */}
+                {/* TOP CDS - Mobile (padrão app) */}
+                <section className="mb-4 md:hidden">
+                    <div className="flex items-center justify-between mb-2 px-4">
+                        <div className="flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5 text-red-600" />
+                            <h2 className="text-base font-bold text-black">TOP CDS</h2>
+                        </div>
+                        <div className="flex gap-1">
+                            <button
+                                onClick={() => scrollSection(topCdsRef, 'left')}
+                                className="w-7 h-7 border border-red-600 text-red-600 rounded flex items-center justify-center"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => scrollSection(topCdsRef, 'right')}
+                                className="w-7 h-7 border border-red-600 text-red-600 rounded flex items-center justify-center"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                    {/* Filtros mobile */}
+                    <div className="flex items-center gap-3 px-4 mb-3">
+                        {['dia', 'semana', 'mes', 'geral'].map((f) => (
+                            <button
+                                key={f}
+                                onClick={() => setTopCdsFilter(f)}
+                                className={`text-xs font-bold pb-0.5 transition-colors ${
+                                    topCdsFilter === f
+                                        ? 'text-red-600 border-b-2 border-red-600'
+                                        : 'text-gray-500'
+                                }`}
+                            >
+                                {f.toUpperCase()}
+                            </button>
+                        ))}
+                    </div>
+                    <div
+                        ref={topCdsRef}
+                        className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth px-4"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
+                        {topCdsAlbums.length === 0 ? (
+                            <p className="text-gray-500 py-4 w-full text-sm">Nenhum CD disponível para este período.</p>
+                        ) : (
+                            topCdsAlbums.slice(0, 20).map((album, index) => (
+                                <div key={`${album.id}-${topCdsFilter}`} className="flex-shrink-0" style={{ width: '140px' }}>
+                                    <Link to={`/${album.artistSlug}/${album.slug || album.id}`} className="block">
+                                        <div className="relative mb-1.5 overflow-hidden rounded-lg shadow" style={{ width: '140px', height: '140px' }}>
+                                            <div className="absolute top-1.5 left-1.5 z-10 bg-red-600 text-white font-bold text-xs w-6 h-6 flex items-center justify-center rounded">
+                                                {index + 1}
+                                            </div>
+                                            <img
+                                                src={album.coverImage}
+                                                alt={album.title}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <h3 className="text-black font-semibold text-xs mb-0.5 line-clamp-2 leading-tight">
+                                            {album.title}
+                                        </h3>
+                                    </Link>
+                                    <div className="flex items-center gap-0.5 text-gray-500 text-xs mb-1">
+                                        <Link to={`/${album.artistSlug}`} className="truncate hover:text-red-600">
+                                            {album.artistName}
+                                        </Link>
+                                        {album.artistVerified && (
+                                            <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-xs">
+                                        <div className="flex items-center gap-0.5 text-gray-500">
+                                            <Play className="w-2.5 h-2.5" />
+                                            <span>{formatNumber(album.period_play_count || album.playCount)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-0.5 text-gray-500">
+                                            <span>↓</span>
+                                            <span>{formatNumber(album.downloadCount)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </section>
+
+                {/* TOP CDS - Desktop */}
                 <section className="mb-16 hidden md:block">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
@@ -721,13 +879,15 @@ const HomeImproved = () => {
                 </section>
 
                 {/* Artistas em Destaque */}
-                <section className="mb-8 md:mb-16">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <User className="w-8 h-8 text-red-600" />
-                            <h2 className="text-3xl font-bold text-black">Artistas em Destaque</h2>
+                <section className="mb-4 md:mb-16">
+                    <div className="flex items-center justify-between mb-3 md:mb-6 px-4 md:px-0">
+                        <div className="flex items-center gap-2 md:gap-3">
+                            <User className="w-5 h-5 md:w-8 md:h-8 text-red-600" />
+                            <h2 className="text-base md:text-3xl font-bold text-black">Artistas em Destaque</h2>
                         </div>
-                        <div className="hidden md:flex gap-2">
+                        <div className="flex items-center gap-2">
+                            <Link to="/artistas" className="md:hidden text-red-600 font-bold text-xs">VER TODOS</Link>
+                            <div className="hidden md:flex gap-2">
                             <Button
                                 onClick={() => scrollSection(artistasRef, 'left')}
                                 size="icon"
@@ -744,6 +904,7 @@ const HomeImproved = () => {
                             >
                                 <ChevronRight className="w-4 h-4" />
                             </Button>
+                            </div>
                         </div>
                     </div>
                     {/* Desktop - scroll horizontal - mostra 7 artistas visíveis */}
@@ -802,7 +963,7 @@ const HomeImproved = () => {
                         )}
                     </div>
                     {/* Mobile */}
-                    <div className="md:hidden flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4">
+                    <div className="md:hidden flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4 px-4">
                         {allArtists.length === 0 ? (
                             <p className="text-gray-500 py-8 w-full">Nenhum artista disponível no momento.</p>
                         ) : (
@@ -985,7 +1146,63 @@ const HomeImproved = () => {
                     </div>
                 </section>
 
-                {/* CLIPS */}
+                {/* CLIPS - Mobile (padrão app) */}
+                {clips.length > 0 && (
+                    <section className="mb-4 md:hidden">
+                        <div className="flex items-center gap-2 mb-3 px-4">
+                            <Video className="w-5 h-5 text-red-600" />
+                            <h2 className="text-base font-bold text-black">CLIPS</h2>
+                        </div>
+                        {/* Vídeo principal mobile */}
+                        <div className="px-4 mb-3">
+                            <div className="relative w-full bg-black rounded-lg overflow-hidden shadow-lg">
+                                <div className="relative" style={{ paddingBottom: '56.25%' }}>
+                                    <iframe
+                                        className="absolute top-0 left-0 w-full h-full"
+                                        src={`https://www.youtube.com/embed/${extractYoutubeId(clips[selectedClipIndex].videoUrl)}`}
+                                        title={clips[selectedClipIndex].title}
+                                        frameBorder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                    ></iframe>
+                                </div>
+                            </div>
+                            <h3 className="text-sm font-bold text-black mt-2 mb-0.5">{clips[selectedClipIndex].title}</h3>
+                            <Link to={`/${clips[selectedClipIndex].artistSlug}`} className="flex items-center gap-1 text-gray-600 text-xs">
+                                <span>{clips[selectedClipIndex].artistName}</span>
+                                {clips[selectedClipIndex].artistVerified && (
+                                    <BadgeCheck className="w-3 h-3 text-blue-500" />
+                                )}
+                            </Link>
+                        </div>
+                        {/* Lista horizontal de thumbnails */}
+                        <div
+                            className="flex gap-2 overflow-x-auto scrollbar-hide px-4"
+                            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                        >
+                            {clips.slice(0, 20).map((clip, index) => (
+                                <div
+                                    key={clip.id}
+                                    className={`flex-shrink-0 rounded-lg overflow-hidden cursor-pointer border-2 ${
+                                        index === selectedClipIndex ? 'border-red-600' : 'border-transparent'
+                                    }`}
+                                    style={{ width: '100px' }}
+                                    onClick={() => setSelectedClipIndex(index)}
+                                >
+                                    <img
+                                        src={clip.thumbnail}
+                                        alt={clip.title}
+                                        className="w-full object-cover"
+                                        style={{ height: '65px' }}
+                                    />
+                                    <p className="text-xs font-semibold text-black px-1 py-0.5 truncate bg-gray-50">{clip.title}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* CLIPS - Desktop */}
                 {clips.length > 0 && (
                     <section className="mb-16 hidden md:block">
                         <div className="flex items-center gap-3 mb-6">
@@ -1060,10 +1277,10 @@ const HomeImproved = () => {
 
                 {/* Gêneros */}
                 <section className="mb-4 md:mb-16">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <Music className="w-8 h-8 text-red-600" />
-                            <h2 className="text-3xl font-bold text-black">Gêneros</h2>
+                    <div className="flex items-center justify-between mb-3 md:mb-6 px-4 md:px-0">
+                        <div className="flex items-center gap-2 md:gap-3">
+                            <Music className="w-5 h-5 md:w-8 md:h-8 text-red-600" />
+                            <h2 className="text-base md:text-3xl font-bold text-black">Gêneros</h2>
                         </div>
                         {/* Desktop - Navigation Buttons */}
                         <div className="hidden md:flex items-center gap-3">
@@ -1118,7 +1335,7 @@ const HomeImproved = () => {
                     </div>
                     
                     {/* Mobile */}
-                    <div className="md:hidden grid grid-cols-3 gap-3">
+                    <div className="md:hidden grid grid-cols-3 gap-3 px-4">
                         {genres.map((genre) => (
                             <Link
                                 key={genre.slug}
