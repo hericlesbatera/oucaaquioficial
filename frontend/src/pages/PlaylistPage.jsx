@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import { usePlayer } from '../context/PlayerContext';
 import { useAuth } from '../context/AuthContext';
 import { Play, Heart, Share2, Download, ListMusic, X, BadgeCheck, Copy, Plus, ThumbsUp, RefreshCw } from 'lucide-react';
+import IconVerified from '../assets/icons/icon-verified.svg';
 import { Button } from '../components/ui/button';
 import { toast } from '../hooks/use-toast';
 import { usePlaylistFavorite } from '../hooks/use-playlist-favorite';
@@ -389,7 +390,7 @@ const PlaylistPage = () => {
                                         <span className="text-lg">{creator.name}</span>
                                         {creator.is_verified && (
                                             <div className="w-3.5 h-3.5 rounded-full bg-blue-500 flex items-center justify-center ml-0.5 mt-0.5">
-                                                <BadgeCheck className="w-2 h-2 text-white" />
+                                                <img src={IconVerified} alt="verificado" className="w-2 h-2" />
                                             </div>
                                         )}
                                     </Link>

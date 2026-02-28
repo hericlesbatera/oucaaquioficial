@@ -9,6 +9,7 @@ import { useCapacitorDownloads } from '../hooks/useCapacitorDownloads';
 import { recordAlbumDownload } from '../lib/statsHelper';
 import { handleDownload, isMobileApp } from '../lib/downloadHelper';
 import { Play, Heart, Share2, Download, Plus, BadgeCheck, Copy, X, Disc, ThumbsUp, Video } from 'lucide-react';
+import IconVerified from '../assets/icons/icon-verified.svg';
 import { Button } from '../components/ui/button';
 import { toast } from '../hooks/use-toast';
 import AlbumSongRow from '../components/AlbumSongRow';
@@ -962,7 +963,7 @@ const AlbumPage = () => {
                                      <Link to={`/${artist?.slug || artistSlug}`} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
                                          <span className="text-lg">{artist?.name || album.artistName}</span>
                                          {artist?.is_verified && (
-                                             <BadgeCheck className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                                             <img src={IconVerified} alt="verificado" className="w-4 h-4 flex-shrink-0" />
                                          )}
                                     </Link>
 
@@ -972,7 +973,7 @@ const AlbumPage = () => {
                                              <Link to={`/${collab.slug}`} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
                                                  <span className="text-lg">{collab.name}</span>
                                                  {collab.is_verified && (
-                                                     <BadgeCheck className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                                                     <img src={IconVerified} alt="verificado" className="w-4 h-4 flex-shrink-0" />
                                                  )}
                                              </Link>
                                          </React.Fragment>
@@ -1015,7 +1016,7 @@ const AlbumPage = () => {
                             <Link to={`/${artist?.slug || artistSlug}`} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
                                 <span>{artist?.name || album.artistName}</span>
                                 {artist?.is_verified && (
-                                    <BadgeCheck className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                                    <img src={IconVerified} alt="verificado" className="w-4 h-4 flex-shrink-0" />
                                 )}
                             </Link>
                         </div>
@@ -1394,7 +1395,7 @@ const AlbumPage = () => {
                                 >
                                     <span className="truncate">{recAlbum.artistName}</span>
                                     {recAlbum.artistVerified && (
-                                        <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                                        <img src={IconVerified} alt="verificado" className="w-3.5 h-3.5 flex-shrink-0" />
                                     )}
                                 </Link>
                                 <div className="flex items-center gap-1 md:gap-2 text-xs flex-wrap">

@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { toast } from '../../hooks/use-toast';
 import { Heart, Music, Disc3, ListMusic, Play, SlidersHorizontal, ChevronDown, Search, Trash2, BadgeCheck } from 'lucide-react';
+import IconVerified from '../../assets/icons/icon-verified.svg';
 import { useNavigate } from 'react-router-dom';
 import FavoriteSongCard from '../../components/FavoriteSongCard';
 import {
@@ -573,7 +574,7 @@ const Favoritos = () => {
                                  {album.artist_name}
                                </p>
                                {album.artist?.is_verified && (
-                                 <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                 <img src={IconVerified} alt="verificado" className="w-3 h-3 flex-shrink-0" />
                                )}
                              </div>
                            </div>

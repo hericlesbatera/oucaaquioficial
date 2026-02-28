@@ -1,5 +1,5 @@
 import React from 'react';
-import { BadgeCheck } from 'lucide-react';
+import IconVerified from '../assets/icons/icon-verified.svg';
 
 // Reusable avatar with a blue "verified" badge overlay at bottom-right.
 // Props:
@@ -9,17 +9,14 @@ import { BadgeCheck } from 'lucide-react';
 // - showBadge: boolean to show/hide the badge
 const VerifiedAvatar = ({ src, alt = '', className = '', showBadge = true, badgeClassName = '' }) => {
   const badgeSize = badgeClassName || 'w-7 h-7';
-  const iconSize = badgeClassName?.includes('w-5') ? 'w-3 h-3' : 'w-4 h-4';
-  
+
   return (
-    <div className={`relative inline-block ${className.includes('w-') ? '' : ''}`}>
+    <div className={`relative inline-block`}>
       <img src={src} alt={alt} className={`${className} block`} />
 
       {showBadge && (
         <div className="absolute bottom-2 right-2">
-          <div className={`${badgeSize} rounded-full bg-blue-500 flex items-center justify-center shadow-md`}>
-            <BadgeCheck className={iconSize} color="#fff" />
-          </div>
+          <img src={IconVerified} alt="verificado" className={`${badgeSize} drop-shadow-md`} />
         </div>
       )}
     </div>

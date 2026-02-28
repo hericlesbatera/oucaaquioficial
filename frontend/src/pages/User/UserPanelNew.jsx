@@ -8,6 +8,7 @@ import {
     ChevronDown, Plus, Trash2, Eye, EyeOff, Lock, Menu, X, Camera, Send, CheckCircle, ArrowLeft,
     Search, SlidersHorizontal, ListMusic, Play, Edit, Loader2, Disc3, BadgeCheck, Upload
 } from 'lucide-react';
+import IconVerified from '../../assets/icons/icon-verified.svg';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -1580,7 +1581,7 @@ const UserPanelNew = () => {
                                                                             {album.artist_name}
                                                                         </p>
                                                                         {album.artist?.is_verified && (
-                                                                            <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                                                            <img src={IconVerified} alt="verificado" className="w-3 h-3 flex-shrink-0" />
                                                                         )}
                                                                     </div>
                                                                 </div>

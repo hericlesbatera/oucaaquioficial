@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import { usePlayer } from '../context/PlayerContext';
 import { useAuth } from '../context/AuthContext';
 import { Play, Disc, Disc3, TrendingUp, ChevronLeft, ChevronRight, User, Users, BadgeCheck, Plus, Music, ThumbsUp, Video } from 'lucide-react';
+import IconVerified from '../assets/icons/icon-verified.svg';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { toast } from '../hooks/use-toast';
@@ -523,11 +524,11 @@ const HomeImproved = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <h3 className="text-black font-semibold text-sm mb-1 truncate group-hover:text-red-600 transition-colors">
+                                        <h3 className="text-black font-semibold text-base mb-1 truncate group-hover:text-red-600 transition-colors">
                                             {album.title}
                                         </h3>
                                     </Link>
-                                    <div className="flex items-center gap-1 text-gray-600 text-xs mb-2 flex-wrap">
+                                    <div className="flex items-center gap-1 text-gray-600 text-sm mb-2 flex-wrap">
                                         {/* Artista Principal */}
                                         <Link
                                             to={`/${album.artistSlug}`}
@@ -535,7 +536,7 @@ const HomeImproved = () => {
                                         >
                                             <span>{album.artistName}</span>
                                             {album.artistVerified && (
-                                                <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                                                <img src={IconVerified} alt="verificado" className="w-3.5 h-3.5 flex-shrink-0" />
                                             )}
                                         </Link>
 
@@ -551,7 +552,7 @@ const HomeImproved = () => {
                                                     >
                                                         <span>{collab.name}</span>
                                                         {collab.verified && (
-                                                            <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                                                            <img src={IconVerified} alt="verificado" className="w-3.5 h-3.5 flex-shrink-0" />
                                                         )}
                                                     </Link>
                                                 ))}
@@ -574,7 +575,7 @@ const HomeImproved = () => {
                     </div>
                 </section>
 
-                {/* TOP CDS - Desktop */}
+                {/* TOP CDS - Desktop */
                 <section className="mb-16 hidden md:block">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-2">
@@ -667,11 +668,11 @@ const HomeImproved = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <h3 className="text-black font-semibold text-sm mb-1 truncate group-hover:text-red-600 transition-colors">
+                                        <h3 className="text-black font-semibold text-base mb-1 truncate group-hover:text-red-600 transition-colors">
                                             {album.title}
                                         </h3>
                                     </Link>
-                                    <div className="flex items-center gap-1 text-gray-600 text-xs mb-2 flex-wrap">
+                                    <div className="flex items-center gap-1 text-gray-600 text-sm mb-2 flex-wrap">
                                         {/* Artista Principal */}
                                         <Link
                                             to={`/${album.artistSlug}`}
@@ -679,7 +680,7 @@ const HomeImproved = () => {
                                         >
                                             <span>{album.artistName}</span>
                                             {album.artistVerified && (
-                                                <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                                                <img src={IconVerified} alt="verificado" className="w-3.5 h-3.5 flex-shrink-0" />
                                             )}
                                         </Link>
 
@@ -695,7 +696,7 @@ const HomeImproved = () => {
                                                     >
                                                         <span>{collab.name}</span>
                                                         {collab.verified && (
-                                                            <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                                                            <img src={IconVerified} alt="verificado" className="w-3.5 h-3.5 flex-shrink-0" />
                                                         )}
                                                     </Link>
                                                 ))}
@@ -775,7 +776,7 @@ const HomeImproved = () => {
                                     >
                                         <span className="text-xs truncate">{artist.name}</span>
                                         {artist.verified && (
-                                            <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                            <img src={IconVerified} alt="verificado" className="w-3 h-3 flex-shrink-0" />
                                         )}
                                     </Link>
                                     <button
@@ -820,7 +821,7 @@ const HomeImproved = () => {
                                     <div className="flex items-center gap-0.5 justify-center w-full">
                                         <span className="text-black font-semibold text-xs truncate group-hover:text-red-600 transition-colors">{artist.name}</span>
                                         {artist.verified && (
-                                            <BadgeCheck className="w-2.5 h-2.5 text-blue-500 flex-shrink-0" />
+                                            <img src={IconVerified} alt="verificado" className="w-2.5 h-2.5 flex-shrink-0" />
                                         )}
                                     </div>
                                 </Link>
@@ -881,7 +882,7 @@ const HomeImproved = () => {
                                             {album.artistName}
                                         </Link>
                                         {album.artistVerified && (
-                                            <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                            <img src={IconVerified} alt="verificado" className="w-3 h-3 flex-shrink-0" />
                                         )}
                                     </div>
                                     <div className="flex items-center gap-1.5 text-xs">
@@ -968,7 +969,7 @@ const HomeImproved = () => {
                                             {album.artistName}
                                         </Link>
                                         {album.artistVerified && (
-                                            <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                            <img src={IconVerified} alt="verificado" className="w-3 h-3 flex-shrink-0" />
                                         )}
                                     </div>
                                     <div className="flex items-center gap-1.5 text-xs">
@@ -1046,18 +1047,18 @@ const HomeImproved = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <h3 className="text-black font-semibold text-sm mb-1 truncate group-hover:text-red-600 transition-colors">
+                                        <h3 className="text-black font-semibold text-base mb-1 truncate group-hover:text-red-600 transition-colors">
                                             {album.title}
                                         </h3>
                                     </Link>
-                                    <div className="flex items-center gap-1 text-gray-600 text-xs mb-2 flex-wrap">
+                                    <div className="flex items-center gap-1 text-gray-600 text-sm mb-2 flex-wrap">
                                         <Link
                                             to={`/${album.artistSlug}`}
                                             className="flex items-center gap-0.5 hover:text-red-600 transition-colors"
                                         >
                                             <span>{album.artistName}</span>
                                             {album.artistVerified && (
-                                                <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                                                <img src={IconVerified} alt="verificado" className="w-3.5 h-3.5 flex-shrink-0" />
                                             )}
                                         </Link>
                                         {album.collaborators && album.collaborators.length > 0 && (
@@ -1071,7 +1072,7 @@ const HomeImproved = () => {
                                                       >
                                                           <span>{collab.name}</span>
                                                           {collab.verified && (
-                                                              <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                                                              <img src={IconVerified} alt="verificado" className="w-3.5 h-3.5 flex-shrink-0" />
                                                           )}
                                                       </Link>
                                                   ))}
@@ -1120,7 +1121,7 @@ const HomeImproved = () => {
                                             {album.artistName}
                                         </Link>
                                         {album.artistVerified && (
-                                            <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                            <img src={IconVerified} alt="verificado" className="w-3 h-3 flex-shrink-0" />
                                         )}
                                     </div>
                                     <div className="flex items-center gap-1.5 text-xs">
@@ -1165,7 +1166,7 @@ const HomeImproved = () => {
                             <Link to={`/${clips[selectedClipIndex].artistSlug}`} className="flex items-center gap-1 text-gray-600 text-xs">
                                 <span>{clips[selectedClipIndex].artistName}</span>
                                 {clips[selectedClipIndex].artistVerified && (
-                                    <BadgeCheck className="w-3 h-3 text-blue-500" />
+                                    <img src={IconVerified} alt="verificado" className="w-3 h-3" />
                                 )}
                             </Link>
                         </div>
@@ -1227,7 +1228,7 @@ const HomeImproved = () => {
                                     >
                                         <span className="font-semibold">{clips[selectedClipIndex].artistName}</span>
                                         {clips[selectedClipIndex].artistVerified && (
-                                            <BadgeCheck className="w-4 h-4 text-blue-500" />
+                                            <img src={IconVerified} alt="verificado" className="w-4 h-4" />
                                         )}
                                     </Link>
                                 </div>

@@ -1,5 +1,6 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { Heart, Plus, Download, X, BadgeCheck } from 'lucide-react';
+import IconVerified from '../assets/icons/icon-verified.svg';
 import { supabase } from '../lib/supabaseClient';
 import { recordSongDownload } from '../lib/statsHelper';
 import { Button } from './ui/button';
@@ -304,7 +305,7 @@ export const SongListItem = ({
                                     )}
                                     <span className="text-xs text-gray-600">{artistData?.name || song?.artistName}</span>
                                     {artistData?.is_verified && (
-                                        <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                                        <img src={IconVerified} alt="verificado" className="w-3.5 h-3.5 flex-shrink-0" />
                                     )}
                                 </div>
                             </div>

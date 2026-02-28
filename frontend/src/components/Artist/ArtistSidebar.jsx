@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Upload, Music2, BarChart3, Settings, LogOut, User, Disc, ListMusic, Heart, Lock, Video, Heart as FavoritesIcon, Disc3, BadgeCheck, MessageSquare } from 'lucide-react';
+import IconVerified from '../../assets/icons/icon-verified.svg';
 import { useAuth } from '../../context/AuthContext';
 import { useImagePreload } from '../../hooks/useImagePreload';
 import { supabase } from '../../lib/supabaseClient';
@@ -61,7 +62,7 @@ const ArtistSidebar = () => {
             <div className="flex items-center gap-1">
               <p className="font-semibold text-gray-900">{artistData?.name || user?.name}</p>
               {artistData?.is_verified && (
-                <BadgeCheck className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                <img src={IconVerified} alt="verificado" className="w-4 h-4 flex-shrink-0" />
               )}
             </div>
             <p className="text-xs text-gray-500">Artista</p>

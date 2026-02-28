@@ -5,6 +5,7 @@ import { usePlayer } from '../../context/PlayerContext';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { Play, Heart, Users, Music, BadgeCheck, Instagram, Twitter, Youtube, MapPin, Music2, Disc3, List, Video, User } from 'lucide-react';
+import IconVerified from '../../assets/icons/icon-verified.svg';
 import { Button } from '../../components/ui/button';
 import { toast } from '../../hooks/use-toast';
 import VerifiedAvatar from '../../components/VerifiedAvatar';
@@ -600,11 +601,7 @@ const ProfilePublicNew = () => {
                 <h1 className="text-xl font-bold text-white flex items-center gap-2">
                   {artist.name}
                   {artist.verified && (
-                    <div className="inline-flex items-center">
-                      <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                        <BadgeCheck className="w-3 h-3" color="#fff" />
-                      </div>
-                    </div>
+                    <img src={IconVerified} alt="verificado" className="w-5 h-5" />
                   )}
                 </h1>
                 <div className="flex gap-3 text-white/80 text-xs">
@@ -643,11 +640,7 @@ const ProfilePublicNew = () => {
                 <h1 className="text-5xl font-bold text-white mb-2 flex items-center">
                   {artist.name}
                   {artist.verified && (
-                    <div className="ml-4 inline-flex items-center">
-                      <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center">
-                        <BadgeCheck className="w-4 h-4" color="#fff" />
-                      </div>
-                    </div>
+                    <img src={IconVerified} alt="verificado" className="w-7 h-7 ml-4" />
                   )}
                 </h1>
                 <div className="flex items-center gap-6 text-white/80 text-sm mt-3">

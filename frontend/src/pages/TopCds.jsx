@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { TrendingUp, Play, SlidersHorizontal, ChevronDown, BadgeCheck } from 'lucide-react';
+import IconVerified from '../assets/icons/icon-verified.svg';
 import { supabase } from '../lib/supabaseClient';
 import { useTrackPageView } from '../hooks/useTrackPageView';
 import { AdBannerLeft, AdBannerRight } from '../components/AdBanner';
@@ -251,7 +252,7 @@ const TopCds = () => {
                                         >
                                             <span>{album.artist?.name || album.artist_name}</span>
                                             {album.artist?.is_verified && (
-                                                <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                                                <img src={IconVerified} alt="verificado" className="w-3.5 h-3.5 flex-shrink-0" />
                                             )}
                                         </Link>
 
@@ -267,7 +268,7 @@ const TopCds = () => {
                                                     >
                                                         <span>{collab.name}</span>
                                                         {collab.is_verified && (
-                                                            <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                                                            <img src={IconVerified} alt="verificado" className="w-3.5 h-3.5 flex-shrink-0" />
                                                         )}
                                                     </Link>
                                                 ))}

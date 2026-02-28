@@ -1,5 +1,6 @@
 import React from 'react';
 import { Heart, Plus, BadgeCheck, Trash2 } from 'lucide-react';
+import IconVerified from '../assets/icons/icon-verified.svg';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { toast } from '../hooks/use-toast';
@@ -71,7 +72,7 @@ export const FavoriteSongCard = ({
             {song.songs?.artist_name}
           </p>
           {song.songs?.artist?.is_verified && (
-            <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0 hover:text-blue-600" />
+            <img src={IconVerified} alt="verificado" className="w-3.5 h-3.5 flex-shrink-0" />
           )}
         </div>
       </div>

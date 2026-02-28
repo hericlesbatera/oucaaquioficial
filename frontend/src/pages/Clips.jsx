@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { BadgeCheck } from 'lucide-react';
+import IconVerified from '../assets/icons/icon-verified.svg';
 import { Link } from 'react-router-dom';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -113,7 +114,7 @@ const Clips = () => {
                         >
                             <span className="font-semibold">{currentClip.artistName}</span>
                             {currentClip.artistVerified && (
-                                <BadgeCheck className="w-4 h-4 text-blue-500" />
+                                <img src={IconVerified} alt="verificado" className="w-4 h-4" />
                             )}
                         </Link>
                     </div>
@@ -174,7 +175,7 @@ const Clips = () => {
                     >
                         <span className="font-semibold">{currentClip.artistName}</span>
                         {currentClip.artistVerified && (
-                            <BadgeCheck className="w-4 h-4 text-blue-500" />
+                            <img src={IconVerified} alt="verificado" className="w-4 h-4" />
                         )}
                     </Link>
                 </div>

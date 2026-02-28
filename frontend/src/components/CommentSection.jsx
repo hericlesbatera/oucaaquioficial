@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from './ui/button';
 import { toast } from '../hooks/use-toast';
 import { MessageCircle, Send, MoreVertical, Trash2, BadgeCheck } from 'lucide-react';
+import IconVerified from '../assets/icons/icon-verified.svg';
 
 const CommentSection = ({ albumId, artistId }) => {
   const { user } = useAuth();
@@ -230,7 +231,7 @@ const CommentSection = ({ albumId, artistId }) => {
               <div className="flex items-center gap-2 mb-3">
                 <p className="text-black font-semibold">{isAdmin ? 'Ouça Aqui' : (userInfo?.name || user.email)}</p>
                 {userInfo?.is_verified && (
-                  <BadgeCheck className="w-4 h-4 text-blue-500" />
+                  <img src={IconVerified} alt="verificado" className="w-4 h-4" />
                 )}
               </div>
               <form onSubmit={handleSubmitComment} className="flex flex-col gap-3">
@@ -291,7 +292,7 @@ const CommentSection = ({ albumId, artistId }) => {
                     <div className="flex items-center gap-2">
                       <p className="text-black font-semibold">{comment.user_name || 'Usuário'}</p>
                       {comment.user_verified && (
-                        <BadgeCheck className="w-4 h-4 text-blue-500" />
+                        <img src={IconVerified} alt="verificado" className="w-4 h-4" />
                       )}
                     </div>
                     {(user?.id === comment.user_id || isAdmin) && (

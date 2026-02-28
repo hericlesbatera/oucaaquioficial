@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Disc3, Play, BadgeCheck } from 'lucide-react';
+import IconVerified from '../assets/icons/icon-verified.svg';
 import { supabase } from '../lib/supabaseClient';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -161,7 +162,7 @@ const RecentReleases = () => {
                   >
                     <span className="truncate">{artist.name}</span>
                     {artist.is_verified && (
-                      <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                      <img src={IconVerified} alt="verificado" className="w-3.5 h-3.5 flex-shrink-0" />
                     )}
                   </Link>
                   <div className="flex items-center gap-2 text-xs">
