@@ -22,9 +22,7 @@ export const DownloadProgressModal = ({
   const prevIsOpen = useRef(isOpen);
 
   // Detecta plataforma e define mensagem (computado, não em estado)
-  const deviceMessage = isMobileApp() 
-    ? 'Transferindo para seu celular' 
-    : 'Transferindo para seu computador';
+  const deviceMessage = 'Transferindo';
 
   // Animação suave da barra de progresso
   useEffect(() => {
@@ -242,9 +240,7 @@ ${document.querySelector('[data-debug-logs]')?.innerText || 'Nenhum log'}
             <p className="text-gray-600 dark:text-gray-400 mb-2">
               {getStatusDescription()}
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500">
-              Acesse em Biblioteca → Downloads para ouvir offline
-            </p>
+
           </div>
         )}
 
