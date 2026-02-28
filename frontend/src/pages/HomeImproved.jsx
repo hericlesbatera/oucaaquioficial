@@ -441,8 +441,8 @@ const HomeImproved = () => {
                     </div>
                 )}
 
-                {/* Hero Slider */}
-                <div className="max-w-7xl mx-auto px-4 py-8">
+                {/* Hero Slider - sem padding no mobile para ocupar 100% da tela */}
+                <div className="md:max-w-7xl md:mx-auto md:px-4 md:py-8 py-0">
                     <HeroSlider />
                 </div>
 
