@@ -316,21 +316,63 @@ const UploadNew = () => {
             // Usar SSE para rastrear progresso em tempo real
             console.log('[UPLOAD] Starting SSE and XHR setup...');
 
-             // Obter token para SSE com timeout de 5 segundos
+             // Obter token para SSE com timeout aumentado e fallback via localStorage
              console.log('[UPLOAD] Getting session...');
              let token = null;
              try {
+                 // Tentar obter sessão do Supabase com timeout de 15 segundos
                  const sessionPromise = supabase.auth.getSession();
                  const timeoutPromise = new Promise((_, reject) => 
-                     setTimeout(() => reject(new Error('Session timeout')), 5000)
+                     setTimeout(() => reject(new Error('Session timeout')), 15000)
                  );
                  const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
                  token = session?.access_token;
-                 console.log('[UPLOAD] Token obtained:', token ? 'yes' : 'no');
+                 console.log('[UPLOAD] Token obtained from Supabase:', token ? 'yes' : 'no');
              } catch (e) {
                  console.warn('[UPLOAD] getSession timeout/error:', e.message);
-                 // If session fails, throw error so user knows to try again
-                 throw new Error('Sessão expirada. Por favor, atualize a página e tente novamente.');
+                 // Fallback: tentar recuperar token do localStorage (chaves do Supabase)
+                 try {
+                     // Primeiro tentar a chave específica configurada no supabaseClient
+                     const specificKey = 'sb-oucaaqui-auth-token';
+                     const specificStored = localStorage.getItem(specificKey);
+                     if (specificStored) {
+                         try {
+                             const parsed = JSON.parse(specificStored);
+                             if (parsed?.access_token) {
+                                 token = parsed.access_token;
+                                 console.log('[UPLOAD] Token recovered from specific localStorage key');
+                             } else if (parsed?.currentSession?.access_token) {
+                                 token = parsed.currentSession.access_token;
+                                 console.log('[UPLOAD] Token recovered from specific localStorage currentSession');
+                             }
+                         } catch (_) {}
+                     }
+                     // Se não encontrou, varrer todas as chaves do Supabase
+                     if (!token) {
+                         const supabaseKeys = Object.keys(localStorage).filter(k => k.includes('supabase') || k.startsWith('sb-'));
+                         for (const key of supabaseKeys) {
+                             try {
+                                 const stored = JSON.parse(localStorage.getItem(key));
+                                 if (stored?.access_token) {
+                                     token = stored.access_token;
+                                     console.log('[UPLOAD] Token recovered from localStorage key:', key);
+                                     break;
+                                 }
+                                 if (stored?.currentSession?.access_token) {
+                                     token = stored.currentSession.access_token;
+                                     console.log('[UPLOAD] Token recovered from localStorage currentSession:', key);
+                                     break;
+                                 }
+                             } catch (_) {}
+                         }
+                     }
+                 } catch (lsErr) {
+                     console.warn('[UPLOAD] localStorage fallback failed:', lsErr.message);
+                 }
+                 if (!token) {
+                     throw new Error('Sessão expirada. Por favor, atualize a página e tente novamente.');
+                 }
+                 console.log('[UPLOAD] Token obtained via fallback:', token ? 'yes' : 'no');
              }
              
              const sseUrl = token 

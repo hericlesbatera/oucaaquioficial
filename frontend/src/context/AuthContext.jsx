@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { DEFAULT_AVATAR } from '../lib/defaults';
 
@@ -15,6 +15,9 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    // Ref para debounce do SIGNED_IN (evitar múltiplos disparos)
+    const signedInDebounceRef = useRef(null);
+    const lastSignedInUserRef = useRef(null);
 
     useEffect(() => {
          // Verificar sessão atual do Supabase
@@ -108,6 +111,23 @@ export const AuthProvider = ({ children }) => {
          // Escutar mudanças de autenticação
           const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
               if (event === 'SIGNED_IN' && session?.user) {
+                  // Debounce: ignorar disparos duplicados do mesmo usuário em menos de 3 segundos
+                  const currentUserId = session.user.id;
+                  if (lastSignedInUserRef.current === currentUserId) {
+                      if (signedInDebounceRef.current) {
+                          clearTimeout(signedInDebounceRef.current);
+                      }
+                      signedInDebounceRef.current = setTimeout(() => {
+                          lastSignedInUserRef.current = null;
+                      }, 3000);
+                      console.log('[AUTH] SIGNED_IN debounced for same user, skipping duplicate');
+                      return;
+                  }
+                  lastSignedInUserRef.current = currentUserId;
+                  signedInDebounceRef.current = setTimeout(() => {
+                      lastSignedInUserRef.current = null;
+                  }, 3000);
+
                   let avatarUrl = session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || DEFAULT_AVATAR;
                   
                   let isAdmin = false;
@@ -201,7 +221,7 @@ export const AuthProvider = ({ children }) => {
                                   name: fullName,
                                   slug: slug,
                                   email: session.user.email,
-                                  profile_image: avatarUrl,
+                                  avatar_url: avatarUrl,
                                   created_at: new Date().toISOString()
                               }, { onConflict: 'id' });
                               
@@ -253,7 +273,7 @@ export const AuthProvider = ({ children }) => {
                           // Verificar na tabela artists - buscar nome e avatar também (com timeout de 5s)
                           const artistPromise = supabase
                               .from('artists')
-                              .select('id, name, profile_image')
+                              .select('id, name, avatar_url')
                               .eq('id', session.user.id)
                               .maybeSingle();
                           
@@ -275,8 +295,8 @@ export const AuthProvider = ({ children }) => {
                                       name: artistData.name
                                   };
                               }
-                              if (artistData.profile_image) {
-                                  avatarUrl = artistData.profile_image;
+                              if (artistData.avatar_url) {
+                                  avatarUrl = artistData.avatar_url;
                               }
                               console.log('[AUTH] Found in artists table, using name:', artistData.name);
                           } else {
@@ -433,7 +453,7 @@ export const AuthProvider = ({ children }) => {
                      const { data: artistCheck } = await Promise.race([
                          supabase
                              .from('artists')
-                             .select('id, name, profile_image')
+                             .select('id, name, avatar_url')
                              .eq('id', data.user.id)
                              .maybeSingle(),
                          new Promise((_, reject) => 
@@ -469,7 +489,7 @@ export const AuthProvider = ({ children }) => {
                  isPremium: false,
                  isAdmin: isAdmin,
                  isAdminOnly: isAdminOnly,
-                 avatar: artistData?.profile_image || data.user.user_metadata?.avatar_url || DEFAULT_AVATAR
+                 avatar: artistData?.avatar_url || data.user.user_metadata?.avatar_url || DEFAULT_AVATAR
              };
              console.log('[LOGIN] Final userData:', userData);
              setUser(userData);
@@ -516,7 +536,7 @@ export const AuthProvider = ({ children }) => {
                     name: name,
                     slug: slug,
                     email: email,
-                    profile_image: avatar,
+                    avatar_url: avatar,
                     created_at: new Date().toISOString()
                 }, { onConflict: 'id' });
                 
@@ -579,7 +599,8 @@ export const AuthProvider = ({ children }) => {
         await supabase.auth.signOut();
         setUser(null);
         localStorage.removeItem('currentUser');
-        // Limpar sessão do Supabase
+        // Limpar sessão do Supabase (incluindo a chave específica configurada)
+        localStorage.removeItem('sb-oucaaqui-auth-token');
         localStorage.removeItem('sb-' + (process.env.REACT_APP_SUPABASE_URL || 'localhost') + '-auth-token');
         // Limpar qualquer chave de sessão do Supabase
         Object.keys(localStorage).forEach(key => {
