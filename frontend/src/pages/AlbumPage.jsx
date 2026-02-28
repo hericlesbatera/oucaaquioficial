@@ -960,7 +960,7 @@ const AlbumPage = () => {
                                 {/* Nomes */}
                                  <div className="flex items-center gap-1">
                                      <Link to={`/${artist?.slug || artistSlug}`} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
-                                         <span className="text-lg">{album.artistName}</span>
+                                         <span className="text-lg">{artist?.name || album.artistName}</span>
                                          {artist?.is_verified && (
                                              <BadgeCheck className="w-4 h-4 text-blue-500 flex-shrink-0" />
                                          )}
@@ -1013,7 +1013,7 @@ const AlbumPage = () => {
                         <h1 className="text-2xl font-bold mb-3">{album.title}</h1>
                         <div className="flex items-center gap-2 justify-center mb-2">
                             <Link to={`/${artist?.slug || artistSlug}`} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
-                                <span>{album.artistName}</span>
+                                <span>{artist?.name || album.artistName}</span>
                                 {artist?.is_verified && (
                                     <BadgeCheck className="w-4 h-4 text-blue-500 flex-shrink-0" />
                                 )}
@@ -1098,7 +1098,7 @@ const AlbumPage = () => {
                                         className="w-12 h-12 rounded-lg bg-green-500 hover:bg-green-600 flex items-center justify-center transition-colors"
                                         onClick={() => {
                                             const url = window.location.href;
-                                            window.open(`https://wa.me/?text=${encodeURIComponent(`${album.title} - ${album.artistName}\n${url}`)}`, '_blank');
+                                            window.open(`https://wa.me/?text=${encodeURIComponent(`${album.title} - ${artist?.name || album.artistName}\n${url}`)}`, '_blank');
                                         }}
                                         title="WhatsApp"
                                     >
@@ -1122,7 +1122,7 @@ const AlbumPage = () => {
                                         className="w-12 h-12 rounded-lg bg-black hover:bg-gray-800 flex items-center justify-center transition-colors"
                                         onClick={() => {
                                             const url = window.location.href;
-                                            window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(`${album.title} - ${album.artistName}`)}`, '_blank');
+                                            window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(`${album.title} - ${artist?.name || album.artistName}`)}`, '_blank');
                                         }}
                                         title="Twitter / X"
                                     >
@@ -1248,7 +1248,7 @@ const AlbumPage = () => {
                                             className="w-12 h-12 rounded-lg bg-green-500 hover:bg-green-600 flex items-center justify-center transition-colors"
                                             onClick={() => {
                                                 const url = window.location.href;
-                                                window.open(`https://wa.me/?text=${encodeURIComponent(`${album.title} - ${album.artistName}\n${url}`)}`, '_blank');
+                                                window.open(`https://wa.me/?text=${encodeURIComponent(`${album.title} - ${artist?.name || album.artistName}\n${url}`)}`, '_blank');
                                             }}
                                             title="WhatsApp"
                                         >
@@ -1272,7 +1272,7 @@ const AlbumPage = () => {
                                             className="w-12 h-12 rounded-lg bg-black hover:bg-gray-800 flex items-center justify-center transition-colors"
                                             onClick={() => {
                                                 const url = window.location.href;
-                                                window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(`${album.title} - ${album.artistName}`)}`, '_blank');
+                                                window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(`${album.title} - ${artist?.name || album.artistName}`)}`, '_blank');
                                             }}
                                             title="Twitter / X"
                                         >

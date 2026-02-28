@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Image as ImageIcon, CheckCircle, Upload, AlertCircle, Lock, Globe, Camera, X } from 'lucide-react';
 import { Progress } from '../../components/ui/progress';
 import { Button } from '../../components/ui/button';
@@ -57,6 +57,28 @@ const UploadNew = () => {
     const [songs, setSongs] = useState([]);
     const [songMetadata, setSongMetadata] = useState({});
     const [showMetadataSelection, setShowMetadataSelection] = useState(false);
+    const [artistName, setArtistName] = useState(null); // Nome artístico da tabela artists
+
+    // Buscar nome artístico do Supabase ao montar o componente
+    useEffect(() => {
+        const fetchArtistName = async () => {
+            if (!user?.id) return;
+            try {
+                const { data } = await supabase
+                    .from('artists')
+                    .select('name')
+                    .eq('id', user.id)
+                    .maybeSingle();
+                if (data?.name) {
+                    setArtistName(data.name);
+                }
+            } catch (err) {
+                console.warn('[UploadNew] Erro ao buscar nome artístico:', err);
+            }
+        };
+        fetchArtistName();
+    }, [user?.id]);
+
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -276,7 +298,7 @@ const UploadNew = () => {
             uploadData.append('releaseDate', releaseDateFormatted);
             uploadData.append('customUrl', formData.customUrl || generateDefaultUrl(formData.title));
             uploadData.append('artistId', user?.id || '');
-            uploadData.append('artistName', user?.name || 'Artista');
+            uploadData.append('artistName', artistName || user?.name || 'Artista');
             uploadData.append('youtubeUrl', formData.youtubeUrl || '');
             uploadData.append('albumFile', formData.albumFile);
 
