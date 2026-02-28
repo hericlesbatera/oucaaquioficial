@@ -8,6 +8,10 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { toast } from '../hooks/use-toast';
 import HeroSlider from '../components/HeroSlider';
+import IconArtistasDestaque from '../assets/icons/icon-artistas-destaque.svg';
+import IconLancamentos from '../assets/icons/icon-lancamentos.svg';
+import IconGeneros from '../assets/icons/icon-generos.svg';
+import IconTopCds from '../assets/icons/icon-topcds.svg';
 import HomePopup from '../components/HomePopup';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -466,7 +470,7 @@ const HomeImproved = () => {
                 <section className="mb-16 hidden md:block">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-2">
-                            <Music className="w-5 h-5 text-red-600" />
+                            <img src={IconLancamentos} alt="" className="w-5 h-5" />
                             <h2 className="text-xl font-bold text-black">Lançamentos Recentes</h2>
                         </div>
                         <div className="flex items-center gap-2">
@@ -574,7 +578,7 @@ const HomeImproved = () => {
                 <section className="mb-16 hidden md:block">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-2">
-                            <TrendingUp className="w-5 h-5 text-red-600" />
+                            <img src={IconTopCds} alt="" className="w-5 h-5" />
                             <h2 className="text-xl font-bold text-black">TOP CDS</h2>
                             <div className="flex items-center gap-2 text-sm ml-4">
                                 <button
@@ -718,7 +722,7 @@ const HomeImproved = () => {
                 <section className="mb-4 md:mb-16">
                     <div className="flex items-center justify-between mb-3 md:mb-6 px-4 md:px-0">
                         <div className="flex items-center gap-2">
-                            <Users className="w-5 h-5 text-red-600" />
+                            <img src={IconArtistasDestaque} alt="" className="w-5 h-5" />
                             <h2 className="text-base md:text-xl font-bold text-black">Artistas em Destaque</h2>
                         </div>
                         <div className="flex items-center gap-2">
@@ -829,7 +833,7 @@ const HomeImproved = () => {
                 <section className="mb-4 md:hidden">
                     <div className="flex items-center justify-between mb-3 px-4">
                         <div className="flex items-center gap-2">
-                            <Music className="w-5 h-5 text-red-600" />
+                            <img src={IconLancamentos} alt="" className="w-5 h-5" />
                             <h2 className="text-base font-bold text-black">Lançamentos Recentes</h2>
                         </div>
                         <div className="flex items-center gap-2">
@@ -900,7 +904,7 @@ const HomeImproved = () => {
                 <section className="mb-4 md:hidden">
                     <div className="flex items-center justify-between mb-2 px-4">
                         <div className="flex items-center gap-2">
-                            <TrendingUp className="w-5 h-5 text-red-600" />
+                            <img src={IconTopCds} alt="" className="w-5 h-5" />
                             <h2 className="text-base font-bold text-black">TOP CDS</h2>
                         </div>
                         <div className="flex gap-1">
@@ -1269,7 +1273,7 @@ const HomeImproved = () => {
                 <section className="mb-4 md:mb-16">
                     <div className="flex items-center justify-between mb-3 md:mb-6 px-4 md:px-0">
                         <div className="flex items-center gap-2">
-                            <Music className="w-5 h-5 text-red-600" />
+                            <img src={IconGeneros} alt="" className="w-5 h-5" />
                             <h2 className="text-base md:text-xl font-bold text-black">Gêneros</h2>
                         </div>
                         {/* Desktop - Navigation Buttons */}
