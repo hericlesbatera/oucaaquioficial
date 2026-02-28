@@ -145,10 +145,9 @@ const HeroSlider = () => {
                 </div>
             </div>
 
-            {/* Mobile Layout */}
-            <div className="md:hidden flex flex-col gap-3">
-                {/* Main Slide - Grande no topo */}
-                <div className="relative w-full h-[220px] overflow-hidden rounded-lg group">
+            {/* Mobile Layout - igual ao app: apenas slide grande com dots */}
+            <div className="md:hidden">
+                <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/9' }}>
                     {slides.map((slide, index) => (
                         <div
                             key={slide.id}
@@ -167,39 +166,17 @@ const HeroSlider = () => {
                         </div>
                     ))}
 
-                    {/* Dots Indicator */}
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 flex space-x-1">
+                    {/* Dots Indicator - igual ao app */}
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex space-x-1.5">
                         {slides.map((_, index) => (
                             <button
                                 key={index}
                                 onClick={() => goToSlide(index)}
-                                className={`h-1.5 rounded-full transition-all ${index === currentSlide ? 'bg-red-600 w-6' : 'bg-white/50 w-1.5'
+                                className={`rounded-full transition-all ${index === currentSlide ? 'bg-red-600 w-5 h-2' : 'bg-white/60 w-2 h-2'
                                     }`}
                             />
                         ))}
                     </div>
-                </div>
-
-                {/* Thumbnails - 2 colunas abaixo - max 9 items (scrollable) */}
-                <div className="grid grid-cols-2 gap-3 max-h-[540px] overflow-y-auto">
-                    {slides.slice(0, 9).map((slide, index) => (
-                        <button
-                            key={slide.id}
-                            onClick={() => goToSlide(index)}
-                            className={`relative h-[100px] overflow-hidden rounded-lg transition-all flex-shrink-0 ${index === currentSlide
-                                    ? 'ring-2 ring-red-600 opacity-100'
-                                    : 'opacity-70 hover:opacity-100'
-                                }`}
-                        >
-                            <img
-                                src={slide.image}
-                                alt={`Thumbnail ${index + 1}`}
-                                loading="lazy"
-                                decoding="async"
-                                className="w-full h-full object-cover"
-                            />
-                        </button>
-                    ))}
                 </div>
             </div>
         </div>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { usePlayer } from '../context/PlayerContext';
 import { useAuth } from '../context/AuthContext';
-import { Play, Disc, Disc3, TrendingUp, ChevronLeft, ChevronRight, User, BadgeCheck, Plus, Music, ThumbsUp, Video } from 'lucide-react';
+import { Play, Disc, Disc3, TrendingUp, ChevronLeft, ChevronRight, User, Users, BadgeCheck, Plus, Music, ThumbsUp, Video } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { toast } from '../hooks/use-toast';
@@ -460,77 +460,6 @@ const HomeImproved = () => {
                     </div>
                 )}
 
-                {/* Lançamentos Recentes - Mobile (padrão app) */}
-                <section className="mb-4 md:hidden">
-                    <div className="flex items-center justify-between mb-3 px-4">
-                        <div className="flex items-center gap-2">
-                            <Disc3 className="w-5 h-5 text-red-600" />
-                            <h2 className="text-base font-bold text-black">Lançamentos Recentes</h2>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Link to="/lancamentos" className="text-red-600 font-bold text-xs">VER TODOS</Link>
-                            <div className="flex gap-1">
-                                <button
-                                    onClick={() => scrollSection(lancamentosRef, 'left')}
-                                    className="w-7 h-7 border border-red-600 text-red-600 rounded flex items-center justify-center"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={() => scrollSection(lancamentosRef, 'right')}
-                                    className="w-7 h-7 border border-red-600 text-red-600 rounded flex items-center justify-center"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div
-                        ref={lancamentosRef}
-                        className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth px-4"
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                    >
-                        {allAlbums.length === 0 ? (
-                            <p className="text-gray-500 py-4 w-full text-sm">Nenhum lançamento disponível no momento.</p>
-                        ) : (
-                            allAlbums.slice(0, 20).map((album) => (
-                                <div key={album.id} className="flex-shrink-0" style={{ width: '140px' }}>
-                                    <Link to={`/${album.artistSlug}/${album.slug || album.id}`} className="block">
-                                        <div className="relative mb-1.5 overflow-hidden rounded-lg shadow" style={{ width: '140px', height: '140px' }}>
-                                            <img
-                                                src={album.coverImage}
-                                                alt={album.title}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                        <h3 className="text-black font-semibold text-xs mb-0.5 line-clamp-2 leading-tight">
-                                            {album.title}
-                                        </h3>
-                                    </Link>
-                                    <div className="flex items-center gap-0.5 text-gray-500 text-xs mb-1">
-                                        <Link to={`/${album.artistSlug}`} className="truncate hover:text-red-600">
-                                            {album.artistName}
-                                        </Link>
-                                        {album.artistVerified && (
-                                            <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-1.5 text-xs">
-                                        <div className="flex items-center gap-0.5 text-gray-500">
-                                            <Play className="w-2.5 h-2.5" />
-                                            <span>{formatNumber(album.playCount)}</span>
-                                        </div>
-                                        <div className="flex items-center gap-0.5 text-gray-500">
-                                            <span>↓</span>
-                                            <span>{formatNumber(album.downloadCount)}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </section>
-
                 {/* Lançamentos Recentes - Desktop */}
                 <section className="mb-16 hidden md:block">
                     <div className="flex items-center justify-between mb-6">
@@ -635,93 +564,6 @@ const HomeImproved = () => {
                                         <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded">
                                             <span className="font-bold text-gray-700">{formatNumber(album.downloadCount)}</span>
                                             <span className="text-gray-500">Downloads</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </section>
-
-                {/* TOP CDS - Mobile (padrão app) */}
-                <section className="mb-4 md:hidden">
-                    <div className="flex items-center justify-between mb-2 px-4">
-                        <div className="flex items-center gap-2">
-                            <TrendingUp className="w-5 h-5 text-red-600" />
-                            <h2 className="text-base font-bold text-black">TOP CDS</h2>
-                        </div>
-                        <div className="flex gap-1">
-                            <button
-                                onClick={() => scrollSection(topCdsRef, 'left')}
-                                className="w-7 h-7 border border-red-600 text-red-600 rounded flex items-center justify-center"
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                            </button>
-                            <button
-                                onClick={() => scrollSection(topCdsRef, 'right')}
-                                className="w-7 h-7 border border-red-600 text-red-600 rounded flex items-center justify-center"
-                            >
-                                <ChevronRight className="w-4 h-4" />
-                            </button>
-                        </div>
-                    </div>
-                    {/* Filtros mobile */}
-                    <div className="flex items-center gap-3 px-4 mb-3">
-                        {['dia', 'semana', 'mes', 'geral'].map((f) => (
-                            <button
-                                key={f}
-                                onClick={() => setTopCdsFilter(f)}
-                                className={`text-xs font-bold pb-0.5 transition-colors ${
-                                    topCdsFilter === f
-                                        ? 'text-red-600 border-b-2 border-red-600'
-                                        : 'text-gray-500'
-                                }`}
-                            >
-                                {f.toUpperCase()}
-                            </button>
-                        ))}
-                    </div>
-                    <div
-                        ref={topCdsRef}
-                        className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth px-4"
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                    >
-                        {topCdsAlbums.length === 0 ? (
-                            <p className="text-gray-500 py-4 w-full text-sm">Nenhum CD disponível para este período.</p>
-                        ) : (
-                            topCdsAlbums.slice(0, 20).map((album, index) => (
-                                <div key={`${album.id}-${topCdsFilter}`} className="flex-shrink-0" style={{ width: '140px' }}>
-                                    <Link to={`/${album.artistSlug}/${album.slug || album.id}`} className="block">
-                                        <div className="relative mb-1.5 overflow-hidden rounded-lg shadow" style={{ width: '140px', height: '140px' }}>
-                                            <div className="absolute top-1.5 left-1.5 z-10 bg-red-600 text-white font-bold text-xs w-6 h-6 flex items-center justify-center rounded">
-                                                {index + 1}
-                                            </div>
-                                            <img
-                                                src={album.coverImage}
-                                                alt={album.title}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                        <h3 className="text-black font-semibold text-xs mb-0.5 line-clamp-2 leading-tight">
-                                            {album.title}
-                                        </h3>
-                                    </Link>
-                                    <div className="flex items-center gap-0.5 text-gray-500 text-xs mb-1">
-                                        <Link to={`/${album.artistSlug}`} className="truncate hover:text-red-600">
-                                            {album.artistName}
-                                        </Link>
-                                        {album.artistVerified && (
-                                            <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-1.5 text-xs">
-                                        <div className="flex items-center gap-0.5 text-gray-500">
-                                            <Play className="w-2.5 h-2.5" />
-                                            <span>{formatNumber(album.period_play_count || album.playCount)}</span>
-                                        </div>
-                                        <div className="flex items-center gap-0.5 text-gray-500">
-                                            <span>↓</span>
-                                            <span>{formatNumber(album.downloadCount)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -882,7 +724,7 @@ const HomeImproved = () => {
                 <section className="mb-4 md:mb-16">
                     <div className="flex items-center justify-between mb-3 md:mb-6 px-4 md:px-0">
                         <div className="flex items-center gap-2 md:gap-3">
-                            <User className="w-5 h-5 md:w-8 md:h-8 text-red-600" />
+                            <Users className="w-5 h-5 md:w-8 md:h-8 text-red-600" />
                             <h2 className="text-base md:text-3xl font-bold text-black">Artistas em Destaque</h2>
                         </div>
                         <div className="flex items-center gap-2">
@@ -962,54 +804,189 @@ const HomeImproved = () => {
                             ))
                         )}
                     </div>
-                    {/* Mobile */}
-                    <div className="md:hidden flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4 px-4">
+                    {/* Mobile - igual ao app: apenas foto circular + nome + badge, sem botão seguir */}
+                    <div className="md:hidden flex gap-5 overflow-x-auto scrollbar-hide scroll-smooth pb-2 px-4">
                         {allArtists.length === 0 ? (
                             <p className="text-gray-500 py-8 w-full">Nenhum artista disponível no momento.</p>
                         ) : (
                             allArtists.map((artist) => (
-                                <div
+                                <Link
                                     key={artist.id}
-                                    className="flex flex-col items-center text-center flex-shrink-0"
-                                    style={{ minWidth: '100px' }}
+                                    to={`/${artist.slug || artist.id}`}
+                                    className="flex flex-col items-center text-center flex-shrink-0 group"
+                                    style={{ minWidth: '80px', maxWidth: '80px' }}
                                 >
-                                    <Link
-                                        to={`/${artist.slug || artist.id}`}
-                                        className="group cursor-pointer mb-2"
-                                    >
-                                        <div className="relative inline-block">
-                                            <img
-                                                src={artist.avatar}
-                                                alt={artist.name}
-                                                className="w-20 h-20 rounded-full object-cover transform group-hover:scale-110 transition-transform duration-300 shadow-lg group-hover:ring-2 group-hover:ring-red-600"
-                                            />
-                                        </div>
-                                    </Link>
-                                    <Link
-                                        to={`/${artist.slug || artist.id}`}
-                                        className="flex items-center gap-0.5 justify-center text-black font-semibold text-xs mb-2 hover:text-red-600 transition-colors w-full"
-                                    >
-                                        <span className="truncate">{artist.name}</span>
+                                    <div className="relative mb-1.5">
+                                        <img
+                                            src={artist.avatar}
+                                            alt={artist.name}
+                                            className="w-16 h-16 rounded-full object-cover shadow-md group-hover:ring-2 group-hover:ring-red-600 transition-all"
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-0.5 justify-center w-full">
+                                        <span className="text-black font-semibold text-xs truncate group-hover:text-red-600 transition-colors">{artist.name}</span>
                                         {artist.verified && (
                                             <BadgeCheck className="w-2.5 h-2.5 text-blue-500 flex-shrink-0" />
                                         )}
+                                    </div>
+                                </Link>
+                            ))
+                        )}
+                    </div>
+                </section>
+
+                {/* Lançamentos Recentes - Mobile (padrão app) */}
+                <section className="mb-4 md:hidden">
+                    <div className="flex items-center justify-between mb-3 px-4">
+                        <div className="flex items-center gap-2">
+                            <Music className="w-5 h-5 text-red-600" />
+                            <h2 className="text-base font-bold text-black">Lançamentos Recentes</h2>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Link to="/lancamentos" className="text-red-600 font-bold text-xs">VER TODOS</Link>
+                            <div className="flex gap-1">
+                                <button
+                                    onClick={() => scrollSection(lancamentosRef, 'left')}
+                                    className="w-7 h-7 border border-red-600 text-red-600 rounded flex items-center justify-center"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => scrollSection(lancamentosRef, 'right')}
+                                    className="w-7 h-7 border border-red-600 text-red-600 rounded flex items-center justify-center"
+                                >
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        ref={lancamentosRef}
+                        className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth px-4"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
+                        {allAlbums.length === 0 ? (
+                            <p className="text-gray-500 py-4 w-full text-sm">Nenhum lançamento disponível no momento.</p>
+                        ) : (
+                            allAlbums.slice(0, 20).map((album) => (
+                                <div key={album.id} className="flex-shrink-0" style={{ width: '140px' }}>
+                                    <Link to={`/${album.artistSlug}/${album.slug || album.id}`} className="block">
+                                        <div className="relative mb-1.5 overflow-hidden rounded-lg shadow" style={{ width: '140px', height: '140px' }}>
+                                            <img
+                                                src={album.coverImage}
+                                                alt={album.title}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <h3 className="text-black font-semibold text-xs mb-0.5 line-clamp-2 leading-tight">
+                                            {album.title}
+                                        </h3>
                                     </Link>
-                                    <button
-                                         onClick={(e) => handleFollow(artist.id, e)}
-                                         className={`inline-flex items-center justify-center gap-1 whitespace-nowrap text-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-3 [&_svg]:shrink-0 shadow py-1 px-2 h-7 rounded-full font-semibold ${followingArtists.has(artist.id)
-                                              ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                              : 'bg-red-600 text-white hover:bg-red-700'
-                                              }`}
-                                    >
-                                         {followingArtists.has(artist.id) ? (
-                                             'SIM'
-                                         ) : (
-                                             <>
-                                                 <Plus className="w-2.5 h-2.5" />
-                                                 ADD
-                                             </>
-                                         )}
-                                     </button>
+                                    <div className="flex items-center gap-0.5 text-gray-500 text-xs mb-1">
+                                        <Link to={`/${album.artistSlug}`} className="truncate hover:text-red-600">
+                                            {album.artistName}
+                                        </Link>
+                                        {album.artistVerified && (
+                                            <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-xs">
+                                        <div className="flex items-center gap-0.5 text-gray-500">
+                                            <Play className="w-2.5 h-2.5" />
+                                            <span>{formatNumber(album.playCount)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-0.5 text-gray-500">
+                                            <span>↓</span>
+                                            <span>{formatNumber(album.downloadCount)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </section>
+
+                {/* TOP CDS - Mobile (padrão app) */}
+                <section className="mb-4 md:hidden">
+                    <div className="flex items-center justify-between mb-2 px-4">
+                        <div className="flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5 text-red-600" />
+                            <h2 className="text-base font-bold text-black">TOP CDS</h2>
+                        </div>
+                        <div className="flex gap-1">
+                            <button
+                                onClick={() => scrollSection(topCdsRef, 'left')}
+                                className="w-7 h-7 border border-red-600 text-red-600 rounded flex items-center justify-center"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => scrollSection(topCdsRef, 'right')}
+                                className="w-7 h-7 border border-red-600 text-red-600 rounded flex items-center justify-center"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                    {/* Filtros mobile */}
+                    <div className="flex items-center gap-3 px-4 mb-3">
+                        {['dia', 'semana', 'mes', 'geral'].map((f) => (
+                            <button
+                                key={f}
+                                onClick={() => setTopCdsFilter(f)}
+                                className={`text-xs font-bold pb-0.5 transition-colors ${
+                                    topCdsFilter === f
+                                        ? 'text-red-600 border-b-2 border-red-600'
+                                        : 'text-gray-500'
+                                }`}
+                            >
+                                {f.toUpperCase()}
+                            </button>
+                        ))}
+                    </div>
+                    <div
+                        ref={topCdsRef}
+                        className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth px-4"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
+                        {topCdsAlbums.length === 0 ? (
+                            <p className="text-gray-500 py-4 w-full text-sm">Nenhum CD disponível para este período.</p>
+                        ) : (
+                            topCdsAlbums.slice(0, 20).map((album, index) => (
+                                <div key={`${album.id}-${topCdsFilter}`} className="flex-shrink-0" style={{ width: '140px' }}>
+                                    <Link to={`/${album.artistSlug}/${album.slug || album.id}`} className="block">
+                                        <div className="relative mb-1.5 overflow-hidden rounded-lg shadow" style={{ width: '140px', height: '140px' }}>
+                                            <div className="absolute top-1.5 left-1.5 z-10 bg-red-600 text-white font-bold text-xs w-6 h-6 flex items-center justify-center rounded">
+                                                {index + 1}
+                                            </div>
+                                            <img
+                                                src={album.coverImage}
+                                                alt={album.title}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <h3 className="text-black font-semibold text-xs mb-0.5 line-clamp-2 leading-tight">
+                                            {album.title}
+                                        </h3>
+                                    </Link>
+                                    <div className="flex items-center gap-0.5 text-gray-500 text-xs mb-1">
+                                        <Link to={`/${album.artistSlug}`} className="truncate hover:text-red-600">
+                                            {album.artistName}
+                                        </Link>
+                                        {album.artistVerified && (
+                                            <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-xs">
+                                        <div className="flex items-center gap-0.5 text-gray-500">
+                                            <Play className="w-2.5 h-2.5" />
+                                            <span>{formatNumber(album.period_play_count || album.playCount)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-0.5 text-gray-500">
+                                            <span>↓</span>
+                                            <span>{formatNumber(album.downloadCount)}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             ))
                         )}
