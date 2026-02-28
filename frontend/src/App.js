@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect } from "react";
+import React, { useEffect, lazy, Suspense } from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -7,7 +7,7 @@ import { usePlayerActive } from "./hooks/usePlayerActive";
 import { Toaster } from "./components/ui/toaster";
 import LoadingSpinner from "./components/LoadingSpinner";
 
-// Layout Components (carregados imediatamente - usados em todas as páginas)
+// Layout Components
 import Header from "./components/Layout/Header";
 import HeaderMobile from "./components/Layout/HeaderMobile";
 import Footer from "./components/Layout/Footer";
@@ -17,7 +17,7 @@ import MobileBottomNav from "./components/Layout/MobileBottomNav";
 import MobileLayout from "./components/Layout/MobileLayout";
 import ArtistPanelLayout from "./components/Artist/ArtistPanelLayout";
 
-// Pages - Lazy loaded para code splitting (cada página carrega só quando necessário)
+// Pages - Lazy loaded para code splitting (cada página carrega apenas quando acessada)
 const Login = lazy(() => import("./pages/Login"));
 const LoginWhite = lazy(() => import("./pages/LoginWhite"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -35,7 +35,7 @@ const ProfilePublicNew = lazy(() => import("./pages/Artist/ProfilePublicNew"));
 const About = lazy(() => import("./pages/About"));
 const Policies = lazy(() => import("./pages/Policies"));
 
-// Artist Pages - Lazy loaded
+// Artist Pages
 const DashboardNew = lazy(() => import("./pages/Artist/DashboardNew"));
 const UploadNew = lazy(() => import("./pages/Artist/UploadNew"));
 const MyAlbums = lazy(() => import("./pages/Artist/MyAlbums"));
@@ -46,18 +46,18 @@ const SettingsNew = lazy(() => import("./pages/Artist/SettingsNew"));
 const EmailSenha = lazy(() => import("./pages/Artist/EmailSenha"));
 const Support = lazy(() => import("./pages/Artist/Support"));
 
-// User Pages - Lazy loaded
+// User Pages
 const UserPanelNew = lazy(() => import("./pages/User/UserPanelNew"));
 const UserSupport = lazy(() => import("./pages/User/UserSupport"));
 
-// Admin Pages - Lazy loaded
+// Admin Pages
 const AdminPanel = lazy(() => import("./pages/Admin/AdminPanel"));
 const SlidesManager = lazy(() => import("./pages/Admin/SlidesManager"));
 
-// Spinner de fallback para o Suspense
+// Fallback de carregamento para lazy pages
 const PageFallback = () => (
   <div className="min-h-screen bg-white flex items-center justify-center">
-    <LoadingSpinner size="large" text="Carregando..." />
+    <LoadingSpinner size="medium" text="Carregando..." />
   </div>
 );
 
@@ -166,225 +166,223 @@ function AppRoutes() {
   const { user } = useAuth();
 
   return (
-    <Suspense fallback={<PageFallback />}>
-      <Routes>
-        <Route
-          path="/login"
-          element={<Login />}
-        />
-        <Route
-          path="/cadastrar"
-          element={<LoginWhite />}
-        />
-        
-        <Route
-          path="/reset-password"
-          element={<ResetPassword />}
-        />
-        
-        {/* Public Routes - No login required */}
-        <Route
-          path="/"
-          element={
-            <MainLayout>
-              <HomeImproved />
-            </MainLayout>
-          }
-        />
-        
-        <Route
-          path="/:artistSlug/:albumSlug"
-          element={
-            <MainLayout showFooter={false}>
-              <AlbumPage />
-            </MainLayout>
-          }
-        />
-        
-        <Route
-          path="/playlist/:playlistSlug"
-          element={
-            <MainLayout showFooter={false}>
-              <PlaylistPage />
-            </MainLayout>
-          }
-        />
-        
-        <Route
-           path="/search"
-           element={
+    <Routes>
+      <Route
+        path="/login"
+        element={<Login />}
+      />
+      <Route
+        path="/cadastrar"
+        element={<LoginWhite />}
+      />
+      
+      <Route
+        path="/reset-password"
+        element={<ResetPassword />}
+      />
+      
+      {/* Public Routes - No login required */}
+      <Route
+        path="/"
+        element={
+          <MainLayout>
+            <HomeImproved />
+          </MainLayout>
+        }
+      />
+      
+      <Route
+        path="/:artistSlug/:albumSlug"
+        element={
+          <MainLayout showFooter={false}>
+            <AlbumPage />
+          </MainLayout>
+        }
+      />
+      
+      <Route
+        path="/playlist/:playlistSlug"
+        element={
+          <MainLayout showFooter={false}>
+            <PlaylistPage />
+          </MainLayout>
+        }
+      />
+      
+      <Route
+         path="/search"
+         element={
+           <MainLayout>
+             <Search />
+           </MainLayout>
+         }
+       />
+       
+       <Route
+         path="/playlists"
+         element={
+           <ProtectedRoute>
              <MainLayout>
-               <Search />
+               <Playlists />
              </MainLayout>
-           }
-         />
-         
-         <Route
-           path="/playlists"
-           element={
-             <ProtectedRoute>
-               <MainLayout>
-                 <Playlists />
-               </MainLayout>
-             </ProtectedRoute>
-           }
-         />
+           </ProtectedRoute>
+         }
+       />
 
-         <Route
-           path="/clips"
-           element={
-             <MainLayout>
-               <Clips />
-             </MainLayout>
-           }
-         />
-         
-         <Route
-           path="/top-cds"
-          element={
+       <Route
+         path="/clips"
+         element={
+           <MainLayout>
+             <Clips />
+           </MainLayout>
+         }
+       />
+       
+       <Route
+         path="/top-cds"
+        element={
+          <MainLayout>
+            <TopCds />
+          </MainLayout>
+        }
+      />
+      
+      <Route
+        path="/lancamentos"
+        element={
+          <MainLayout>
+            <RecentReleases />
+          </MainLayout>
+        }
+      />
+      
+      <Route
+        path="/genero/:genre"
+        element={
+          <MainLayout>
+            <GenrePage />
+          </MainLayout>
+        }
+      />
+      
+      <Route
+        path="/sobre"
+        element={
+          <MainLayout>
+            <About />
+          </MainLayout>
+        }
+      />
+      
+      <Route
+        path="/politicas"
+        element={
+          <MainLayout>
+            <Policies />
+          </MainLayout>
+        }
+      />
+      
+      {/* Protected Routes - Login required */}
+      <Route
+        path="/library"
+        element={
+          <ProtectedRoute>
             <MainLayout>
-              <TopCds />
+              <Library />
             </MainLayout>
-          }
-        />
-        
-        <Route
-          path="/lancamentos"
-          element={
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/favorites"
+        element={
+          <ProtectedRoute>
             <MainLayout>
-              <RecentReleases />
+              <Library />
             </MainLayout>
-          }
-        />
-        
-        <Route
-          path="/genero/:genre"
-          element={
-            <MainLayout>
-              <GenrePage />
-            </MainLayout>
-          }
-        />
-        
-        <Route
-          path="/sobre"
-          element={
-            <MainLayout>
-              <About />
-            </MainLayout>
-          }
-        />
-        
-        <Route
-          path="/politicas"
-          element={
-            <MainLayout>
-              <Policies />
-            </MainLayout>
-          }
-        />
-        
-        {/* Protected Routes - Login required */}
-        <Route
-          path="/library"
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <Library />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        
-        <Route
-          path="/favorites"
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <Library />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        
-        {/* User Panel Routes - Protected */}
-        <Route
-          path="/user/panel"
-          element={
-            <ProtectedRoute>
-              <UserPanelNew />
-            </ProtectedRoute>
-          }
-        />
-        
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* User Panel Routes - Protected */}
+      <Route
+        path="/user/panel"
+        element={
+          <ProtectedRoute>
+            <UserPanelNew />
+          </ProtectedRoute>
+        }
+      />
+      
 
-        
-        {/* Artist Routes - Protected with shared layout */}
-        <Route
-          path="/artist"
-          element={
-            <ProtectedRoute>
-              <ArtistPanelLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="dashboard" element={<DashboardNew />} />
-          <Route path="upload" element={<UploadNew />} />
-          <Route path="albums" element={<MyAlbums />} />
-          <Route path="playlists" element={<MyPlaylists />} />
-          <Route path="favoritos" element={<Favoritos />} />
-          <Route path="meus-videos" element={<MeusVideos />} />
-          <Route path="support" element={<Support />} />
-          <Route path="settings" element={<SettingsNew />} />
-          <Route path="email-senha" element={<EmailSenha />} />
-          <Route index element={<Navigate to="dashboard" replace />} />
-        </Route>
-        
-        {/* Admin Routes */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <AdminLayout>
-                <AdminPanel />
-              </AdminLayout>
-            </ProtectedRoute>
-          }
-        />
+      
+      {/* Artist Routes - Protected with shared layout */}
+      <Route
+        path="/artist"
+        element={
+          <ProtectedRoute>
+            <ArtistPanelLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<DashboardNew />} />
+        <Route path="upload" element={<UploadNew />} />
+        <Route path="albums" element={<MyAlbums />} />
+        <Route path="playlists" element={<MyPlaylists />} />
+        <Route path="favoritos" element={<Favoritos />} />
+        <Route path="meus-videos" element={<MeusVideos />} />
+        <Route path="support" element={<Support />} />
+        <Route path="settings" element={<SettingsNew />} />
+        <Route path="email-senha" element={<EmailSenha />} />
+        <Route index element={<Navigate to="dashboard" replace />} />
+      </Route>
+      
+      {/* Admin Routes */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <AdminPanel />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
 
-        <Route
-          path="/admin/slides"
-          element={
-            <ProtectedRoute>
-              <AdminLayout>
-                <SlidesManager />
-              </AdminLayout>
-            </ProtectedRoute>
-          }
-        />
+      <Route
+        path="/admin/slides"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <SlidesManager />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
 
-        <Route
-          path="/support"
-          element={
-            <ProtectedRoute>
-              <UserSupport />
-            </ProtectedRoute>
-          }
-        />
+      <Route
+        path="/support"
+        element={
+          <ProtectedRoute>
+            <UserSupport />
+          </ProtectedRoute>
+        }
+      />
 
-        {/* Artist Profile - Must be last to act as catch-all */}
-        <Route
-          path="/:slug"
-          element={
-            <MainLayout showFooter={false}>
-              <ProfilePublicNew />
-            </MainLayout>
-          }
-        />
+      {/* Artist Profile - Must be last to act as catch-all */}
+      <Route
+        path="/:slug"
+        element={
+          <MainLayout showFooter={false}>
+            <ProfilePublicNew />
+          </MainLayout>
+        }
+      />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Suspense>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
@@ -397,7 +395,9 @@ function App() {
           <ScrollToTop />
           <PathSaver />
           <RecoveryHandler />
-          <AppRoutes />
+          <Suspense fallback={<PageFallback />}>
+            <AppRoutes />
+          </Suspense>
           <Toaster />
         </PlayerProvider>
       </AuthProvider>

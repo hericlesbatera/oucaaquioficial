@@ -126,11 +126,10 @@ const ProfilePublicNew = () => {
 
   useEffect(() => {
     const loadArtist = async () => {
-      const artistCols = 'id, name, slug, bio, avatar_url, cover_url, is_verified, followers_count, estilo_musical, cidade, estado, instagram, twitter, youtube';
       // Primeiro tenta buscar por slug
       let { data: supabaseArtist } = await supabase
         .from('artists')
-        .select(artistCols)
+        .select('*')
         .eq('slug', slug)
         .maybeSingle();
       
@@ -138,7 +137,7 @@ const ProfilePublicNew = () => {
       if (!supabaseArtist) {
         const { data: artistById } = await supabase
           .from('artists')
-          .select(artistCols)
+          .select('*')
           .eq('id', slug)
           .maybeSingle();
         supabaseArtist = artistById;
@@ -223,19 +222,41 @@ const ProfilePublicNew = () => {
     };
     
     const loadAlbums = async (artistId) => {
-      const albumCols2 = 'id, slug, title, artist_id, cover_url, release_year, release_date, created_at, is_private, is_scheduled, scheduled_publish_at, deleted_at, song_count, play_count, download_count';
-      // Paralelizar: buscar álbuns próprios e colaborações ao mesmo tempo
-      const [ownAlbumsResult, collabResult2] = await Promise.all([
-        supabase.from('albums').select(albumCols2).eq('artist_id', artistId).order('published_at', { ascending: false, nullsFirst: false }),
-        supabase.from('collaboration_invites').select('album_id').eq('invited_user_id', artistId).eq('status', 'accepted')
-      ]);
-      let ownAlbums = ownAlbumsResult.data;
-      const collabInvites = collabResult2.data;
+      // 1. Buscar álbuns próprios do artista
+      let { data: ownAlbums, error } = await supabase
+        .from('albums')
+        .select('*')
+        .eq('artist_id', artistId)
+        .order('release_date', { ascending: false });
+      
+      // Se houver erro porque a coluna não existe, fazer fallback para created_at
+      if (error && error.code === 'PGRST116') {
+        const fallback = await supabase
+          .from('albums')
+          .select('*')
+          .eq('artist_id', artistId)
+          .order('created_at', { ascending: false });
+        ownAlbums = fallback.data;
+      }
+      
+      // 2. Buscar álbuns onde o artista é colaborador aceito
+      console.log('Buscando colaborações para artistId:', artistId);
+      const { data: collabInvites, error: collabError } = await supabase
+        .from('collaboration_invites')
+        .select('*')
+        .eq('invited_user_id', artistId)
+        .eq('status', 'accepted');
+      
+      console.log('Colaborações encontradas:', collabInvites, 'Erro:', collabError);
       
       let collabAlbums = [];
       if (collabInvites && collabInvites.length > 0) {
         const albumIds = collabInvites.map(c => c.album_id);
-        const { data: albums } = await supabase.from('albums').select(albumCols2).in('id', albumIds);
+        const { data: albums } = await supabase
+          .from('albums')
+          .select('*')
+          .in('id', albumIds);
+        console.log('Álbuns de colaboração:', albums);
         collabAlbums = albums || [];
       }
       
@@ -306,23 +327,32 @@ const ProfilePublicNew = () => {
   useEffect(() => {
     if (artist?.id) {
       const loadAlbums = async () => {
-        const albumCols3 = 'id, slug, title, artist_id, cover_url, release_year, release_date, created_at, published_at, is_private, is_scheduled, scheduled_publish_at, deleted_at, song_count, play_count, download_count';
-        // Paralelizar: buscar álbuns próprios e colaborações ao mesmo tempo
-        const [ownAlbumsRes, collabRes] = await Promise.all([
-          supabase.from('albums').select(albumCols3).eq('artist_id', artist.id).order('published_at', { ascending: false, nullsFirst: false }),
-          supabase.from('collaboration_invites').select('album_id').eq('invited_user_id', artist.id).eq('status', 'accepted')
-        ]);
-        const ownAlbums = ownAlbumsRes.data;
-        const collabInvites = collabRes.data;
+        // 1. Buscar álbuns próprios do artista - ordenado por data de lançamento
+        const { data: ownAlbums } = await supabase
+          .from('albums')
+          .select('*')
+          .eq('artist_id', artist.id)
+          .order('release_date', { ascending: false });
+        
+        // 2. Buscar álbuns onde o artista é colaborador aceito
+        console.log('Buscando colaborações para artistId:', artist.id);
+        const { data: collabInvites, error: collabError } = await supabase
+          .from('collaboration_invites')
+          .select('album_id')
+          .eq('invited_user_id', artist.id)
+          .eq('status', 'accepted');
+        
+        console.log('Colaborações encontradas:', collabInvites, 'Erro:', collabError);
         
         let collabAlbums = [];
         if (collabInvites && collabInvites.length > 0) {
           const albumIds = collabInvites.map(c => c.album_id);
           const { data: albums } = await supabase
             .from('albums')
-            .select(albumCols3 + ', artist:artists(slug, name)')
+            .select('*, artist:artists(slug, name)')
             .in('id', albumIds)
-            .order('published_at', { ascending: false, nullsFirst: false });
+            .order('release_date', { ascending: false });
+          console.log('Álbuns de colaboração:', albums);
           collabAlbums = albums || [];
         }
         
@@ -371,7 +401,7 @@ const ProfilePublicNew = () => {
       const loadPlaylists = async () => {
         const { data: playlists, error } = await supabase
           .from('playlists')
-          .select('id, title, slug, cover_url, user_id, is_public, created_at, song_count')
+          .select('*')
           .eq('user_id', artist.id)
           .eq('is_public', true)
           .order('created_at', { ascending: false });
@@ -401,7 +431,7 @@ const ProfilePublicNew = () => {
           // Carregar vídeos públicos do artista do Supabase
           const { data: dbVideos, error } = await supabase
             .from('artist_videos')
-            .select('id, title, video_url, video_id, thumbnail_url, artist_id, is_public, created_at')
+            .select('*')
             .eq('artist_id', artist.id)
             .eq('is_public', true)
             .order('created_at', { ascending: false });
