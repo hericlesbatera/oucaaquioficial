@@ -4,7 +4,7 @@
   "description": "Ouça Aqui - O Melhor da Música Você Encontra Aqui",
   "main": "server.js",
   "scripts": {
-    "build": "cd frontend && npm install --legacy-peer-deps && npm run build && cd .. && rm -rf build && mkdir -p build && cp -r frontend/build/* build/",
+    "build": "cd frontend && npm install --include=dev --legacy-peer-deps && npm run build && cd .. && rm -rf build && mkdir -p build && cp -r frontend/build/* build/",
     "start": "node server.js",
     "dev": "cd frontend && npm start"
   },
