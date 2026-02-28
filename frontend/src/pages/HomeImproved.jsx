@@ -575,7 +575,7 @@ const HomeImproved = () => {
                     </div>
                 </section>
 
-                {/* TOP CDS - Desktop */
+                {/* TOP CDS - Desktop */}
                 <section className="mb-16 hidden md:block">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-2">
@@ -727,7 +727,7 @@ const HomeImproved = () => {
                             <h2 className="text-base md:text-xl font-bold text-black">Artistas em Destaque</h2>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Link to="/artistas" className="text-red-600 font-bold text-xs md:text-sm">VER TODOS</Link>
+                            <Link to="/artistas" className="text-red-600 font-bold text-xs md:text-sm whitespace-nowrap">VER TODOS</Link>
                             <div className="hidden md:flex gap-1">
                             <button
                                 onClick={() => scrollSection(artistasRef, 'left')}
@@ -835,10 +835,10 @@ const HomeImproved = () => {
                     <div className="flex items-center justify-between mb-3 px-4">
                         <div className="flex items-center gap-2">
                             <img src={IconLancamentos} alt="" className="w-5 h-5" />
-                            <h2 className="text-base font-bold text-black">Lançamentos Recentes</h2>
+                            <h2 className="text-base font-bold text-black">Lançamentos</h2>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Link to="/lancamentos" className="text-red-600 font-bold text-xs">VER TODOS</Link>
+                            <Link to="/lancamentos" className="text-red-600 font-bold text-xs whitespace-nowrap">VER TODOS</Link>
                             <div className="flex gap-1">
                                 <button
                                     onClick={() => scrollSection(lancamentosRef, 'left')}
