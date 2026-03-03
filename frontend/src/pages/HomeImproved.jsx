@@ -20,7 +20,9 @@ const HomeImproved = () => {
     const { playSong } = usePlayer();
     const { user } = useAuth();
     const lancamentosRef = useRef(null);
+    const lancamentosDesktopRef = useRef(null);
     const topCdsRef = useRef(null);
+    const topCdsDesktopRef = useRef(null);
     const generosRef = useRef(null);
     const clipsRef = useRef(null);
     const artistasRef = useRef(null);
@@ -482,13 +484,13 @@ const HomeImproved = () => {
                             </Link>
                             <div className="flex gap-1">
                                 <button
-                                    onClick={() => scrollSection(lancamentosRef, 'left')}
+                                    onClick={() => scrollSection(lancamentosDesktopRef, 'left')}
                                     className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                                 >
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
                                 <button
-                                    onClick={() => scrollSection(lancamentosRef, 'right')}
+                                    onClick={() => scrollSection(lancamentosDesktopRef, 'right')}
                                     className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                                 >
                                     <ChevronRight className="w-4 h-4" />
@@ -497,18 +499,18 @@ const HomeImproved = () => {
                         </div>
                     </div>
                     <div
-                        ref={lancamentosRef}
+                        ref={lancamentosDesktopRef}
                         className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {allAlbums.length === 0 ? (
                             <p className="text-gray-500 py-8 w-full">Nenhum lançamento disponível no momento.</p>
                         ) : (
-                            allAlbums.slice(0, 12).map((album) => (
+                            allAlbums.slice(0, 20).map((album) => (
                                 <div
                                     key={album.id}
                                     className="flex-shrink-0"
-                                    style={{ width: 'calc((100% - 80px) / 6)', minWidth: '160px' }}
+                                    style={{ width: '185px', minWidth: '185px' }}
                                 >
                                     <Link
                                         to={`/${album.artistSlug}/${album.slug || album.id}`}
@@ -623,13 +625,13 @@ const HomeImproved = () => {
                             </Link>
                             <div className="flex gap-1">
                                 <button
-                                    onClick={() => scrollSection(topCdsRef, 'left')}
+                                    onClick={() => scrollSection(topCdsDesktopRef, 'left')}
                                     className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                                 >
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
                                 <button
-                                    onClick={() => scrollSection(topCdsRef, 'right')}
+                                    onClick={() => scrollSection(topCdsDesktopRef, 'right')}
                                     className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                                 >
                                     <ChevronRight className="w-4 h-4" />
@@ -638,18 +640,18 @@ const HomeImproved = () => {
                         </div>
                     </div>
                     <div
-                        ref={topCdsRef}
+                        ref={topCdsDesktopRef}
                         className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {topCdsAlbums.length === 0 ? (
                             <p className="text-gray-500 py-8 w-full">Nenhum CD disponível para este período.</p>
                         ) : (
-                            topCdsAlbums.slice(0, 12).map((album, index) => (
+                            topCdsAlbums.slice(0, 20).map((album, index) => (
                                 <div
                                     key={`${album.id}-${topCdsFilter}`}
                                     className="flex-shrink-0"
-                                    style={{ width: 'calc((100% - 80px) / 6)', minWidth: '160px' }}
+                                    style={{ width: '185px', minWidth: '185px' }}
                                 >
                                     <Link
                                         to={`/${album.artistSlug}/${album.slug || album.id}`}
@@ -749,16 +751,17 @@ const HomeImproved = () => {
                     {/* Desktop - scroll horizontal - mostra 7 artistas visíveis */}
                     <div 
                         ref={artistasRef}
-                        className="hidden md:flex gap-4 overflow-hidden pb-4"
+                        className="hidden md:flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {allArtists.length === 0 ? (
                             <p className="text-gray-500 py-8">Nenhum artista disponível no momento.</p>
                         ) : (
-                            allArtists.slice(0, 8).map((artist) => (
+                            allArtists.slice(0, 20).map((artist) => (
                                 <div
                                     key={artist.id}
                                     className="flex flex-col items-center text-center flex-shrink-0"
-                                    style={{ width: 'calc((100% - 7 * 1rem) / 8)' }}
+                                    style={{ width: '110px', minWidth: '110px' }}
                                 >
                                     <Link
                                         to={`/${artist.slug || artist.id}`}
@@ -1031,7 +1034,7 @@ const HomeImproved = () => {
                                 <div
                                     key={album.id}
                                     className="flex-shrink-0"
-                                    style={{ width: 'calc((100% - 80px) / 6)', minWidth: '160px' }}
+                                    style={{ width: '185px', minWidth: '185px' }}
                                 >
                                     <Link
                                         to={`/${album.artistSlug}/${album.slug || album.id}`}
@@ -1308,7 +1311,7 @@ const HomeImproved = () => {
                                 key={genre.slug}
                                 to={`/genero/${genre.slug}`}
                                 className="flex-shrink-0"
-                                style={{ width: 'calc((100% - 5 * 1rem) / 6)' }}
+                                style={{ width: '185px', minWidth: '185px' }}
                             >
                                 <div
                                     className="h-32 rounded-lg shadow-lg flex items-center justify-center p-4 cursor-pointer group hover:shadow-xl transition-all duration-300 relative overflow-hidden"
