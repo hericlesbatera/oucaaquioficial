@@ -53,7 +53,8 @@ export const AlbumSongRow = ({
    onPlay, 
    onPlayMobile,
    formatDuration,
-   isHighlighted = false
+   isHighlighted = false,
+   allowDownload = true
  }) => {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -486,14 +487,14 @@ export const AlbumSongRow = ({
         <span className="text-gray-600 text-sm w-12 text-right">
           {formatDuration(song.duration)}
         </span>
-        <Button
+        {allowDownload !== false && <Button
           onClick={handleDownload}
           variant="outline"
           size="sm"
           className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
         >
           ↓ BAIXAR
-        </Button>
+        </Button>}
       </div>
 
       <Dialog open={creditsDialogOpen} onOpenChange={setCreditsDialogOpen}>

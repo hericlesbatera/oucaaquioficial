@@ -36,6 +36,7 @@ const UploadNew = () => {
         publishType: 'immediate', // 'immediate', 'private', 'scheduled'
         scheduleDate: '',
         scheduleTime: '',
+        allowDownload: true,
         releaseDate: '',
         customUrl: '',
         youtubeUrl: '',
@@ -283,6 +284,7 @@ const UploadNew = () => {
             uploadData.append('tags', JSON.stringify(Array.isArray(formData.tags) ? formData.tags : []));
             uploadData.append('isPublic', formData.isPublic !== false);
             uploadData.append('publishType', formData.publishType);
+            uploadData.append('allowDownload', formData.allowDownload !== false ? 'true' : 'false');
             uploadData.append('videoLink', formData.videoLink || '');
             
             // Garantir formato YYYY-MM-DD para a data
@@ -1012,6 +1014,52 @@ const UploadNew = () => {
                                                     </p>
                                                 </div>
                                             )}
+                                        </div>
+                                    </div>
+
+                                    {/* Download Permission */}
+                                    <div>
+                                        <Label className="text-gray-700 font-semibold mb-1 block text-sm md:text-base">
+                                            Permissão de Download
+                                        </Label>
+                                        <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3">
+                                            Defina se os ouvintes poderão baixar as músicas deste álbum.
+                                        </p>
+                                        <div className="space-y-2 md:space-y-3">
+                                            {/* Download permitido */}
+                                            <label className="flex items-start p-3 md:p-4 border-2 rounded-lg cursor-pointer transition-colors gap-3" style={{ borderColor: formData.allowDownload !== false ? '#dc2626' : '#d1d5db' }}>
+                                                <input
+                                                    type="radio"
+                                                    name="allowDownload"
+                                                    checked={formData.allowDownload !== false}
+                                                    onChange={() => setFormData(prev => ({ ...prev, allowDownload: true }))}
+                                                    className="w-4 h-4 text-red-600 cursor-pointer mt-0.5 flex-shrink-0"
+                                                />
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 md:w-5 h-4 md:h-5 text-red-600 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                                        <span className="font-semibold text-gray-900 text-sm md:text-base">Download Liberado</span>
+                                                    </div>
+                                                    <p className="text-xs md:text-sm text-gray-600">Ouvintes podem baixar as músicas no site e no app</p>
+                                                </div>
+                                            </label>
+                                            {/* Download apenas no app */}
+                                            <label className="flex items-start p-3 md:p-4 border-2 rounded-lg cursor-pointer transition-colors gap-3" style={{ borderColor: formData.allowDownload === false ? '#dc2626' : '#d1d5db' }}>
+                                                <input
+                                                    type="radio"
+                                                    name="allowDownload"
+                                                    checked={formData.allowDownload === false}
+                                                    onChange={() => setFormData(prev => ({ ...prev, allowDownload: false }))}
+                                                    className="w-4 h-4 text-red-600 cursor-pointer mt-0.5 flex-shrink-0"
+                                                />
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 md:w-5 h-4 md:h-5 text-red-600 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+                                                        <span className="font-semibold text-gray-900 text-sm md:text-base">Apenas no App (Offline)</span>
+                                                    </div>
+                                                    <p className="text-xs md:text-sm text-gray-600">Download disponível somente no app para ouvir offline. No site, apenas streaming.</p>
+                                                </div>
+                                            </label>
                                         </div>
                                     </div>
 

@@ -258,7 +258,8 @@ const AlbumPage = () => {
                   genre: supabaseAlbum.genre,
                   archiveUrl: supabaseAlbum.archive_url,
                   download_count: supabaseAlbum.download_count || 0,
-                  play_count: supabaseAlbum.play_count || 0
+                  play_count: supabaseAlbum.play_count || 0,
+                  allowDownload: supabaseAlbum.allow_download !== false // default true se campo não existir
               });
 
               // Fazer o resto em paralelo (menos crítico)
@@ -1047,7 +1048,8 @@ const AlbumPage = () => {
                                     }`}
                             />
                         </Button>
-                        <Button
+                        {/* Botão de download: oculto no site web quando allowDownload=false */}
+                        {(album?.allowDownload !== false || isMobileApp()) && <Button
                              onClick={handleDownloadAlbum}
                              disabled={!album || downloadInProgress || (album?.id && isAlbumDownloaded(album.id))}
                              className={`relative text-white px-8 h-12 text-base font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden ${
@@ -1082,7 +1084,7 @@ const AlbumPage = () => {
                                      BAIXAR CD COMPLETO
                                  </>
                              )}
-                         </Button>
+                         </Button>}
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
@@ -1198,8 +1200,8 @@ const AlbumPage = () => {
                             </Button>
                         </div>
                         
-                        {/* Download Button */}
-                         <Button
+                        {/* Download Button: oculto no site web quando allowDownload=false */}
+                         {(album?.allowDownload !== false || isMobileApp()) && <Button
                              onClick={handleDownloadAlbum}
                              disabled={!album || downloadInProgress || (album?.id && isAlbumDownloaded(album.id))}
                              className={`w-full text-white h-12 text-base font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -1229,7 +1231,7 @@ const AlbumPage = () => {
                                      BAIXAR CD COMPLETO
                                  </>
                              )}
-                         </Button>
+                         </Button>}
                         
                         {/* Share & Stats */}
                         <div className="flex items-center gap-3 w-full">
@@ -1344,6 +1346,7 @@ const AlbumPage = () => {
                                 onPlayMobile={handleMobilePlayerToggle}
                                 formatDuration={formatDurationLocal}
                                 isHighlighted={currentSong && currentSong.id === song.id}
+                                allowDownload={album?.allowDownload !== false}
                             />
                         ))}
                     </div>
