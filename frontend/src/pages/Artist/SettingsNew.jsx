@@ -410,6 +410,8 @@ const SettingsNew = () => {
                         value={artist.slug || ''}
                         onChange={(e) => {
                           const value = e.target.value
+                            .normalize('NFKD')
+                            .replace(/\p{Diacritic}/gu, '')
                             .toLowerCase()
                             .replace(/\s+/g, '')
                             .replace(/[^a-z0-9]/g, '');
