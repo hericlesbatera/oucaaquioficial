@@ -41,7 +41,7 @@ const HomeImproved = () => {
     const [loadError, setLoadError] = useState(null);
 
     // Paginação dos carrosséis
-    const PAGE_SIZE = 20;
+    const PAGE_SIZE = 40;
     const [lancamentosPage, setLancamentosPage] = useState(0);
     const [lancamentosHasMore, setLancamentosHasMore] = useState(true);
     const [lancamentosLoading, setLancamentosLoading] = useState(false);
@@ -478,7 +478,7 @@ const HomeImproved = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Scroll infinito: registra listeners após dados carregarem
+    // Scroll infinito: registra listeners após dados carregarem (re-registra quando allAlbums muda)
     useEffect(() => {
         if (isLoading) return; // aguarda dados carregarem para os containers existirem
 
@@ -576,7 +576,24 @@ const HomeImproved = () => {
                 });
 
                 const albumIds = Object.keys(playCountByAlbum);
-                if (albumIds.length === 0) { setTopCdsAlbums([]); return; }
+                if (albumIds.length === 0) {
+                    // Sem plays no período: mostrar todos os álbuns ordenados por play_count total
+                    ({ data, error } = await supabase
+                        .from('albums')
+                        .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
+                        .eq('is_private', false)
+                        .is('deleted_at', null)
+                        .order('play_count', { ascending: false })
+                        .range(0, PAGE_SIZE - 1));
+                    if (error) throw error;
+                    if (!data || data.length < PAGE_SIZE) setTopCdsHasMore(false);
+                    if (data && data.length > 0) {
+                        const am = {};
+                        data.forEach(a => { if (a.artists) am[a.artist_id] = a.artists; });
+                        setTopCdsAlbums(formatAlbums(data, am, null));
+                    } else { setTopCdsAlbums([]); }
+                    return;
+                }
 
                 ({ data, error } = await supabase
                     .from('albums')
@@ -611,10 +628,19 @@ const HomeImproved = () => {
         }
     };
 
-    const scrollSection = (ref, direction) => {
+    const scrollSection = (ref, direction, onNearEnd) => {
         if (ref.current) {
             const scrollAmount = direction === 'left' ? -800 : 800;
             ref.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            // Verificar após scroll se chegou perto do fim
+            if (direction === 'right' && onNearEnd) {
+                setTimeout(() => {
+                    const el = ref.current;
+                    if (el && el.scrollLeft + el.clientWidth >= el.scrollWidth - 600) {
+                        onNearEnd();
+                    }
+                }, 400);
+            }
         }
     };
 
@@ -743,7 +769,7 @@ const HomeImproved = () => {
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
                                 <button
-                                    onClick={() => scrollSection(lancamentosDesktopRef, 'right')}
+                                    onClick={() => scrollSection(lancamentosDesktopRef, 'right', () => { if (!lancamentosHasMoreRef.current || lancamentosLoadingRef.current) return; const np = lancamentosPageRef.current + 1; lancamentosPageRef.current = np; setLancamentosPage(np); loadMoreLancamentos(np); })}
                                     className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                                 >
                                     <ChevronRight className="w-4 h-4" />
@@ -891,7 +917,7 @@ const HomeImproved = () => {
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
                                 <button
-                                    onClick={() => scrollSection(topCdsDesktopRef, 'right')}
+                                    onClick={() => scrollSection(topCdsDesktopRef, 'right', () => { if (!topCdsHasMoreRef.current || topCdsLoadingRef.current) return; loadMoreTopCds(); })}
                                     className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                                 >
                                     <ChevronRight className="w-4 h-4" />
@@ -1007,7 +1033,7 @@ const HomeImproved = () => {
                                 <ChevronLeft className="w-4 h-4" />
                             </button>
                             <button
-                                onClick={() => scrollSection(window.innerWidth < 768 ? artistasMobileRef : artistasRef, 'right')}
+                                onClick={() => scrollSection(window.innerWidth < 768 ? artistasMobileRef : artistasRef, 'right', () => { if (!artistasHasMoreRef.current || artistasLoadingRef.current) return; const np = artistasPageRef.current + 1; artistasPageRef.current = np; setArtistasPage(np); loadMoreArtistas(np); })}
                                 className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                             >
                                 <ChevronRight className="w-4 h-4" />
@@ -1133,7 +1159,7 @@ const HomeImproved = () => {
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
                                 <button
-                                    onClick={() => scrollSection(lancamentosRef, 'right')}
+                                    onClick={() => scrollSection(lancamentosRef, 'right', () => { if (!lancamentosHasMoreRef.current || lancamentosLoadingRef.current) return; const np = lancamentosPageRef.current + 1; lancamentosPageRef.current = np; setLancamentosPage(np); loadMoreLancamentos(np); })}
                                     className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                                 >
                                     <ChevronRight className="w-4 h-4" />
@@ -1209,7 +1235,7 @@ const HomeImproved = () => {
                                 <ChevronLeft className="w-4 h-4" />
                             </button>
                             <button
-                                onClick={() => scrollSection(topCdsRef, 'right')}
+                                onClick={() => scrollSection(topCdsRef, 'right', () => { if (!topCdsHasMoreRef.current || topCdsLoadingRef.current) return; loadMoreTopCds(); })}
                                 className="w-7 h-7 border border-red-600 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors"
                             >
                                 <ChevronRight className="w-4 h-4" />
