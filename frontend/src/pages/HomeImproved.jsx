@@ -40,6 +40,27 @@ const HomeImproved = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState(null);
 
+    // Paginação dos carrosséis
+    const PAGE_SIZE = 20;
+    const [lancamentosPage, setLancamentosPage] = useState(0);
+    const [lancamentosHasMore, setLancamentosHasMore] = useState(true);
+    const [lancamentosLoading, setLancamentosLoading] = useState(false);
+    const [topCdsPage, setTopCdsPage] = useState(0);
+    const [topCdsHasMore, setTopCdsHasMore] = useState(true);
+    const [topCdsLoading, setTopCdsLoading] = useState(false);
+    const [artistasPage, setArtistasPage] = useState(0);
+    const [artistasHasMore, setArtistasHasMore] = useState(true);
+    const [artistasLoading, setArtistasLoading] = useState(false);
+    const [recomendadosPage, setRecomendadosPage] = useState(0);
+    const [recomendadosHasMore, setRecomendadosHasMore] = useState(true);
+    const [recomendadosLoading, setRecomendadosLoading] = useState(false);
+
+    // Refs dos sentinelas (elementos invisíveis no final de cada carrossel)
+    const lancamentosSentinelRef = useRef(null);
+    const topCdsSentinelRef = useRef(null);
+    const artistasSentinelRef = useRef(null);
+    const recomendadosSentinelRef = useRef(null);
+
     const genres = [
         { name: 'Forró', slug: 'forro', imageUrl: '/images/slides/GENEROS/forró.jpg' },
         { name: 'Arrocha', slug: 'arrocha', imageUrl: '/images/slides/GENEROS/ARROCHA.jpg' },
@@ -78,6 +99,137 @@ const HomeImproved = () => {
         return match ? match[1] : '';
     };
 
+    // Função auxiliar para formatar álbuns
+    const formatAlbums = (supabaseAlbums, artistsMap, collaboratorsByAlbum) => {
+        return supabaseAlbums.map(album => {
+            const artist = artistsMap[album.artist_id] || {};
+            return {
+                id: album.id,
+                slug: album.slug,
+                title: album.title,
+                artistName: artist.name || album.artist_name || 'Artista',
+                artistId: album.artist_id,
+                artistSlug: artist.slug || album.artist_id,
+                artistVerified: artist.is_verified || false,
+                collaborators: collaboratorsByAlbum ? (collaboratorsByAlbum[album.id] || []) : [],
+                coverImage: album.cover_url || '/images/default-album.png',
+                releaseYear: album.release_year,
+                releaseDate: album.release_date,
+                playCount: album.play_count || 0,
+                downloadCount: album.download_count || 0
+            };
+        });
+    };
+
+    // Carregamento incremental de Laçamentos
+    const loadMoreLancamentos = async (page) => {
+        if (lancamentosLoading) return;
+        setLancamentosLoading(true);
+        try {
+            const from = page * PAGE_SIZE;
+            const to = from + PAGE_SIZE - 1;
+            const { data, error } = await supabase
+                .from('albums')
+                .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
+                .eq('is_private', false)
+                .is('deleted_at', null)
+                .order('release_date', { ascending: false, nullsFirst: false })
+                .range(from, to);
+            if (error) throw error;
+            if (!data || data.length < PAGE_SIZE) setLancamentosHasMore(false);
+            if (data && data.length > 0) {
+                const artistsMap = {};
+                data.forEach(a => { if (a.artists) artistsMap[a.artist_id] = a.artists; });
+                const formatted = formatAlbums(data, artistsMap, null);
+                setAllAlbums(prev => {
+                    const existingIds = new Set(prev.map(a => a.id));
+                    const newItems = formatted.filter(a => !existingIds.has(a.id));
+                    return [...prev, ...newItems];
+                });
+            }
+        } catch (e) { console.error('loadMoreLancamentos:', e); }
+        finally { setLancamentosLoading(false); }
+    };
+
+    // Carregamento incremental de Artistas
+    const loadMoreArtistas = async (page) => {
+        if (artistasLoading) return;
+        setArtistasLoading(true);
+        try {
+            const from = page * PAGE_SIZE;
+            const to = from + PAGE_SIZE - 1;
+            const { data, error } = await supabase
+                .from('artists')
+                .select('*')
+                .order('followers_count', { ascending: false })
+                .range(from, to);
+            if (error) throw error;
+            if (!data || data.length < PAGE_SIZE) setArtistasHasMore(false);
+            if (data && data.length > 0) {
+                const formatted = data.map(a => ({
+                    id: a.id, slug: a.slug, name: a.name,
+                    avatar: a.avatar_url || '/images/default-avatar.png',
+                    coverImage: a.cover_url || '', verified: a.is_verified, bio: a.bio
+                }));
+                setAllArtists(prev => {
+                    const existingIds = new Set(prev.map(a => a.id));
+                    const newItems = formatted.filter(a => !existingIds.has(a.id));
+                    return [...prev, ...newItems];
+                });
+            }
+        } catch (e) { console.error('loadMoreArtistas:', e); }
+        finally { setArtistasLoading(false); }
+    };
+
+    // Carregamento incremental de Recomendados (usa allAlbums embaralhados)
+    const loadMoreRecomendados = async (page) => {
+        if (recomendadosLoading) return;
+        setRecomendadosLoading(true);
+        try {
+            const from = page * PAGE_SIZE;
+            const to = from + PAGE_SIZE - 1;
+            const { data, error } = await supabase
+                .from('albums')
+                .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
+                .eq('is_private', false)
+                .is('deleted_at', null)
+                .order('play_count', { ascending: false })
+                .range(from, to);
+            if (error) throw error;
+            if (!data || data.length < PAGE_SIZE) setRecomendadosHasMore(false);
+            if (data && data.length > 0) {
+                const artistsMap = {};
+                data.forEach(a => { if (a.artists) artistsMap[a.artist_id] = a.artists; });
+                const formatted = formatAlbums(data, artistsMap, null);
+                setRecommendedAlbums(prev => {
+                    const existingIds = new Set(prev.map(a => a.id));
+                    const newItems = formatted.filter(a => !existingIds.has(a.id));
+                    return [...prev, ...newItems];
+                });
+            }
+        } catch (e) { console.error('loadMoreRecomendados:', e); }
+        finally { setRecomendadosLoading(false); }
+    };
+
+    // Carregamento incremental de TOP CDS (usa allAlbums já carregados, aumenta slice)
+    const loadMoreTopCds = () => {
+        if (topCdsLoading) return;
+        const nextPage = topCdsPage + 1;
+        const needed = (nextPage + 1) * PAGE_SIZE;
+        if (allAlbums.length >= needed || !lancamentosHasMore) {
+            if ((nextPage + 1) * PAGE_SIZE > allAlbums.length && !lancamentosHasMore) {
+                setTopCdsHasMore(false);
+            }
+            setTopCdsPage(nextPage);
+        } else {
+            // Carregar mais álbuns base
+            const nextLancPage = lancamentosPage + 1;
+            setLancamentosPage(nextLancPage);
+            loadMoreLancamentos(nextLancPage);
+            setTopCdsPage(nextPage);
+        }
+    };
+
     const loadData = async () => {
         try {
                 // Não bloqueia loading para toda página - permite slider renderizar
@@ -85,21 +237,21 @@ const HomeImproved = () => {
 
                 // Paralelizar as queries principais sem timeout
                 const [albumsResult, artistsResult, collabResult, clipsResult] = await Promise.all([
-                    // Query 1: Álbuns com limite - ordenado por data de lançamento real (release_date)
+                    // Query 1: Primeira página de álbuns
                     supabase
                         .from('albums')
                         .select('*')
                         .eq('is_private', false)
                         .is('deleted_at', null)
                         .order('release_date', { ascending: false, nullsFirst: false })
-                        .limit(50),
+                        .range(0, PAGE_SIZE - 1),
                     
-                    // Query 2: Artistas
+                    // Query 2: Primeira página de Artistas
                     supabase
                         .from('artists')
                         .select('*')
                         .order('followers_count', { ascending: false })
-                        .limit(100),
+                        .range(0, PAGE_SIZE - 1),
                     
                     // Query 3: Colaborações
                     supabase
@@ -166,10 +318,12 @@ const HomeImproved = () => {
                     });
                     
                     setAllAlbums(formattedAlbums);
+                    if (formattedAlbums.length < PAGE_SIZE) setLancamentosHasMore(false);
                     
+                    // Recomendados: embaralhar os álbuns da primeira página
                     if (formattedAlbums.length > 0) {
                         const shuffled = [...formattedAlbums].sort(() => Math.random() - 0.5);
-                        setRecommendedAlbums(shuffled.slice(0, 6));
+                        setRecommendedAlbums(shuffled);
                     }
                 }
 
@@ -192,6 +346,7 @@ const HomeImproved = () => {
                     bio: a.bio
                 }));
                 setAllArtists(formattedSupabaseArtists);
+                if (formattedSupabaseArtists.length < PAGE_SIZE) setArtistasHasMore(false);
 
                 // Carregar artistas que o usuário segue (com try-catch para evitar falhas)
                 if (user?.id) {
@@ -269,26 +424,86 @@ const HomeImproved = () => {
 
     useEffect(() => {
         loadData();
-
-        // Desabilitar subscription Realtime por enquanto para evitar loop infinito
-        // TODO: Reimplementar com debounce se necessário
-        // const subscription = supabase
-        //     .channel('albums_channel')
-        //     .on(
-        //         'postgres_changes',
-        //         { event: '*', schema: 'public', table: 'albums' },
-        //         () => {
-        //             // Recarregar dados quando houver qualquer mudança na tabela albums
-        //             loadData();
-        //         }
-        //     )
-        //     .subscribe();
-
-        // return () => {
-        //     subscription.unsubscribe();
-        // };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // IntersectionObserver para carregamento infinito de Laçamentos
+    useEffect(() => {
+        if (!lancamentosHasMore) return;
+        const sentinel = lancamentosSentinelRef.current;
+        if (!sentinel) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && !lancamentosLoading) {
+                    const nextPage = lancamentosPage + 1;
+                    setLancamentosPage(nextPage);
+                    loadMoreLancamentos(nextPage);
+                }
+            },
+            { root: lancamentosDesktopRef.current || lancamentosRef.current, threshold: 0.1 }
+        );
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [lancamentosHasMore, lancamentosLoading, lancamentosPage]);
+
+    // IntersectionObserver para carregamento infinito de Artistas
+    useEffect(() => {
+        if (!artistasHasMore) return;
+        const sentinel = artistasSentinelRef.current;
+        if (!sentinel) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && !artistasLoading) {
+                    const nextPage = artistasPage + 1;
+                    setArtistasPage(nextPage);
+                    loadMoreArtistas(nextPage);
+                }
+            },
+            { root: artistasRef.current || artistasMobileRef.current, threshold: 0.1 }
+        );
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [artistasHasMore, artistasLoading, artistasPage]);
+
+    // IntersectionObserver para carregamento infinito de Recomendados
+    useEffect(() => {
+        if (!recomendadosHasMore) return;
+        const sentinel = recomendadosSentinelRef.current;
+        if (!sentinel) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && !recomendadosLoading) {
+                    const nextPage = recomendadosPage + 1;
+                    setRecomendadosPage(nextPage);
+                    loadMoreRecomendados(nextPage);
+                }
+            },
+            { root: recomendaRef.current || recomendaMobileRef.current, threshold: 0.1 }
+        );
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [recomendadosHasMore, recomendadosLoading, recomendadosPage]);
+
+    // IntersectionObserver para carregamento infinito de TOP CDS
+    useEffect(() => {
+        if (!topCdsHasMore) return;
+        const sentinel = topCdsSentinelRef.current;
+        if (!sentinel) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && !topCdsLoading) {
+                    loadMoreTopCds();
+                }
+            },
+            { root: topCdsDesktopRef.current || topCdsRef.current, threshold: 0.1 }
+        );
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [topCdsHasMore, topCdsLoading, topCdsPage, allAlbums]);
 
     // Carregar TOP CDS quando período muda
     useEffect(() => {
@@ -506,7 +721,8 @@ const HomeImproved = () => {
                         {allAlbums.length === 0 ? (
                             <p className="text-gray-500 py-8 w-full">Nenhum lançamento disponível no momento.</p>
                         ) : (
-                            allAlbums.slice(0, 20).map((album) => (
+                            <>
+                            {allAlbums.map((album) => (
                                 <div
                                     key={album.id}
                                     className="flex-shrink-0"
@@ -574,7 +790,13 @@ const HomeImproved = () => {
                                         </div>
                                     </div>
                                 </div>
-                            ))
+                            ))}
+                            {lancamentosHasMore && (
+                                <div ref={lancamentosSentinelRef} className="flex-shrink-0 flex items-center justify-center" style={{ width: '40px', minWidth: '40px' }}>
+                                    {lancamentosLoading && <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
+                                </div>
+                            )}
+                            </>
                         )}
                     </div>
                 </section>
@@ -647,7 +869,8 @@ const HomeImproved = () => {
                         {topCdsAlbums.length === 0 ? (
                             <p className="text-gray-500 py-8 w-full">Nenhum CD disponível para este período.</p>
                         ) : (
-                            topCdsAlbums.slice(0, 20).map((album, index) => (
+                            <>
+                            {topCdsAlbums.map((album, index) => (
                                 <div
                                     key={`${album.id}-${topCdsFilter}`}
                                     className="flex-shrink-0"
@@ -718,7 +941,13 @@ const HomeImproved = () => {
                                         </div>
                                     </div>
                                 </div>
-                            ))
+                            ))}
+                            {topCdsHasMore && (
+                                <div ref={topCdsSentinelRef} className="flex-shrink-0 flex items-center justify-center" style={{ width: '40px', minWidth: '40px' }}>
+                                    {topCdsLoading && <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
+                                </div>
+                            )}
+                            </>
                         )}
                     </div>
                 </section>
@@ -757,7 +986,8 @@ const HomeImproved = () => {
                         {allArtists.length === 0 ? (
                             <p className="text-gray-500 py-8">Nenhum artista disponível no momento.</p>
                         ) : (
-                            allArtists.slice(0, 20).map((artist) => (
+                            <>
+                            {allArtists.map((artist) => (
                                 <div
                                     key={artist.id}
                                     className="flex flex-col items-center text-center flex-shrink-0"
@@ -801,7 +1031,13 @@ const HomeImproved = () => {
                                          )}
                                      </button>
                                 </div>
-                            ))
+                            ))}
+                            {artistasHasMore && (
+                                <div ref={artistasSentinelRef} className="flex-shrink-0 flex items-center justify-center" style={{ width: '40px', minWidth: '40px' }}>
+                                    {artistasLoading && <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
+                                </div>
+                            )}
+                            </>
                         )}
                     </div>
                     {/* Mobile - igual ao app: apenas foto circular + nome + badge, sem botão seguir */}
@@ -809,7 +1045,8 @@ const HomeImproved = () => {
                         {allArtists.length === 0 ? (
                             <p className="text-gray-500 py-8 w-full">Nenhum artista disponível no momento.</p>
                         ) : (
-                            allArtists.map((artist) => (
+                            <>
+                            {allArtists.map((artist) => (
                                 <Link
                                     key={artist.id}
                                     to={`/${artist.slug || artist.id}`}
@@ -830,7 +1067,13 @@ const HomeImproved = () => {
                                         )}
                                     </div>
                                 </Link>
-                            ))
+                            ))}
+                            {artistasHasMore && (
+                                <div className="flex-shrink-0 flex items-center justify-center" style={{ minWidth: '40px' }}>
+                                    {artistasLoading && <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
+                                </div>
+                            )}
+                            </>
                         )}
                     </div>
                 </section>
@@ -868,7 +1111,8 @@ const HomeImproved = () => {
                         {allAlbums.length === 0 ? (
                             <p className="text-gray-500 py-4 w-full text-sm">Nenhum lançamento disponível no momento.</p>
                         ) : (
-                            allAlbums.slice(0, 20).map((album) => (
+                            <>
+                            {allAlbums.map((album) => (
                                 <div key={album.id} className="flex-shrink-0" style={{ width: '140px' }}>
                                     <Link to={`/${album.artistSlug}/${album.slug || album.id}`} className="block">
                                         <div className="relative mb-1.5 overflow-hidden rounded-lg shadow" style={{ width: '140px', height: '140px' }}>
@@ -901,7 +1145,13 @@ const HomeImproved = () => {
                                         </div>
                                     </div>
                                 </div>
-                            ))
+                            ))}
+                            {lancamentosHasMore && (
+                                <div className="flex-shrink-0 flex items-center justify-center" style={{ minWidth: '40px' }}>
+                                    {lancamentosLoading && <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
+                                </div>
+                            )}
+                            </>
                         )}
                     </div>
                 </section>
@@ -952,7 +1202,8 @@ const HomeImproved = () => {
                         {topCdsAlbums.length === 0 ? (
                             <p className="text-gray-500 py-4 w-full text-sm">Nenhum CD disponível para este período.</p>
                         ) : (
-                            topCdsAlbums.slice(0, 20).map((album, index) => (
+                            <>
+                            {topCdsAlbums.map((album, index) => (
                                 <div key={`${album.id}-${topCdsFilter}`} className="flex-shrink-0" style={{ width: '140px' }}>
                                     <Link to={`/${album.artistSlug}/${album.slug || album.id}`} className="block">
                                         <div className="relative mb-1.5 overflow-hidden rounded-lg shadow" style={{ width: '140px', height: '140px' }}>
@@ -988,7 +1239,13 @@ const HomeImproved = () => {
                                         </div>
                                     </div>
                                 </div>
-                            ))
+                            ))}
+                            {topCdsHasMore && (
+                                <div className="flex-shrink-0 flex items-center justify-center" style={{ minWidth: '40px' }}>
+                                    {topCdsLoading && <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
+                                </div>
+                            )}
+                            </>
                         )}
                     </div>
                 </section>
@@ -1030,7 +1287,8 @@ const HomeImproved = () => {
                         {recommendedAlbums.length === 0 ? (
                             <p className="text-gray-500 py-8">Nenhum álbum disponível no momento.</p>
                         ) : (
-                            recommendedAlbums.slice(0, 12).map((album) => (
+                            <>
+                            {recommendedAlbums.map((album) => (
                                 <div
                                     key={album.id}
                                     className="flex-shrink-0"
@@ -1095,7 +1353,13 @@ const HomeImproved = () => {
                                         </div>
                                     </div>
                                 </div>
-                            ))
+                            ))}
+                            {recomendadosHasMore && (
+                                <div ref={recomendadosSentinelRef} className="flex-shrink-0 flex items-center justify-center" style={{ width: '40px', minWidth: '40px' }}>
+                                    {recomendadosLoading && <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
+                                </div>
+                            )}
+                            </>
                         )}
                     </div>
                     {/* Mobile - carrossel de 140px igual a Lançamentos Recentes */}
@@ -1107,7 +1371,8 @@ const HomeImproved = () => {
                         {recommendedAlbums.length === 0 ? (
                             <p className="text-gray-500 py-4 w-full text-sm">Nenhum álbum disponível no momento.</p>
                         ) : (
-                            recommendedAlbums.slice(0, 12).map((album) => (
+                            <>
+                            {recommendedAlbums.map((album) => (
                                 <div key={album.id} className="flex-shrink-0" style={{ width: '140px' }}>
                                     <Link to={`/${album.artistSlug}/${album.slug || album.id}`} className="block">
                                         <div className="relative mb-1.5 overflow-hidden rounded-lg shadow" style={{ width: '140px', height: '140px' }}>
@@ -1140,7 +1405,13 @@ const HomeImproved = () => {
                                         </div>
                                     </div>
                                 </div>
-                            ))
+                            ))}
+                            {recomendadosHasMore && (
+                                <div className="flex-shrink-0 flex items-center justify-center" style={{ minWidth: '40px' }}>
+                                    {recomendadosLoading && <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
+                                </div>
+                            )}
+                            </>
                         )}
                     </div>
 
