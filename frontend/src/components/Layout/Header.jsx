@@ -127,7 +127,7 @@ const Header = () => {
 
     useEffect(() => {
         const loadArtist = async () => {
-            if (user?.id && isArtist) {
+            if (user?.id && !isAdmin) {
                 // Verificar cache primeiro
                 const cached = getCachedAvatar(user.id);
                 if (cached && !artistForUser?.id) {
@@ -156,7 +156,7 @@ const Header = () => {
             }
         };
         loadArtist();
-    }, [user?.id, isArtist]);
+    }, [user?.id, isAdmin]);
 
     useEffect(() => {
         const loadAdminAvatar = async () => {
@@ -295,7 +295,7 @@ const Header = () => {
                                                  <span>Sair</span>
                                              </DropdownMenuItem>
                                         </>
-                                        ) : isArtist ? (
+                                        ) : (
                                        <>
                                             <DropdownMenuItem onClick={() => navigate(`/${artistForUser?.slug || artistForUser?.id || 'a1'}`)} className="cursor-pointer flex items-center gap-3 py-2">
                                                 <User className="w-5 h-5 text-gray-500" />
@@ -323,27 +323,7 @@ const Header = () => {
                                                 <span>Sair</span>
                                             </DropdownMenuItem>
                                        </>
-                                    ) : (
-                                       <>
-                                            <DropdownMenuItem onClick={() => navigate('/user/panel')} className="cursor-pointer flex items-center gap-3 py-2">
-                                                <Settings className="w-5 h-5 text-gray-500" />
-                                                <span>Meu Painel</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/favorites')} className="cursor-pointer flex items-center gap-3 py-2">
-                                                <Heart className="w-5 h-5 text-gray-500" />
-                                                <span>Favoritos</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/playlists')} className="cursor-pointer flex items-center gap-3 py-2">
-                                                <ListMusic className="w-5 h-5 text-gray-500" />
-                                                <span>Playlists</span>
-                                            </DropdownMenuItem>
-                                            <div className="border-t border-gray-200 my-2"></div>
-                                            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer flex items-center gap-3 py-2 text-red-600">
-                                                <LogOut className="w-5 h-5" />
-                                                <span>Sair</span>
-                                            </DropdownMenuItem>
-                                            </>
-                                            )}
+                                        )}
                                             </DropdownMenuContent>
                             </DropdownMenu>
                         ) : (

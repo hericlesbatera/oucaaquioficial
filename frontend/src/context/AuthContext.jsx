@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }) => {
                          id: session.user.id,
                          email: session.user.email,
                          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Usuário',
-                         type: isAdmin ? 'admin' : (session.user.user_metadata?.user_type || 'user'),
+                         type: isAdmin ? 'admin' : 'artist',
                          cidade: session.user.user_metadata?.cidade || '',
                          estado: session.user.user_metadata?.estado || '',
                          genero: session.user.user_metadata?.genero || '',
@@ -331,7 +331,7 @@ export const AuthProvider = ({ children }) => {
                           console.log('[AUTH] User type determined:', existingUserType);
                       } catch (e) {
                           console.warn('[AUTH] Error/timeout checking user type:', e.message);
-                          existingUserType = session.user.user_metadata?.user_type || 'user';
+                          existingUserType = 'artist';
                       }
                   }
          
@@ -339,7 +339,7 @@ export const AuthProvider = ({ children }) => {
                       id: session.user.id,
                       email: session.user.email,
                       name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Usuário',
-                      type: isAdmin ? 'admin' : (existingUserType || session.user.user_metadata?.user_type || 'user'),
+                      type: isAdmin ? 'admin' : 'artist',
                       cidade: session.user.user_metadata?.cidade || '',
                       estado: session.user.user_metadata?.estado || '',
                       genero: session.user.user_metadata?.genero || '',
@@ -415,13 +415,8 @@ export const AuthProvider = ({ children }) => {
                  console.warn('Erro ao verificar admin/artist status:', checkError);
              }
     
-             // Determinar tipo: admin > artist > user
-             let userType = 'user';
-             if (isAdmin) {
-                 userType = 'admin';
-             } else if (isArtist) {
-                 userType = 'artist';
-             }
+             // Determinar tipo: admin > artist (todos os não-admin são artistas)
+             let userType = isAdmin ? 'admin' : 'artist';
     
              const userData = {
                  id: data.user.id,
@@ -509,7 +504,7 @@ export const AuthProvider = ({ children }) => {
                 }
                 
                 await supabase.auth.updateUser({
-                    data: { user_type: 'user', full_name: name }
+                    data: { user_type: 'artist', full_name: name }
                 });
             }
             

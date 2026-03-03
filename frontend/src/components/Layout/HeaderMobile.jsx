@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { User, Upload, Music, ListMusic, Heart, Video, Settings, Mail, MessageCircle, LogOut } from 'lucide-react';
 
 const HeaderMobile = () => {
-    const { user, logout, isArtist } = useAuth();
+    const { user, logout, isAdmin } = useAuth();
     const navigate = useNavigate();
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [artistAvatar, setArtistAvatar] = useState(null);
@@ -22,7 +22,7 @@ const HeaderMobile = () => {
 
     useEffect(() => {
         const loadArtistAvatar = async () => {
-            if (user?.id && isArtist) {
+            if (user?.id && !isAdmin) {
                 try {
                     const { data: supabaseArtist } = await supabase
                         .from('artists')
@@ -40,7 +40,7 @@ const HeaderMobile = () => {
         };
 
         loadArtistAvatar();
-    }, [user?.id, isArtist]);
+    }, [user?.id, isAdmin]);
 
     const handleNavigate = (path) => {
         navigate(path);
@@ -93,7 +93,7 @@ const HeaderMobile = () => {
                                 {/* Meu Perfil */}
                                 <div className="p-4 border-b border-gray-200">
                                     <button
-                                        onClick={() => handleNavigate(isArtist ? '/artist/dashboard' : '/user/panel')}
+                                        onClick={() => handleNavigate('/artist/dashboard')}
                                         className="flex items-center gap-3 text-gray-700 hover:text-red-600 w-full"
                                     >
                                         <User className="w-5 h-5" />
@@ -102,7 +102,7 @@ const HeaderMobile = () => {
                                 </div>
 
                                 {/* ADICIONAR */}
-                                {isArtist && (
+                                {!isAdmin && (
                                     <div className="px-4 py-3 border-b border-gray-200">
                                         <p className="text-xs text-gray-500 font-semibold mb-2">ADICIONAR</p>
                                         <button
@@ -119,8 +119,7 @@ const HeaderMobile = () => {
                                 <div className="px-4 py-3 border-b border-gray-200">
                                     <p className="text-xs text-gray-500 font-semibold mb-2">EDITAR PERFIL</p>
                                     <div className="space-y-2">
-                                        {isArtist ? (
-                                            <>
+                                        <>
                                                 <button
                                                     onClick={() => handleNavigate('/artist/albums')}
                                                     className="flex items-center gap-3 text-gray-700 hover:text-red-600 w-full py-1 text-sm"
@@ -150,29 +149,11 @@ const HeaderMobile = () => {
                                                     <span>Meus Vídeos</span>
                                                 </button>
                                             </>
-                                        ) : (
-                                            <>
-                                                <button
-                                                    onClick={() => handleNavigate('/playlists')}
-                                                    className="flex items-center gap-3 text-gray-700 hover:text-red-600 w-full py-1 text-sm"
-                                                >
-                                                    <ListMusic className="w-5 h-5" />
-                                                    <span>Minhas Playlists</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => handleNavigate('/favorites')}
-                                                    className="flex items-center gap-3 text-gray-700 hover:text-red-600 w-full py-1 text-sm"
-                                                >
-                                                    <Heart className="w-5 h-5" />
-                                                    <span>Favoritos</span>
-                                                </button>
-                                            </>
-                                        )}
                                     </div>
                                 </div>
 
                                 {/* COMUNICAÇÃO */}
-                                {isArtist && (
+                                {!isAdmin && (
                                     <div className="px-4 py-3 border-b border-gray-200">
                                         <p className="text-xs text-gray-500 font-semibold mb-2">COMUNICAÇÃO</p>
                                         <button
@@ -190,14 +171,14 @@ const HeaderMobile = () => {
                                     <p className="text-xs text-gray-500 font-semibold mb-2">DASHBOARD</p>
                                     <div className="space-y-2">
                                         <button
-                                            onClick={() => handleNavigate(isArtist ? '/artist/settings' : '/user/panel')}
+                                            onClick={() => handleNavigate('/artist/settings')}
                                             className="flex items-center gap-3 text-gray-700 hover:text-red-600 w-full py-1 text-sm"
                                         >
                                             <Settings className="w-5 h-5" />
                                             <span>Configurações</span>
                                         </button>
                                         <button
-                                            onClick={() => handleNavigate(isArtist ? '/artist/email-senha' : '/user/panel')}
+                                            onClick={() => handleNavigate('/artist/email-senha')}
                                             className="flex items-center gap-3 text-gray-700 hover:text-red-600 w-full py-1 text-sm"
                                         >
                                             <Mail className="w-5 h-5" />
