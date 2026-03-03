@@ -127,7 +127,7 @@ ${document.querySelector('[data-debug-logs]')?.innerText || 'Nenhum log'}
 
         {/* Album Info */}
         <div className="mb-6">
-          <p className="text-gray-600 dark:text-gray-400 font-medium">
+          <p className="text-gray-600 dark:text-gray-400 font-medium truncate max-w-full" title={albumTitle}>
             {albumTitle}
           </p>
           {status !== 'completed' && (
@@ -154,9 +154,10 @@ ${document.querySelector('[data-debug-logs]')?.innerText || 'Nenhum log'}
 
         {/* Current Song Info */}
         {(status === 'preparing' || status === 'downloading') && currentSong && (
-          <div className="mb-6 p-3 bg-gray-100 dark:bg-gray-800 rounded">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Atual: <span className="font-medium truncate">{currentSong}</span>
+          <div className="mb-6 p-3 bg-gray-100 dark:bg-gray-800 rounded overflow-hidden">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Atual:</p>
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate" title={currentSong}>
+              {currentSong}
             </p>
           </div>
         )}
