@@ -83,7 +83,17 @@ const UploadNew = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        if (name === 'customUrl') {
+            const sanitized = value
+                .normalize('NFKD')
+                .replace(/\p{Diacritic}/gu, '')
+                .toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^\w-]/g, '');
+            setFormData(prev => ({ ...prev, [name]: sanitized }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleTagKeyDown = (e) => {
@@ -155,6 +165,8 @@ const UploadNew = () => {
     // Gerar URL padrão a partir do título
     const generateDefaultUrl = (title) => {
         return title
+            .normalize('NFKD')
+            .replace(/\p{Diacritic}/gu, '')
             .toLowerCase()
             .trim()
             .replace(/\s+/g, '-')
