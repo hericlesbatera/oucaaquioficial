@@ -991,22 +991,22 @@ const UploadNew = () => {
                                             {/* Schedule Details - Show only when scheduled is selected */}
                                             {formData.publishType === 'scheduled' && (
                                                 <div className="ml-7 md:ml-8 space-y-2 md:space-y-3 pt-2">
-                                                    <div className="flex flex-col md:flex-row gap-2 md:gap-4">
+                                                    <div className="flex flex-row gap-2 md:gap-3 flex-wrap">
                                                         <Input
                                                             id="scheduleDate"
                                                             type="date"
                                                             value={formData.scheduleDate}
                                                             onChange={(e) => setFormData(prev => ({ ...prev, scheduleDate: e.target.value }))}
-                                                            className="border-gray-300 focus:border-red-500 focus:ring-red-500 h-10 md:h-12 px-3 flex-1 text-sm md:text-base"
-                                                            style={{ fontSize: '16px' }}
+                                                            className="border-gray-300 focus:border-red-500 focus:ring-red-500 h-10 px-3 text-sm"
+                                                            style={{ fontSize: '16px', width: '160px' }}
                                                         />
                                                         <Input
                                                             id="scheduleTime"
                                                             type="time"
                                                             value={formData.scheduleTime}
                                                             onChange={(e) => setFormData(prev => ({ ...prev, scheduleTime: e.target.value }))}
-                                                            className="border-gray-300 focus:border-red-500 focus:ring-red-500 h-10 md:h-12 px-3 flex-1 md:flex-initial md:w-32 text-sm md:text-base"
-                                                            style={{ fontSize: '16px' }}
+                                                            className="border-gray-300 focus:border-red-500 focus:ring-red-500 h-10 px-3 text-sm"
+                                                            style={{ fontSize: '16px', width: '120px' }}
                                                         />
                                                     </div>
                                                     <p className="text-xs text-gray-600">
