@@ -407,15 +407,6 @@ const AuthModal = ({ isOpen, onClose }) => {
             return;
         }
 
-        if (!acceptTerms) {
-            toast({
-                title: 'Erro',
-                description: 'Você precisa aceitar os termos de uso',
-                variant: 'destructive'
-            });
-            return;
-        }
-
         if (signupPassword !== signupConfirmPassword) {
             toast({
                 title: 'Erro',
@@ -471,7 +462,7 @@ const AuthModal = ({ isOpen, onClose }) => {
                 password: signupPassword,
                 options: {
                     data: {
-                        full_name: signupName,
+                        full_name: artistName || signupName,
                         user_type: userType,
                         cidade: userType === 'user' ? '' : artistCidade,
                         estado: userType === 'user' ? '' : artistEstado,
@@ -488,8 +479,8 @@ const AuthModal = ({ isOpen, onClose }) => {
             if (authData?.user?.id) {
                 const artistData = {
                     id: authData.user.id,
-                    name: userType === 'artist' ? artistName : signupName,
-                    slug: userType === 'artist' ? artistSlug : slugify(signupName),
+                    name: artistName || signupName,
+                    slug: artistSlug || slugify(signupName),
                     email: signupEmail,
                     cidade: userType === 'artist' ? artistCidade : '',
                     estado: userType === 'artist' ? artistEstado : '',
@@ -653,7 +644,7 @@ const AuthModal = ({ isOpen, onClose }) => {
                                                 <UserIcon className="w-5 h-5 absolute left-3 top-3.5 text-gray-400" />
                                                 <input
                                                     type="text"
-                                                    placeholder="Nome (Artista/Banda)"
+                                                    placeholder="Nome completo"
                                                     value={signupName}
                                                     onChange={(e) => setSignupName(e.target.value)}
                                                     className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 placeholder-gray-400 text-sm"
@@ -705,31 +696,6 @@ const AuthModal = ({ isOpen, onClose }) => {
                                                 >
                                                     {showSignupConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                                 </button>
-                                            </div>
-
-                                            <div className="flex items-start gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    id="acceptTermsMobile"
-                                                    checked={acceptTerms}
-                                                    onChange={(e) => {
-                                                        if (!termsReadByUser) {
-                                                            openTermsModal('user');
-                                                        } else {
-                                                            setAcceptTerms(e.target.checked);
-                                                        }
-                                                    }}
-                                                    className="mt-1 cursor-pointer"
-                                                />
-                                                <label htmlFor="acceptTermsMobile" className="text-xs text-gray-700">
-                                                    Li e aceito os{' '}
-                                                    <span 
-                                                        className="text-red-600 underline cursor-pointer hover:text-red-700"
-                                                        onClick={() => openTermsModal('user')}
-                                                    >
-                                                        termos de uso
-                                                    </span>
-                                                </label>
                                             </div>
 
                                             <button
@@ -912,7 +878,7 @@ const AuthModal = ({ isOpen, onClose }) => {
                                         <UserIcon className="w-5 h-5 absolute left-3 top-3.5 text-gray-400" />
                                         <input
                                             type="text"
-                                        placeholder="Nome (Artista/Banda)"
+                                        placeholder="Nome completo"
                                                     value={signupName}
                                                     onChange={(e) => setSignupName(e.target.value)}
                                                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 placeholder-gray-400 text-sm"
@@ -965,32 +931,6 @@ const AuthModal = ({ isOpen, onClose }) => {
                                             {showSignupConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                         </button>
                                     </div>
-
-                                    <div className="flex items-start gap-2">
-                                         <input
-                                              type="checkbox"
-                                              id="acceptTerms"
-                                              checked={acceptTerms}
-                                              onChange={(e) => {
-                                                  if (!termsReadByUser) {
-                                                      openTermsModal('user');
-                                                  } else {
-                                                      setAcceptTerms(e.target.checked);
-                                                  }
-                                              }}
-                                              className="mt-1 cursor-pointer"
-                                          />
-                                         <label htmlFor="acceptTerms" className="text-xs text-gray-700">
-                                             Li e aceito os{' '}
-                                             <span 
-                                                 className="text-red-600 underline cursor-pointer hover:text-red-700"
-                                                 onClick={() => openTermsModal('user')}
-                                             >
-                                                 termos de uso
-                                             </span>
-                                             {!termsReadByUser && <span className="text-gray-500 text-xs ml-1">(Abra para ler)</span>}
-                                         </label>
-                                     </div>
 
                                     <button
                                         type="submit"
