@@ -250,7 +250,7 @@ const AlbumPage = () => {
                   id: supabaseAlbum.id,
                   slug: supabaseAlbum.slug,
                   title: supabaseAlbum.title,
-                  artistName: supabaseAlbum.artist_name,
+                  artistName: artistData?.name || supabaseAlbum.artist_name,
                   artistId: supabaseAlbum.artist_id,
                   coverImage: supabaseAlbum.cover_url || '/images/default-album.png',
                   releaseYear: supabaseAlbum.release_year,
@@ -332,7 +332,7 @@ const AlbumPage = () => {
                       return {
                           id: song.id,
                           title: song.title,
-                          artistName: song.artist_name,
+                          artistName: artistData?.name || song.artist_name,
                           artistId: song.artist_id,
                           artistSlug: artistData?.slug,
                           albumId: song.album_id,
