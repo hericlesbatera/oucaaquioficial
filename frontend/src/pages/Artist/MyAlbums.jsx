@@ -203,31 +203,75 @@ const MyAlbums = () => {
         if (!albumToPermanentDelete) return;
 
     try {
-        // Deletar músicas do álbum
+        const albumId = albumToPermanentDelete.id;
+        const albumSlug = albumToPermanentDelete.slug;
+
+        // 1. Buscar todas as músicas para obter os paths de áudio no Storage
+        const { data: songs } = await supabase
+            .from('songs')
+            .select('id, audio_url')
+            .eq('album_id', albumId);
+
+        // 2. Apagar arquivos de áudio do Storage
+        if (songs && songs.length > 0) {
+            const audioPaths = songs
+                .filter(s => s.audio_url)
+                .map(s => {
+                    // Extrair o path relativo da URL pública
+                    // URL: .../storage/v1/object/public/musica/songs/{albumId}/xx_nome.mp3
+                    const match = s.audio_url.match(/\/musica\/(.+)$/);
+                    return match ? match[1] : null;
+                })
+                .filter(Boolean);
+
+            if (audioPaths.length > 0) {
+                const { error: audioDeleteError } = await supabase.storage
+                    .from('musica')
+                    .remove(audioPaths);
+                if (audioDeleteError) {
+                    console.warn('Aviso ao apagar áudios do Storage:', audioDeleteError);
+                }
+            }
+        }
+
+        // 3. Apagar capa do Storage
+        // Path da capa: albums/{slug}/cover.jpg
+        if (albumSlug) {
+            const coverPath = `albums/${albumSlug}/cover.jpg`;
+            const { error: coverDeleteError } = await supabase.storage
+                .from('musica')
+                .remove([coverPath]);
+            if (coverDeleteError) {
+                console.warn('Aviso ao apagar capa do Storage:', coverDeleteError);
+            }
+        }
+
+        // 4. Deletar músicas do banco
         await supabase
             .from('songs')
             .delete()
-            .eq('album_id', albumToPermanentDelete.id);
+            .eq('album_id', albumId);
 
-        // Deletar vídeos associados ao álbum
+        // 5. Deletar vídeos associados ao álbum
         await supabase
             .from('artist_videos')
             .delete()
-            .eq('album_id', albumToPermanentDelete.id);
+            .eq('album_id', albumId);
 
-    const {error} = await supabase
-    .from('albums')
-    .delete()
-    .eq('id', albumToPermanentDelete.id);
+        // 6. Deletar o álbum do banco
+        const { error } = await supabase
+            .from('albums')
+            .delete()
+            .eq('id', albumId);
 
-    if (error) throw error;
+        if (error) throw error;
 
-    toast({
-        title: 'Álbum excluído permanentemente',
-    description: `"${albumToPermanentDelete.title}" foi excluído`
-            });
+        toast({
+            title: 'Álbum excluído permanentemente',
+            description: `"${albumToPermanentDelete.title}" foi excluído e todos os arquivos removidos`
+        });
 
-    loadAlbums();
+        loadAlbums();
         } catch (error) {
         console.error('Erro ao excluir:', error);
     toast({
