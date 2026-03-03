@@ -41,7 +41,8 @@ export const SongListItem = ({
     onDownload,
     showActions = true,
     formatDuration,
-    playlistId = null
+    playlistId = null,
+    allowDownload = true
 }) => {
     const { user } = useAuth();
     const { isFavorite, toggleFavorite } = useMusicFavorite(song?.id);
@@ -264,6 +265,7 @@ export const SongListItem = ({
                         <span className="text-gray-600 text-sm w-12 text-right">
                             {(formatDuration || defaultFormatDuration)(song.duration)}
                         </span>
+                        {allowDownload !== false && (
                         <Button
                             onClick={handleDownload}
                             variant="outline"
@@ -272,6 +274,7 @@ export const SongListItem = ({
                         >
                             ↓ BAIXAR
                         </Button>
+                        )}
                     </div>
                 )}
             </div>

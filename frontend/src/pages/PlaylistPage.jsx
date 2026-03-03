@@ -52,7 +52,7 @@ const PlaylistPage = () => {
                 const { data: albums } = albumIds.length > 0
                     ? await supabase
                         .from('albums')
-                        .select('id, cover_url')
+                        .select('id, cover_url, allow_download')
                         .in('id', albumIds)
                     : { data: [] };
 
@@ -60,7 +60,7 @@ const PlaylistPage = () => {
                 if (albums) {
                     albums.forEach(album => {
                         // Adicionar timestamp para forçar refresh
-                        albumMap[album.id] = `${album.cover_url}?t=${new Date().getTime()}`;
+                        albumMap[album.id] = { cover_url: `${album.cover_url}?t=${new Date().getTime()}`, allow_download: album.allow_download };
                     });
                 }
 
@@ -74,9 +74,10 @@ const PlaylistPage = () => {
                         artistId: song.artist_id,
                         albumId: song.album_id,
                         albumName: song.album_name,
-                        coverImage: (song.album_id && albumMap[song.album_id]) || song.cover_url || '/placeholder-album.jpg',
+                        coverImage: (song.album_id && albumMap[song.album_id]?.cover_url) || song.cover_url || '/placeholder-album.jpg',
                         audioUrl: song.audio_url,
-                        duration: song.duration || 0
+                        duration: song.duration || 0,
+                        allowDownload: song.album_id ? albumMap[song.album_id]?.allow_download !== false : true
                     }));
                 
                 setPlaylistSongs(updatedSongs);
@@ -149,14 +150,14 @@ const PlaylistPage = () => {
                     const { data: albums } = albumIds.length > 0 
                         ? await supabase
                             .from('albums')
-                            .select('id, cover_url')
+                            .select('id, cover_url, allow_download')
                             .in('id', albumIds)
                         : { data: [] };
 
                     const albumMap = {};
                     if (albums) {
                         albums.forEach(album => {
-                            albumMap[album.id] = album.cover_url;
+                            albumMap[album.id] = { cover_url: album.cover_url, allow_download: album.allow_download };
                         });
                     }
 
@@ -171,9 +172,10 @@ const PlaylistPage = () => {
                             albumId: song.album_id,
                             albumName: song.album_name,
                             // Usar a imagem do álbum como prioridade, depois cover_url da música
-                            coverImage: (song.album_id && albumMap[song.album_id]) || song.cover_url || '/placeholder-album.jpg',
+                            coverImage: (song.album_id && albumMap[song.album_id]?.cover_url) || song.cover_url || '/placeholder-album.jpg',
                             audioUrl: song.audio_url,
-                            duration: song.duration || 0
+                            duration: song.duration || 0,
+                            allowDownload: song.album_id ? albumMap[song.album_id]?.allow_download !== false : true
                         }));
                     setPlaylistSongs(orderedSongs);
                 }
@@ -556,6 +558,7 @@ const PlaylistPage = () => {
                                     showActions={true}
                                     formatDuration={formatDurationLocal}
                                     playlistId={playlist.id}
+                                    allowDownload={song.allowDownload !== false}
                                 />
                             ))}
                         </div>
