@@ -150,12 +150,13 @@ const UploadNew = () => {
         if (file) {
             if (fileType === 'coverImage') {
                 setFormData(prev => ({ ...prev, [fileType]: file }));
-                // Preview da imagem
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    setCoverImagePreview(reader.result);
-                };
-                reader.readAsDataURL(file);
+                // Preview imediato usando URL.createObjectURL (mais rápido e confiável que FileReader)
+                // Revogar URL anterior se existir para evitar vazamento de memória
+                if (coverImagePreview && coverImagePreview.startsWith('blob:')) {
+                    URL.revokeObjectURL(coverImagePreview);
+                }
+                const objectUrl = URL.createObjectURL(file);
+                setCoverImagePreview(objectUrl);
             } else {
                 setFormData(prev => ({ ...prev, [fileType]: file }));
             }
@@ -356,14 +357,26 @@ const UploadNew = () => {
              console.log('[UPLOAD] Getting session...');
              let token = null;
              try {
-                 // Tentar obter sessão do Supabase com timeout de 15 segundos
-                 const sessionPromise = supabase.auth.getSession();
-                 const timeoutPromise = new Promise((_, reject) => 
-                     setTimeout(() => reject(new Error('Session timeout')), 15000)
-                 );
-                 const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
-                 token = session?.access_token;
-                 console.log('[UPLOAD] Token obtained from Supabase:', token ? 'yes' : 'no');
+                 // Primeiro tentar renovar o token para evitar expiração durante upload longo
+                 try {
+                     const { data: refreshData } = await supabase.auth.refreshSession();
+                     if (refreshData?.session?.access_token) {
+                         token = refreshData.session.access_token;
+                         console.log('[UPLOAD] Token renovado via refreshSession');
+                     }
+                 } catch (refreshErr) {
+                     console.warn('[UPLOAD] refreshSession falhou, tentando getSession:', refreshErr.message);
+                 }
+                 // Se não conseguiu renovar, tentar getSession
+                 if (!token) {
+                     const sessionPromise = supabase.auth.getSession();
+                     const timeoutPromise = new Promise((_, reject) => 
+                         setTimeout(() => reject(new Error('Session timeout')), 15000)
+                     );
+                     const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
+                     token = session?.access_token;
+                     console.log('[UPLOAD] Token obtained from Supabase:', token ? 'yes' : 'no');
+                 }
              } catch (e) {
                  console.warn('[UPLOAD] getSession timeout/error:', e.message);
                  // Fallback: tentar recuperar token do localStorage (chaves do Supabase)
@@ -1183,8 +1196,18 @@ const UploadNew = () => {
                     {currentStep === 3 && (
                         <Card className="bg-white shadow-sm">
                             <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-4 md:space-y-6">
-                                <div>
-                                    <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-1 md:mb-2">Etapa 3: Upload do Arquivo</h2>
+                                <div className="flex items-center gap-4">
+                                    {coverImagePreview && (
+                                        <img
+                                            src={coverImagePreview}
+                                            alt="Capa do álbum"
+                                            className="w-14 h-14 rounded-lg object-cover flex-shrink-0 shadow"
+                                        />
+                                    )}
+                                    <div>
+                                        <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-1 md:mb-2">Etapa 3: Upload do Arquivo</h2>
+                                        {formData.title && <p className="text-sm text-gray-500 truncate max-w-xs">{formData.title}</p>}
+                                    </div>
                                 </div>
 
                                 {/* Para Lembrar Box */}
