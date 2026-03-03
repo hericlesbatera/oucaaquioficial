@@ -61,6 +61,19 @@ const HomeImproved = () => {
     const artistasSentinelRef = useRef(null);
     const recomendadosSentinelRef = useRef(null);
 
+    // Refs para rastrear estado atual sem problemas de closure nos event listeners
+    const lancamentosPageRef = useRef(0);
+    const lancamentosHasMoreRef = useRef(true);
+    const lancamentosLoadingRef = useRef(false);
+    const artistasPageRef = useRef(0);
+    const artistasHasMoreRef = useRef(true);
+    const artistasLoadingRef = useRef(false);
+    const recomendadosPageRef = useRef(0);
+    const recomendadosHasMoreRef = useRef(true);
+    const recomendadosLoadingRef = useRef(false);
+    const topCdsHasMoreRef = useRef(true);
+    const topCdsLoadingRef = useRef(false);
+
     const genres = [
         { name: 'Forró', slug: 'forro', imageUrl: '/images/slides/GENEROS/forró.jpg' },
         { name: 'Arrocha', slug: 'arrocha', imageUrl: '/images/slides/GENEROS/ARROCHA.jpg' },
@@ -121,10 +134,24 @@ const HomeImproved = () => {
         });
     };
 
+    // Sincronizar refs com estados
+    useEffect(() => { lancamentosPageRef.current = lancamentosPage; }, [lancamentosPage]);
+    useEffect(() => { lancamentosHasMoreRef.current = lancamentosHasMore; }, [lancamentosHasMore]);
+    useEffect(() => { lancamentosLoadingRef.current = lancamentosLoading; }, [lancamentosLoading]);
+    useEffect(() => { artistasPageRef.current = artistasPage; }, [artistasPage]);
+    useEffect(() => { artistasHasMoreRef.current = artistasHasMore; }, [artistasHasMore]);
+    useEffect(() => { artistasLoadingRef.current = artistasLoading; }, [artistasLoading]);
+    useEffect(() => { recomendadosPageRef.current = recomendadosPage; }, [recomendadosPage]);
+    useEffect(() => { recomendadosHasMoreRef.current = recomendadosHasMore; }, [recomendadosHasMore]);
+    useEffect(() => { recomendadosLoadingRef.current = recomendadosLoading; }, [recomendadosLoading]);
+    useEffect(() => { topCdsHasMoreRef.current = topCdsHasMore; }, [topCdsHasMore]);
+    useEffect(() => { topCdsLoadingRef.current = topCdsLoading; }, [topCdsLoading]);
+
     // Carregamento incremental de Laçamentos
     const loadMoreLancamentos = async (page) => {
-        if (lancamentosLoading) return;
+        if (lancamentosLoadingRef.current) return;
         setLancamentosLoading(true);
+        lancamentosLoadingRef.current = true;
         try {
             const from = page * PAGE_SIZE;
             const to = from + PAGE_SIZE - 1;
@@ -148,13 +175,14 @@ const HomeImproved = () => {
                 });
             }
         } catch (e) { console.error('loadMoreLancamentos:', e); }
-        finally { setLancamentosLoading(false); }
+        finally { setLancamentosLoading(false); lancamentosLoadingRef.current = false; }
     };
 
     // Carregamento incremental de Artistas
     const loadMoreArtistas = async (page) => {
-        if (artistasLoading) return;
+        if (artistasLoadingRef.current) return;
         setArtistasLoading(true);
+        artistasLoadingRef.current = true;
         try {
             const from = page * PAGE_SIZE;
             const to = from + PAGE_SIZE - 1;
@@ -178,13 +206,14 @@ const HomeImproved = () => {
                 });
             }
         } catch (e) { console.error('loadMoreArtistas:', e); }
-        finally { setArtistasLoading(false); }
+        finally { setArtistasLoading(false); artistasLoadingRef.current = false; }
     };
 
     // Carregamento incremental de Recomendados (usa allAlbums embaralhados)
     const loadMoreRecomendados = async (page) => {
-        if (recomendadosLoading) return;
+        if (recomendadosLoadingRef.current) return;
         setRecomendadosLoading(true);
+        recomendadosLoadingRef.current = true;
         try {
             const from = page * PAGE_SIZE;
             const to = from + PAGE_SIZE - 1;
@@ -208,26 +237,48 @@ const HomeImproved = () => {
                 });
             }
         } catch (e) { console.error('loadMoreRecomendados:', e); }
-        finally { setRecomendadosLoading(false); }
+        finally { setRecomendadosLoading(false); recomendadosLoadingRef.current = false; }
     };
 
-    // Carregamento incremental de TOP CDS (usa allAlbums já carregados, aumenta slice)
-    const loadMoreTopCds = () => {
-        if (topCdsLoading) return;
-        const nextPage = topCdsPage + 1;
-        const needed = (nextPage + 1) * PAGE_SIZE;
-        if (allAlbums.length >= needed || !lancamentosHasMore) {
-            if ((nextPage + 1) * PAGE_SIZE > allAlbums.length && !lancamentosHasMore) {
-                setTopCdsHasMore(false);
+    // Carregamento incremental de TOP CDS (busca direta no Supabase com paginação própria)
+    const loadMoreTopCds = async (page, filter) => {
+        const currentFilter = filter || topCdsFilter;
+        const currentPage = page !== undefined ? page : topCdsPage;
+        if (topCdsLoadingRef.current) return;
+        setTopCdsLoading(true);
+        topCdsLoadingRef.current = true;
+        try {
+            const from = (currentPage + 1) * PAGE_SIZE;
+            const to = from + PAGE_SIZE - 1;
+
+            let query = supabase
+                .from('albums')
+                .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
+                .eq('is_private', false)
+                .is('deleted_at', null);
+
+            if (currentFilter === 'geral') {
+                query = query.order('play_count', { ascending: false });
+            } else {
+                query = query.order('play_count', { ascending: false });
             }
-            setTopCdsPage(nextPage);
-        } else {
-            // Carregar mais álbuns base
-            const nextLancPage = lancamentosPage + 1;
-            setLancamentosPage(nextLancPage);
-            loadMoreLancamentos(nextLancPage);
-            setTopCdsPage(nextPage);
-        }
+
+            const { data, error } = await query.range(from, to);
+            if (error) throw error;
+            if (!data || data.length < PAGE_SIZE) setTopCdsHasMore(false);
+            if (data && data.length > 0) {
+                const artistsMap = {};
+                data.forEach(a => { if (a.artists) artistsMap[a.artist_id] = a.artists; });
+                const formatted = formatAlbums(data, artistsMap, null);
+                setTopCdsAlbums(prev => {
+                    const existingIds = new Set(prev.map(a => a.id));
+                    const newItems = formatted.filter(a => !existingIds.has(a.id));
+                    return [...prev, ...newItems];
+                });
+                setTopCdsPage(currentPage + 1);
+            }
+        } catch (e) { console.error('loadMoreTopCds:', e); }
+        finally { setTopCdsLoading(false); topCdsLoadingRef.current = false; }
     };
 
     const loadData = async () => {
@@ -427,148 +478,135 @@ const HomeImproved = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // IntersectionObserver para carregamento infinito de Laçamentos
+    // Scroll infinito: registra listeners após dados carregarem
     useEffect(() => {
-        if (!lancamentosHasMore) return;
-        const sentinel = lancamentosSentinelRef.current;
-        if (!sentinel) return;
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting && !lancamentosLoading) {
-                    const nextPage = lancamentosPage + 1;
-                    setLancamentosPage(nextPage);
-                    loadMoreLancamentos(nextPage);
-                }
-            },
-            { root: lancamentosDesktopRef.current || lancamentosRef.current, threshold: 0.1 }
-        );
-        observer.observe(sentinel);
-        return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [lancamentosHasMore, lancamentosLoading, lancamentosPage]);
+        if (isLoading) return; // aguarda dados carregarem para os containers existirem
 
-    // IntersectionObserver para carregamento infinito de Artistas
-    useEffect(() => {
-        if (!artistasHasMore) return;
-        const sentinel = artistasSentinelRef.current;
-        if (!sentinel) return;
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting && !artistasLoading) {
-                    const nextPage = artistasPage + 1;
-                    setArtistasPage(nextPage);
-                    loadMoreArtistas(nextPage);
-                }
-            },
-            { root: artistasRef.current || artistasMobileRef.current, threshold: 0.1 }
-        );
-        observer.observe(sentinel);
-        return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [artistasHasMore, artistasLoading, artistasPage]);
-
-    // IntersectionObserver para carregamento infinito de Recomendados
-    useEffect(() => {
-        if (!recomendadosHasMore) return;
-        const sentinel = recomendadosSentinelRef.current;
-        if (!sentinel) return;
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting && !recomendadosLoading) {
-                    const nextPage = recomendadosPage + 1;
-                    setRecomendadosPage(nextPage);
-                    loadMoreRecomendados(nextPage);
-                }
-            },
-            { root: recomendaRef.current || recomendaMobileRef.current, threshold: 0.1 }
-        );
-        observer.observe(sentinel);
-        return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [recomendadosHasMore, recomendadosLoading, recomendadosPage]);
-
-    // IntersectionObserver para carregamento infinito de TOP CDS
-    useEffect(() => {
-        if (!topCdsHasMore) return;
-        const sentinel = topCdsSentinelRef.current;
-        if (!sentinel) return;
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting && !topCdsLoading) {
-                    loadMoreTopCds();
-                }
-            },
-            { root: topCdsDesktopRef.current || topCdsRef.current, threshold: 0.1 }
-        );
-        observer.observe(sentinel);
-        return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [topCdsHasMore, topCdsLoading, topCdsPage, allAlbums]);
-
-    // Carregar TOP CDS quando período muda
-    useEffect(() => {
-        loadTopCds();
-    }, [topCdsFilter, allAlbums]);
-
-    const loadTopCds = async () => {
-        try {
-            if (allAlbums.length === 0) return;
-
-
-
-            // Se o período for 'geral', retorna os álbuns ordenados por play_count
-            if (topCdsFilter === 'geral') {
-                const sorted = [...allAlbums]
-                    .sort((a, b) => b.playCount - a.playCount);
-
-                setTopCdsAlbums(sorted);
-                return;
-            }
-
-            // Para DIA, SEMANA, MÊS, buscar plays e filtrar por data
-            const now = new Date();
-            let startDate;
-
-            if (topCdsFilter === 'dia') {
-                startDate = new Date(now);
-                startDate.setHours(0, 0, 0, 0);
-            } else if (topCdsFilter === 'semana') {
-                startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            } else if (topCdsFilter === 'mes') {
-                startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-            }
-
-            // Buscar plays do período
-            const { data: plays, error: playsError } = await supabase
-                .from('plays')
-                .select('album_id')
-                .gte('created_at', startDate.toISOString())
-                .lte('created_at', now.toISOString());
-
-            if (playsError) throw playsError;
-
-            // Contar plays por álbum
-            const playCountByAlbum = {};
-            (plays || []).forEach(play => {
-                playCountByAlbum[play.album_id] = (playCountByAlbum[play.album_id] || 0) + 1;
+        const makeHandlers = (refs, onNearEnd) => {
+            const containers = refs.map(r => r.current).filter(Boolean);
+            const handlers = containers.map(el => {
+                const fn = () => {
+                    if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 400) onNearEnd();
+                };
+                el.addEventListener('scroll', fn, { passive: true });
+                return { el, fn };
             });
+            return handlers;
+        };
 
-            // Ordenar álbuns pelos plays do período
-            const sortedAlbums = allAlbums
-                .filter(album => playCountByAlbum[album.id] > 0) // Só mostra álbuns com plays neste período
-                .map(album => ({
-                    ...album,
-                    period_play_count: playCountByAlbum[album.id] || 0
-                }))
-                .sort((a, b) => {
-                    // Ordena APENAS por plays do período (sem desempate)
-                    return b.period_play_count - a.period_play_count;
+        const allHandlers = [
+            ...makeHandlers([lancamentosDesktopRef, lancamentosRef], () => {
+                if (!lancamentosHasMoreRef.current || lancamentosLoadingRef.current) return;
+                const nextPage = lancamentosPageRef.current + 1;
+                lancamentosPageRef.current = nextPage;
+                setLancamentosPage(nextPage);
+                loadMoreLancamentos(nextPage);
+            }),
+            ...makeHandlers([artistasRef, artistasMobileRef], () => {
+                if (!artistasHasMoreRef.current || artistasLoadingRef.current) return;
+                const nextPage = artistasPageRef.current + 1;
+                artistasPageRef.current = nextPage;
+                setArtistasPage(nextPage);
+                loadMoreArtistas(nextPage);
+            }),
+            ...makeHandlers([recomendaRef, recomendaMobileRef], () => {
+                if (!recomendadosHasMoreRef.current || recomendadosLoadingRef.current) return;
+                const nextPage = recomendadosPageRef.current + 1;
+                recomendadosPageRef.current = nextPage;
+                setRecomendadosPage(nextPage);
+                loadMoreRecomendados(nextPage);
+            }),
+            ...makeHandlers([topCdsDesktopRef, topCdsRef], () => {
+                if (!topCdsHasMoreRef.current || topCdsLoadingRef.current) return;
+                loadMoreTopCds();
+            }),
+        ];
+
+        return () => allHandlers.forEach(({ el, fn }) => el.removeEventListener('scroll', fn));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoading]);
+
+    // Carregar TOP CDS quando período muda (busca direta no Supabase)
+    useEffect(() => {
+        // Resetar paginação ao mudar filtro
+        setTopCdsPage(0);
+        setTopCdsHasMore(true);
+        setTopCdsAlbums([]);
+        loadTopCds(topCdsFilter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [topCdsFilter]);
+
+    const loadTopCds = async (filter) => {
+        const currentFilter = filter || topCdsFilter;
+        try {
+            let data, error;
+
+            if (currentFilter === 'geral') {
+                // Geral: ordenar por play_count total
+                ({ data, error } = await supabase
+                    .from('albums')
+                    .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
+                    .eq('is_private', false)
+                    .is('deleted_at', null)
+                    .order('play_count', { ascending: false })
+                    .range(0, PAGE_SIZE - 1));
+            } else {
+                // DIA, SEMANA, MÊS: buscar plays do período
+                const now = new Date();
+                let startDate;
+                if (currentFilter === 'dia') {
+                    startDate = new Date(now); startDate.setHours(0, 0, 0, 0);
+                } else if (currentFilter === 'semana') {
+                    startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                } else {
+                    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                }
+
+                const { data: plays, error: playsError } = await supabase
+                    .from('plays')
+                    .select('album_id')
+                    .gte('created_at', startDate.toISOString())
+                    .lte('created_at', now.toISOString());
+
+                if (playsError) throw playsError;
+
+                const playCountByAlbum = {};
+                (plays || []).forEach(play => {
+                    playCountByAlbum[play.album_id] = (playCountByAlbum[play.album_id] || 0) + 1;
                 });
 
+                const albumIds = Object.keys(playCountByAlbum);
+                if (albumIds.length === 0) { setTopCdsAlbums([]); return; }
 
+                ({ data, error } = await supabase
+                    .from('albums')
+                    .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
+                    .eq('is_private', false)
+                    .is('deleted_at', null)
+                    .in('id', albumIds)
+                    .range(0, PAGE_SIZE - 1));
 
-            setTopCdsAlbums(sortedAlbums);
+                if (!error && data) {
+                    data = data.map(a => ({ ...a, period_play_count: playCountByAlbum[a.id] || 0 }))
+                        .sort((a, b) => b.period_play_count - a.period_play_count);
+                }
+            }
+
+            if (error) throw error;
+            if (!data || data.length < PAGE_SIZE) setTopCdsHasMore(false);
+            if (data && data.length > 0) {
+                const artistsMap = {};
+                data.forEach(a => { if (a.artists) artistsMap[a.artist_id] = a.artists; });
+                const formatted = formatAlbums(data, artistsMap, null).map((a, i) => ({
+                    ...a,
+                    period_play_count: data[i]?.period_play_count || a.playCount
+                }));
+                setTopCdsAlbums(formatted);
+            } else {
+                setTopCdsAlbums([]);
+            }
         } catch (error) {
+            console.error('loadTopCds:', error);
             setTopCdsAlbums([]);
         }
     };
