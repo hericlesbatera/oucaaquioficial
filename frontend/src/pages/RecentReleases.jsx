@@ -59,7 +59,7 @@ const RecentReleases = () => {
       .select('*')
       .eq('is_private', false)
       .is('deleted_at', null)
-      .order('published_at', { ascending: false, nullsFirst: false })
+      .order('release_date', { ascending: false, nullsFirst: false })
       .range(0, 19);
 
     if (!error && data) {
@@ -76,7 +76,7 @@ const RecentReleases = () => {
       .select('*')
       .eq('is_private', false)
       .is('deleted_at', null)
-      .order('published_at', { ascending: false, nullsFirst: false })
+      .order('release_date', { ascending: false, nullsFirst: false })
       .range(offset, offset + 19);
 
     if (!error && data) {

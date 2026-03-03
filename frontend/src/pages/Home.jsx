@@ -38,11 +38,11 @@ const Home = () => {
           // Buscar álbuns públicos com limit maior para TOP CDS (100 em vez de 50)
           supabase
             .from('albums')
-            .select('id, slug, title, artist_name, artist_id, cover_url, play_count')
+            .select('id, slug, title, artist_name, artist_id, cover_url, play_count, release_date')
             .eq('is_private', false)
             .is('deleted_at', null)
             .is('is_scheduled', false)
-            .order('published_at', { ascending: false, nullsFirst: false })
+            .order('release_date', { ascending: false, nullsFirst: false })
             .limit(100),
           
           // Buscar artistas ordenados por seguidores (mais seguidores primeiro)
@@ -183,11 +183,11 @@ const Home = () => {
       // Buscar apenas álbuns necessários (não todos os campos)
       const { data: supabaseAlbums } = await supabase
         .from('albums')
-        .select('id, slug, title, artist_name, artist_id, cover_url, play_count')
+        .select('id, slug, title, artist_name, artist_id, cover_url, play_count, release_date')
         .eq('is_private', false)
         .is('deleted_at', null)
         .is('is_scheduled', false)
-        .order('published_at', { ascending: false, nullsFirst: false })
+        .order('release_date', { ascending: false, nullsFirst: false })
         .limit(100);
       
       if (supabaseAlbums && supabaseAlbums.length > 0) {

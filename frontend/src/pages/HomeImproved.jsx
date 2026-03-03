@@ -83,13 +83,13 @@ const HomeImproved = () => {
 
                 // Paralelizar as queries principais sem timeout
                 const [albumsResult, artistsResult, collabResult, clipsResult] = await Promise.all([
-                    // Query 1: Álbuns com limite - ordenado por data de publicação real (published_at)
+                    // Query 1: Álbuns com limite - ordenado por data de lançamento real (release_date)
                     supabase
                         .from('albums')
                         .select('*')
                         .eq('is_private', false)
                         .is('deleted_at', null)
-                        .order('published_at', { ascending: false, nullsFirst: false })
+                        .order('release_date', { ascending: false, nullsFirst: false })
                         .limit(50),
                     
                     // Query 2: Artistas
@@ -157,6 +157,7 @@ const HomeImproved = () => {
                             collaborators: collaboratorsByAlbum[album.id] || [],
                             coverImage: album.cover_url || '/images/default-album.png',
                             releaseYear: album.release_year,
+                            releaseDate: album.release_date,
                             playCount: album.play_count || 0,
                             downloadCount: album.download_count || 0
                         };
