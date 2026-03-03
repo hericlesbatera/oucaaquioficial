@@ -170,8 +170,8 @@ const ProfilePublicNew = () => {
           monthlyListeners: totalPlays,
           genre: supabaseArtist.estilo_musical,
           location: supabaseArtist.cidade && supabaseArtist.estado 
-            ? `${supabaseArtist.cidade}, ${supabaseArtist.estado}` 
-            : supabaseArtist.cidade || supabaseArtist.estado || '',
+            ? `${supabaseArtist.cidade}, ${supabaseArtist.estado.toUpperCase()}` 
+            : supabaseArtist.cidade || (supabaseArtist.estado ? supabaseArtist.estado.toUpperCase() : '') || '',
           instagram: supabaseArtist.instagram || '',
           twitter: supabaseArtist.twitter || '',
           youtube: supabaseArtist.youtube || ''
