@@ -37,7 +37,7 @@ const AuthModal = ({ isOpen, onClose }) => {
     const { loginWithGoogle, completeGoogleSignup } = useAuth();
 
     const [showGoogleSignupTypeModal, setShowGoogleSignupTypeModal] = useState(false);
-    const [googleSignupType, setGoogleSignupType] = useState('user');
+    const [googleSignupType, setGoogleSignupType] = useState('artist');
     const [showGoogleAccountTypeModal, setShowGoogleAccountTypeModal] = useState(false);
     const [googleAccountTypeLoading, setGoogleAccountTypeLoading] = useState(false);
 
@@ -87,7 +87,7 @@ const AuthModal = ({ isOpen, onClose }) => {
     );
     
     // Tipo de usuário e etapa
-    const [userType, setUserType] = useState('user');
+    const [userType, setUserType] = useState('artist');
     const [signupStep, setSignupStep] = useState(() => {
         // Mobile começa em login (signupStep 4), desktop começa em cadastro (signupStep 1)
         return typeof window !== 'undefined' && window.innerWidth < 768 ? 4 : 1;
@@ -307,10 +307,19 @@ const AuthModal = ({ isOpen, onClose }) => {
             });
         }
         
-        // Verificar se precisa escolher tipo de conta (login Google com conta nova)
+        // Verificar se precisa criar conta Google automaticamente como artista
         const needsAccountType = sessionStorage.getItem('googleNeedsAccountType');
         if (needsAccountType === 'true') {
-            setShowGoogleAccountTypeModal(true);
+            // Criar conta automaticamente como artista sem perguntar
+            completeGoogleSignup('artist').then((result) => {
+                if (!result?.error) {
+                    toast({
+                        title: 'Conta criada com sucesso!',
+                        description: 'Bem-vindo ao Ouça Aqui!',
+                    });
+                    onClose();
+                }
+            });
         }
     }, [isOpen]);
     
@@ -319,7 +328,16 @@ const AuthModal = ({ isOpen, onClose }) => {
         const checkPendingGoogleSignup = () => {
             const needsAccountType = sessionStorage.getItem('googleNeedsAccountType');
             if (needsAccountType === 'true') {
-                setShowGoogleAccountTypeModal(true);
+                // Criar conta automaticamente como artista
+                completeGoogleSignup('artist').then((result) => {
+                    if (!result?.error) {
+                        toast({
+                            title: 'Conta criada com sucesso!',
+                            description: 'Bem-vindo ao Ouça Aqui!',
+                        });
+                        onClose();
+                    }
+                });
             }
         };
         
@@ -366,8 +384,9 @@ const AuthModal = ({ isOpen, onClose }) => {
         }
     };
 
-    const handleGoogleSignup = () => {
-        setShowGoogleSignupTypeModal(true);
+    const handleGoogleSignup = async () => {
+        localStorage.setItem('pendingGoogleSignupType', 'artist');
+        await loginWithGoogle();
     };
 
     const handleGoogleSignupConfirm = async () => {
@@ -629,37 +648,12 @@ const AuthModal = ({ isOpen, onClose }) => {
                                 {signupStep === 1 ? (
                                     // CADASTRO - Mobile
                                     <>
-                                        <div className="mb-6">
-                                            <div className="flex gap-4 mb-4">
-                                                <button
-                                                    onClick={() => setUserType('user')}
-                                                    className={`flex-1 px-3 py-2 rounded-lg font-semibold text-xs transition-colors ${
-                                                        userType === 'user'
-                                                            ? 'bg-red-600 text-white'
-                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                    }`}
-                                                >
-                                                    Usuário
-                                                </button>
-                                                <button
-                                                    onClick={() => setUserType('artist')}
-                                                    className={`flex-1 px-3 py-2 rounded-lg font-semibold text-xs transition-colors ${
-                                                        userType === 'artist'
-                                                            ? 'bg-red-600 text-white'
-                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                    }`}
-                                                >
-                                                    Artista
-                                                </button>
-                                            </div>
-                                        </div>
-
                                         <form onSubmit={handleSignupStep1} className="space-y-3 flex-1 flex flex-col">
                                             <div className="relative">
                                                 <UserIcon className="w-5 h-5 absolute left-3 top-3.5 text-gray-400" />
                                                 <input
                                                     type="text"
-                                                    placeholder="Nome completo"
+                                                    placeholder="Nome (Artista/Banda)"
                                                     value={signupName}
                                                     onChange={(e) => setSignupName(e.target.value)}
                                                     className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 placeholder-gray-400 text-sm"
@@ -744,7 +738,7 @@ const AuthModal = ({ isOpen, onClose }) => {
                                                 className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white font-bold py-2.5 rounded-full transition-colors flex items-center justify-center gap-2 mt-auto text-sm"
                                             >
                                                 {loadingSignup && <Loader2 className="w-4 h-4 animate-spin" />}
-                                                {userType === 'artist' ? 'PRÓXIMO' : 'CADASTRAR'}
+                                                PRÓXIMO
                                             </button>
                                         </form>
                                     </>
@@ -910,32 +904,7 @@ const AuthModal = ({ isOpen, onClose }) => {
                                 <h2 className="text-2xl md:text-2xl font-bold text-gray-900 mb-1">Cadastre-se GRÁTIS</h2>
                                 <p className="text-gray-600 text-sm mb-4">Crie sua conta para acessar a plataforma</p>
 
-                                {/* Seletor de Tipo */}
-                                <div className="mb-8">
-                                    <p className="text-gray-700 font-semibold text-sm mb-3">Tipo de conta:</p>
-                                    <div className="flex gap-3">
-                                        <button
-                                            onClick={() => setUserType('user')}
-                                            className={`flex-1 px-4 py-3 rounded-lg font-bold text-sm transition-colors ${
-                                                userType === 'user'
-                                                    ? 'bg-red-600 text-white'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                            }`}
-                                        >
-                                            Usuário
-                                        </button>
-                                        <button
-                                            onClick={() => setUserType('artist')}
-                                            className={`flex-1 px-4 py-3 rounded-lg font-bold text-sm transition-colors ${
-                                                userType === 'artist'
-                                                    ? 'bg-red-600 text-white'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                            }`}
-                                        >
-                                            Artista
-                                        </button>
-                                    </div>
-                                </div>
+
 
                                 {/* Formulário Etapa 1 */}
                                 <form onSubmit={handleSignupStep1} className="space-y-4">
@@ -943,10 +912,10 @@ const AuthModal = ({ isOpen, onClose }) => {
                                         <UserIcon className="w-5 h-5 absolute left-3 top-3.5 text-gray-400" />
                                         <input
                                             type="text"
-                                            placeholder="Nome completo"
-                                            value={signupName}
-                                            onChange={(e) => setSignupName(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 placeholder-gray-400 text-sm"
+                                        placeholder="Nome (Artista/Banda)"
+                                                    value={signupName}
+                                                    onChange={(e) => setSignupName(e.target.value)}
+                                                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 placeholder-gray-400 text-sm"
                                         />
                                     </div>
 
@@ -1029,32 +998,9 @@ const AuthModal = ({ isOpen, onClose }) => {
                                         className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-full transition-colors flex items-center justify-center gap-2 mt-5 text-sm"
                                     >
                                         {loadingSignup && <Loader2 className="w-4 h-4 animate-spin" />}
-                                        {userType === 'artist' ? 'PRÓXIMO' : 'CADASTRAR'}
+                                        PRÓXIMO
                                     </button>
                                 </form>
-
-                                <div className="relative my-4">
-                                    <div className="absolute inset-0 flex items-center">
-                                        <div className="w-full border-t border-gray-300"></div>
-                                    </div>
-                                    <div className="relative flex justify-center text-xs uppercase">
-                                        <span className="bg-white px-2 text-gray-500">Ou</span>
-                                    </div>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={handleGoogleSignup}
-                                    className="w-full bg-white hover:bg-gray-100 text-black border border-gray-300 font-semibold py-2.5 rounded-full transition-colors flex items-center justify-center gap-2 text-sm"
-                                >
-                                    <svg className="w-4 h-4" viewBox="0 0 24 24">
-                                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                                    </svg>
-                                    Cadastre-se com Google
-                                </button>
                             </div>
 
                             {/* DIREITA - Login */}
@@ -1419,110 +1365,9 @@ const AuthModal = ({ isOpen, onClose }) => {
 
 
 
-            {/* Modal de Tipo de Conta para Google (cadastro) */}
-            {showGoogleSignupTypeModal && (
-                <Dialog open={showGoogleSignupTypeModal} onOpenChange={setShowGoogleSignupTypeModal}>
-                    <DialogContent className="max-w-md">
-                        <DialogTitle className="text-xl font-bold text-center">Escolha o tipo de conta</DialogTitle>
-                        <DialogDescription className="text-center text-gray-600 mb-4">
-                            Selecione o tipo de conta que deseja criar
-                        </DialogDescription>
-                        <div className="flex gap-4 mb-6">
-                            <button
-                                onClick={() => setGoogleSignupType('user')}
-                                className={`flex-1 px-4 py-4 rounded-lg font-bold text-sm transition-colors ${
-                                    googleSignupType === 'user'
-                                        ? 'bg-red-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
-                            >
-                                Usuário
-                            </button>
-                            <button
-                                onClick={() => setGoogleSignupType('artist')}
-                                className={`flex-1 px-4 py-4 rounded-lg font-bold text-sm transition-colors ${
-                                    googleSignupType === 'artist'
-                                        ? 'bg-red-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
-                            >
-                                Artista
-                            </button>
-                        </div>
-                        <button
-                            onClick={handleGoogleSignupConfirm}
-                            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-full transition-colors flex items-center justify-center gap-2"
-                        >
-                            <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                <path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                <path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                            </svg>
-                            Continuar com Google
-                        </button>
-                    </DialogContent>
-                </Dialog>
-            )}
+
             
-            {/* Modal de Tipo de Conta - Login Google sem conta existente */}
-            {showGoogleAccountTypeModal && (
-                <Dialog open={showGoogleAccountTypeModal} onOpenChange={(open) => {
-                    if (!open) {
-                        // Se fechar sem escolher, deslogar
-                        sessionStorage.removeItem('googleNeedsAccountType');
-                        sessionStorage.removeItem('googlePendingUserId');
-                        sessionStorage.removeItem('googlePendingEmail');
-                        sessionStorage.removeItem('googlePendingName');
-                        sessionStorage.removeItem('googlePendingAvatar');
-                    }
-                    setShowGoogleAccountTypeModal(open);
-                }}>
-                    <DialogContent className="max-w-md">
-                        <DialogTitle className="text-xl font-bold text-center">Criar sua conta</DialogTitle>
-                        <DialogDescription className="text-center text-gray-600 mb-4">
-                            Não encontramos uma conta com esse email. Deseja criar uma nova conta?
-                        </DialogDescription>
-                        <div className="flex gap-4 mb-6">
-                            <button
-                                onClick={() => setGoogleSignupType('user')}
-                                className={`flex-1 px-4 py-4 rounded-lg font-bold text-sm transition-colors ${
-                                    googleSignupType === 'user'
-                                        ? 'bg-red-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
-                            >
-                                <div className="text-lg mb-1">👤</div>
-                                Usuário
-                                <div className="text-xs font-normal mt-1 opacity-80">Ouvir músicas e criar playlists</div>
-                            </button>
-                            <button
-                                onClick={() => setGoogleSignupType('artist')}
-                                className={`flex-1 px-4 py-4 rounded-lg font-bold text-sm transition-colors ${
-                                    googleSignupType === 'artist'
-                                        ? 'bg-red-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
-                            >
-                                <div className="text-lg mb-1">🎤</div>
-                                Artista
-                                <div className="text-xs font-normal mt-1 opacity-80">Publicar músicas e álbuns</div>
-                            </button>
-                        </div>
-                        <button
-                            onClick={handleGoogleAccountTypeConfirm}
-                            disabled={googleAccountTypeLoading}
-                            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-full transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                        >
-                            {googleAccountTypeLoading ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : (
-                                'Criar Conta'
-                            )}
-                        </button>
-                    </DialogContent>
-                </Dialog>
-            )}
+
 
             {/* Modal de Termos de Uso */}
             {showTermsModal && (
