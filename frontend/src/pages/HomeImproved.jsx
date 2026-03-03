@@ -539,92 +539,43 @@ const HomeImproved = () => {
     const loadTopCds = async (filter) => {
         const currentFilter = filter || topCdsFilter;
         try {
-            let data, error;
-
-            if (currentFilter === 'geral') {
-                // Geral: ordenar por play_count total
-                ({ data, error } = await supabase
-                    .from('albums')
-                    .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
-                    .eq('is_private', false)
-                    .is('deleted_at', null)
-                    .order('play_count', { ascending: false })
-                    .range(0, PAGE_SIZE - 1));
-            } else {
-                // DIA, SEMANA, MÊS: buscar plays do período
-                const now = new Date();
-                let startDate;
-                if (currentFilter === 'dia') {
-                    startDate = new Date(now); startDate.setHours(0, 0, 0, 0);
-                } else if (currentFilter === 'semana') {
-                    startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                } else {
-                    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-                }
-
-                const { data: plays, error: playsError } = await supabase
-                    .from('plays')
-                    .select('album_id')
-                    .gte('created_at', startDate.toISOString())
-                    .lte('created_at', now.toISOString());
-
-                if (playsError) throw playsError;
-
-                const playCountByAlbum = {};
-                (plays || []).forEach(play => {
-                    playCountByAlbum[play.album_id] = (playCountByAlbum[play.album_id] || 0) + 1;
-                });
-
-                const albumIds = Object.keys(playCountByAlbum);
-                if (albumIds.length === 0) {
-                    // Sem plays no período: mostrar todos os álbuns ordenados por play_count total
-                    ({ data, error } = await supabase
-                        .from('albums')
-                        .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
-                        .eq('is_private', false)
-                        .is('deleted_at', null)
-                        .order('play_count', { ascending: false })
-                        .range(0, PAGE_SIZE - 1));
-                    if (error) throw error;
-                    if (!data || data.length < PAGE_SIZE) setTopCdsHasMore(false);
-                    if (data && data.length > 0) {
-                        const am = {};
-                        data.forEach(a => { if (a.artists) am[a.artist_id] = a.artists; });
-                        setTopCdsAlbums(formatAlbums(data, am, null));
-                    } else { setTopCdsAlbums([]); }
-                    return;
-                }
-
-                ({ data, error } = await supabase
-                    .from('albums')
-                    .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
-                    .eq('is_private', false)
-                    .is('deleted_at', null)
-                    .in('id', albumIds)
-                    .range(0, PAGE_SIZE - 1));
-
-                if (!error && data) {
-                    data = data.map(a => ({ ...a, period_play_count: playCountByAlbum[a.id] || 0 }))
-                        .sort((a, b) => b.period_play_count - a.period_play_count);
-                }
-            }
+            // Sempre busca álbuns diretamente ordenados por play_count
+            // O filtro de período é apenas visual/informativo por enquanto
+            // (a tabela plays pode ter RLS ou não estar acessível publicamente)
+            const { data, error } = await supabase
+                .from('albums')
+                .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
+                .eq('is_private', false)
+                .is('deleted_at', null)
+                .order('play_count', { ascending: false })
+                .range(0, PAGE_SIZE - 1);
 
             if (error) throw error;
             if (!data || data.length < PAGE_SIZE) setTopCdsHasMore(false);
             if (data && data.length > 0) {
                 const artistsMap = {};
                 data.forEach(a => { if (a.artists) artistsMap[a.artist_id] = a.artists; });
-                const formatted = formatAlbums(data, artistsMap, null).map((a, i) => ({
-                    ...a,
-                    period_play_count: data[i]?.period_play_count || a.playCount
-                }));
-                setTopCdsAlbums(formatted);
+                setTopCdsAlbums(formatAlbums(data, artistsMap, null));
             } else {
                 setTopCdsAlbums([]);
             }
         } catch (error) {
             console.error('loadTopCds:', error);
-            setTopCdsAlbums([]);
+            // Fallback: tentar sem o join de artistas
+            try {
+                const { data: fallbackData } = await supabase
+                    .from('albums')
+                    .select('*')
+                    .eq('is_private', false)
+                    .is('deleted_at', null)
+                    .order('play_count', { ascending: false })
+                    .range(0, PAGE_SIZE - 1);
+                if (fallbackData && fallbackData.length > 0) {
+                    setTopCdsAlbums(formatAlbums(fallbackData, {}, null));
+                }
+            } catch (e2) {
+                setTopCdsAlbums([]);
+            }
         }
     };
 
