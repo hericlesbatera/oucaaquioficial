@@ -158,7 +158,7 @@ const HomeImproved = () => {
             const { data, error } = await supabase
                 .from('albums')
                 .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
-                .eq('is_private', false)
+                .or('is_private.is.null,is_private.eq.false')
                 .is('deleted_at', null)
                 .order('release_date', { ascending: false, nullsFirst: false })
                 .range(from, to);
@@ -220,7 +220,7 @@ const HomeImproved = () => {
             const { data, error } = await supabase
                 .from('albums')
                 .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
-                .eq('is_private', false)
+                .or('is_private.is.null,is_private.eq.false')
                 .is('deleted_at', null)
                 .order('play_count', { ascending: false })
                 .range(from, to);
@@ -254,7 +254,8 @@ const HomeImproved = () => {
             let query = supabase
                 .from('albums')
                 .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
-                .eq('is_private', false)
+                .or('is_private.is.null,is_private.eq.false')
+                .or('is_scheduled.is.null,is_scheduled.eq.false')
                 .is('deleted_at', null);
 
             if (currentFilter === 'geral') {
@@ -292,7 +293,7 @@ const HomeImproved = () => {
                     supabase
                         .from('albums')
                         .select('*')
-                        .eq('is_private', false)
+                        .or('is_private.is.null,is_private.eq.false')
                         .is('deleted_at', null)
                         .order('release_date', { ascending: false, nullsFirst: false })
                         .range(0, PAGE_SIZE - 1),
@@ -548,8 +549,8 @@ const HomeImproved = () => {
                 const { data, error } = await supabase
                     .from('albums')
                     .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
-                    .eq('is_private', false)
-                    .eq('is_scheduled', false)
+                    .or('is_private.is.null,is_private.eq.false')
+                    .or('is_scheduled.is.null,is_scheduled.eq.false')
                     .is('deleted_at', null)
                     .order('play_count', { ascending: false, nullsFirst: false })
                     .range(0, PAGE_SIZE - 1);
@@ -603,8 +604,8 @@ const HomeImproved = () => {
                 const { data: fallback } = await supabase
                     .from('albums')
                     .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
-                    .eq('is_private', false)
-                    .eq('is_scheduled', false)
+                    .or('is_private.is.null,is_private.eq.false')
+                    .or('is_scheduled.is.null,is_scheduled.eq.false')
                     .is('deleted_at', null)
                     .order('play_count', { ascending: false, nullsFirst: false })
                     .range(0, PAGE_SIZE - 1);
@@ -624,8 +625,8 @@ const HomeImproved = () => {
                 .from('albums')
                 .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
                 .in('id', topIds)
-                .eq('is_private', false)
-                .eq('is_scheduled', false)
+                .or('is_private.is.null,is_private.eq.false')
+                .or('is_scheduled.is.null,is_scheduled.eq.false')
                 .is('deleted_at', null);
 
             if (error) throw error;
@@ -648,7 +649,7 @@ const HomeImproved = () => {
                 const { data: fallbackData } = await supabase
                     .from('albums')
                     .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
-                    .eq('is_private', false)
+                    .or('is_private.is.null,is_private.eq.false')
                     .is('deleted_at', null)
                     .order('play_count', { ascending: false })
                     .range(0, PAGE_SIZE - 1);
