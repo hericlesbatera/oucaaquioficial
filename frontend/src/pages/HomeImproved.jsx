@@ -157,7 +157,7 @@ const HomeImproved = () => {
             const to = from + PAGE_SIZE - 1;
             const { data, error } = await supabase
                 .from('albums')
-                .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
+                .select('*')
                 .or('is_private.is.null,is_private.eq.false')
                 .is('deleted_at', null)
                 .order('release_date', { ascending: false, nullsFirst: false })
@@ -166,7 +166,6 @@ const HomeImproved = () => {
             if (!data || data.length < PAGE_SIZE) setLancamentosHasMore(false);
             if (data && data.length > 0) {
                 const artistsMap = {};
-                data.forEach(a => { if (a.artists) artistsMap[a.artist_id] = a.artists; });
                 const formatted = formatAlbums(data, artistsMap, null);
                 setAllAlbums(prev => {
                     const existingIds = new Set(prev.map(a => a.id));
@@ -219,7 +218,7 @@ const HomeImproved = () => {
             const to = from + PAGE_SIZE - 1;
             const { data, error } = await supabase
                 .from('albums')
-                .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
+                .select('*')
                 .or('is_private.is.null,is_private.eq.false')
                 .is('deleted_at', null)
                 .order('play_count', { ascending: false })
@@ -228,7 +227,6 @@ const HomeImproved = () => {
             if (!data || data.length < PAGE_SIZE) setRecomendadosHasMore(false);
             if (data && data.length > 0) {
                 const artistsMap = {};
-                data.forEach(a => { if (a.artists) artistsMap[a.artist_id] = a.artists; });
                 const formatted = formatAlbums(data, artistsMap, null);
                 setRecommendedAlbums(prev => {
                     const existingIds = new Set(prev.map(a => a.id));
@@ -251,25 +249,17 @@ const HomeImproved = () => {
             const from = (currentPage + 1) * PAGE_SIZE;
             const to = from + PAGE_SIZE - 1;
 
-            let query = supabase
+            const { data, error } = await supabase
                 .from('albums')
-                .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
+                .select('*')
                 .or('is_private.is.null,is_private.eq.false')
-                .or('is_scheduled.is.null,is_scheduled.eq.false')
-                .is('deleted_at', null);
-
-            if (currentFilter === 'geral') {
-                query = query.order('play_count', { ascending: false });
-            } else {
-                query = query.order('play_count', { ascending: false });
-            }
-
-            const { data, error } = await query.range(from, to);
+                .is('deleted_at', null)
+                .order('play_count', { ascending: false })
+                .range(from, to);
             if (error) throw error;
             if (!data || data.length < PAGE_SIZE) setTopCdsHasMore(false);
             if (data && data.length > 0) {
                 const artistsMap = {};
-                data.forEach(a => { if (a.artists) artistsMap[a.artist_id] = a.artists; });
                 const formatted = formatAlbums(data, artistsMap, null);
                 setTopCdsAlbums(prev => {
                     const existingIds = new Set(prev.map(a => a.id));
