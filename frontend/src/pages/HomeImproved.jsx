@@ -538,40 +538,124 @@ const HomeImproved = () => {
 
     const loadTopCds = async (filter) => {
         const currentFilter = filter || topCdsFilter;
+        // Reset paginação ao mudar filtro
+        setTopCdsPage(0);
+        topCdsHasMoreRef.current = true;
+        setTopCdsHasMore(true);
         try {
-            // Sempre busca álbuns diretamente ordenados por play_count
-            // O filtro de período é apenas visual/informativo por enquanto
-            // (a tabela plays pode ter RLS ou não estar acessível publicamente)
+            if (currentFilter === 'geral') {
+                // GERAL: ordenar por play_count total
+                const { data, error } = await supabase
+                    .from('albums')
+                    .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
+                    .eq('is_private', false)
+                    .eq('is_scheduled', false)
+                    .is('deleted_at', null)
+                    .order('play_count', { ascending: false, nullsFirst: false })
+                    .range(0, PAGE_SIZE - 1);
+                if (error) throw error;
+                if (!data || data.length < PAGE_SIZE) { setTopCdsHasMore(false); topCdsHasMoreRef.current = false; }
+                if (data && data.length > 0) {
+                    const artistsMap = {};
+                    data.forEach(a => { if (a.artists) artistsMap[a.artist_id] = a.artists; });
+                    setTopCdsAlbums(formatAlbums(data, artistsMap, null));
+                } else {
+                    setTopCdsAlbums([]);
+                }
+                return;
+            }
+
+            // DIA / SEMANA / MÊS: buscar plays no período
+            const now = new Date();
+            let startDate;
+            if (currentFilter === 'dia') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            } else if (currentFilter === 'semana') {
+                startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            } else {
+                // mes
+                startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            }
+
+            const { data: plays, error: playsError } = await supabase
+                .from('plays')
+                .select('album_id')
+                .gte('created_at', startDate.toISOString())
+                .lte('created_at', now.toISOString())
+                .limit(10000);
+
+            if (playsError) throw playsError;
+
+            // Contar plays por álbum
+            const playCount = {};
+            (plays || []).forEach(p => {
+                playCount[p.album_id] = (playCount[p.album_id] || 0) + 1;
+            });
+
+            // Ordenar por quantidade de plays e pegar os top IDs
+            const topIds = Object.entries(playCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, PAGE_SIZE)
+                .map(([id]) => id);
+
+            if (topIds.length === 0) {
+                // Sem plays no período — fallback: mostrar por play_count total
+                const { data: fallback } = await supabase
+                    .from('albums')
+                    .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
+                    .eq('is_private', false)
+                    .eq('is_scheduled', false)
+                    .is('deleted_at', null)
+                    .order('play_count', { ascending: false, nullsFirst: false })
+                    .range(0, PAGE_SIZE - 1);
+                if (fallback && fallback.length > 0) {
+                    const artistsMap = {};
+                    fallback.forEach(a => { if (a.artists) artistsMap[a.artist_id] = a.artists; });
+                    setTopCdsAlbums(formatAlbums(fallback, artistsMap, null));
+                } else {
+                    setTopCdsAlbums([]);
+                }
+                setTopCdsHasMore(false); topCdsHasMoreRef.current = false;
+                return;
+            }
+
+            // Buscar dados completos dos álbuns com mais plays
             const { data, error } = await supabase
                 .from('albums')
                 .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
+                .in('id', topIds)
                 .eq('is_private', false)
-                .is('deleted_at', null)
-                .order('play_count', { ascending: false })
-                .range(0, PAGE_SIZE - 1);
+                .eq('is_scheduled', false)
+                .is('deleted_at', null);
 
             if (error) throw error;
-            if (!data || data.length < PAGE_SIZE) setTopCdsHasMore(false);
             if (data && data.length > 0) {
                 const artistsMap = {};
                 data.forEach(a => { if (a.artists) artistsMap[a.artist_id] = a.artists; });
-                setTopCdsAlbums(formatAlbums(data, artistsMap, null));
+                const formatted = formatAlbums(data, artistsMap, null)
+                    .map(a => ({ ...a, period_plays: playCount[a.id] || 0 }))
+                    .sort((a, b) => b.period_plays - a.period_plays);
+                setTopCdsAlbums(formatted);
             } else {
                 setTopCdsAlbums([]);
             }
+            // Filtro por período não pagina
+            setTopCdsHasMore(false); topCdsHasMoreRef.current = false;
         } catch (error) {
             console.error('loadTopCds:', error);
-            // Fallback: tentar sem o join de artistas
+            // Fallback geral em caso de erro
             try {
                 const { data: fallbackData } = await supabase
                     .from('albums')
-                    .select('*')
+                    .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
                     .eq('is_private', false)
                     .is('deleted_at', null)
                     .order('play_count', { ascending: false })
                     .range(0, PAGE_SIZE - 1);
                 if (fallbackData && fallbackData.length > 0) {
-                    setTopCdsAlbums(formatAlbums(fallbackData, {}, null));
+                    const artistsMap = {};
+                    fallbackData.forEach(a => { if (a.artists) artistsMap[a.artist_id] = a.artists; });
+                    setTopCdsAlbums(formatAlbums(fallbackData, artistsMap, null));
                 }
             } catch (e2) {
                 setTopCdsAlbums([]);
