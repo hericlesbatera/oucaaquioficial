@@ -537,49 +537,59 @@ const HomeImproved = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [topCdsFilter]);
 
-    // Função auxiliar para buscar álbuns por play_count (fallback geral)
-    const fetchAlbumsByPlayCount = async () => {
-        const { data, error } = await supabase
-            .from('albums')
-            .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
-            .or('is_private.is.null,is_private.eq.false')
-            .is('deleted_at', null)
-            .order('play_count', { ascending: false, nullsFirst: false })
-            .range(0, PAGE_SIZE - 1);
-        if (error) { console.error('fetchAlbumsByPlayCount:', error); return []; }
-        return data || [];
-    };
-
     const loadTopCds = async (filter) => {
         const currentFilter = filter || topCdsFilter;
         setTopCdsPage(0);
-        topCdsHasMoreRef.current = true;
-        setTopCdsHasMore(true);
+        topCdsHasMoreRef.current = false;
+        setTopCdsHasMore(false);
 
-        // Para todos os filtros, sempre buscar álbuns por play_count como base
-        // Para DIA/SEMANA/MÊS, tentar refinar com tabela plays
+        // Lógica idêntica ao TopCds.jsx que funciona corretamente
         try {
-            // Buscar álbuns base (sempre funciona)
-            const baseAlbums = await fetchAlbumsByPlayCount();
+            // 1. Buscar artistas
+            const { data: artistsData } = await supabase
+                .from('artists')
+                .select('id, name, slug, is_verified, avatar_url');
             const artistsMap = {};
-            baseAlbums.forEach(a => { if (a.artists) artistsMap[a.artist_id] = a.artists; });
+            if (artistsData) artistsData.forEach(a => { artistsMap[a.id] = a; });
 
-            if (currentFilter === 'geral' || baseAlbums.length === 0) {
-                // GERAL ou sem álbuns: ordenar por play_count total
-                if (!baseAlbums || baseAlbums.length < PAGE_SIZE) { setTopCdsHasMore(false); topCdsHasMoreRef.current = false; }
-                setTopCdsAlbums(formatAlbums(baseAlbums, artistsMap, null));
+            // 2. Buscar TODOS os álbuns públicos (sem limite, igual ao /top-cds)
+            const { data: allAlbums, error } = await supabase
+                .from('albums')
+                .select('*')
+                .or('is_private.is.null,is_private.eq.false')
+                .is('deleted_at', null)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            if (!allAlbums || allAlbums.length === 0) { setTopCdsAlbums([]); return; }
+
+            // Filtrar localmente para garantir que não há privados
+            const publicAlbums = allAlbums.filter(album => !album.is_private);
+
+            // 3. Mapear artistas nos álbuns
+            const formattedAlbums = publicAlbums.map(album => ({
+                ...album,
+                artistName: (artistsMap[album.artist_id]?.name) || album.artist_name || 'Artista',
+                artistSlug: (artistsMap[album.artist_id]?.slug) || album.artist_id,
+                artistVerified: artistsMap[album.artist_id]?.is_verified || false,
+                artists: artistsMap[album.artist_id] || null,
+            }));
+
+            // 4. GERAL: ordenar por play_count total
+            if (currentFilter === 'geral') {
+                const sorted = [...formattedAlbums].sort((a, b) => (b.play_count || 0) - (a.play_count || 0));
+                setTopCdsAlbums(formatAlbums(sorted, artistsMap, null));
                 return;
             }
 
-            // DIA / SEMANA / MÊS: tentar buscar plays no período
+            // 5. DIA / SEMANA / MÊS: buscar plays no período
             const now = new Date();
             let startDate;
             if (currentFilter === 'dia') {
-                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                startDate = new Date(now); startDate.setHours(0, 0, 0, 0);
             } else if (currentFilter === 'semana') {
                 startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
             } else {
-                // mes
                 startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
             }
 
@@ -587,51 +597,37 @@ const HomeImproved = () => {
                 .from('plays')
                 .select('album_id')
                 .gte('created_at', startDate.toISOString())
-                .lte('created_at', now.toISOString())
-                .limit(10000);
+                .lte('created_at', now.toISOString());
 
-            if (playsError || !plays || plays.length === 0) {
-                // Sem acesso à tabela plays ou sem plays no período — usar fallback por play_count
-                if (playsError) console.warn('plays table error (usando fallback):', playsError.message);
-                setTopCdsHasMore(false); topCdsHasMoreRef.current = false;
-                setTopCdsAlbums(formatAlbums(baseAlbums, artistsMap, null));
+            if (playsError) {
+                // Se não consegue acessar plays, mostrar por play_count total
+                console.warn('plays error, usando play_count total:', playsError.message);
+                const sorted = [...formattedAlbums].sort((a, b) => (b.play_count || 0) - (a.play_count || 0));
+                setTopCdsAlbums(formatAlbums(sorted, artistsMap, null));
                 return;
             }
 
-            // Contar plays por álbum no período
-            const playCount = {};
-            plays.forEach(p => {
-                playCount[p.album_id] = (playCount[p.album_id] || 0) + 1;
+            // Contar plays por álbum
+            const playCountByAlbum = {};
+            (plays || []).forEach(play => {
+                playCountByAlbum[play.album_id] = (playCountByAlbum[play.album_id] || 0) + 1;
             });
 
-            // Reordenar baseAlbums pelos plays do período
-            const sorted = formatAlbums(baseAlbums, artistsMap, null)
-                .map(a => ({ ...a, period_plays: playCount[a.id] || 0 }))
-                .sort((a, b) => b.period_plays - a.period_plays);
-
-            setTopCdsAlbums(sorted);
-            setTopCdsHasMore(false); topCdsHasMoreRef.current = false;
+            // Se há plays no período, filtrar e ordenar por eles
+            const albumsWithPlays = formattedAlbums.filter(a => playCountByAlbum[a.id] > 0);
+            if (albumsWithPlays.length > 0) {
+                const sorted = albumsWithPlays
+                    .map(a => ({ ...a, period_play_count: playCountByAlbum[a.id] || 0 }))
+                    .sort((a, b) => b.period_play_count - a.period_play_count);
+                setTopCdsAlbums(formatAlbums(sorted, artistsMap, null));
+            } else {
+                // Sem plays no período — mostrar todos por play_count total
+                const sorted = [...formattedAlbums].sort((a, b) => (b.play_count || 0) - (a.play_count || 0));
+                setTopCdsAlbums(formatAlbums(sorted, artistsMap, null));
+            }
         } catch (error) {
             console.error('loadTopCds error:', error);
-            // Último recurso: tentar buscar sem filtros complexos
-            try {
-                const { data: fallbackData } = await supabase
-                    .from('albums')
-                    .select('*, artists!albums_artist_id_fkey(id, name, slug, is_verified, avatar_url)')
-                    .is('deleted_at', null)
-                    .order('play_count', { ascending: false })
-                    .range(0, PAGE_SIZE - 1);
-                if (fallbackData && fallbackData.length > 0) {
-                    const artistsMap = {};
-                    fallbackData.forEach(a => { if (a.artists) artistsMap[a.artist_id] = a.artists; });
-                    setTopCdsAlbums(formatAlbums(fallbackData, artistsMap, null));
-                } else {
-                    setTopCdsAlbums([]);
-                }
-            } catch (e2) {
-                console.error('loadTopCds fallback error:', e2);
-                setTopCdsAlbums([]);
-            }
+            setTopCdsAlbums([]);
         }
     };
 
