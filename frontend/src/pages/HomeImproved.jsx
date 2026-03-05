@@ -519,10 +519,9 @@ const HomeImproved = () => {
 
     // Carregar TOP CDS quando período muda (busca direta no Supabase)
     useEffect(() => {
-        // Resetar paginação ao mudar filtro
         setTopCdsPage(0);
-        setTopCdsHasMore(true);
-        setTopCdsAlbums([]);
+        setTopCdsHasMore(false);
+        // Não limpar a lista antes de ter novos dados (evita flash de 'Nenhum CD')
         loadTopCds(topCdsFilter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [topCdsFilter]);
@@ -532,6 +531,8 @@ const HomeImproved = () => {
         setTopCdsPage(0);
         topCdsHasMoreRef.current = false;
         setTopCdsHasMore(false);
+        setTopCdsLoading(true);
+        topCdsLoadingRef.current = true;
 
         // Lógica idêntica ao TopCds.jsx que funciona corretamente
         try {
@@ -617,7 +618,10 @@ const HomeImproved = () => {
             }
         } catch (error) {
             console.error('loadTopCds error:', error);
-            setTopCdsAlbums([]);
+            // Não limpar a lista em caso de erro - manter o que estava
+        } finally {
+            setTopCdsLoading(false);
+            topCdsLoadingRef.current = false;
         }
     };
 
@@ -924,7 +928,13 @@ const HomeImproved = () => {
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {topCdsAlbums.length === 0 ? (
-                            <p className="text-gray-500 py-8 w-full">Nenhum CD disponível para este período.</p>
+                            <div className="flex items-center justify-center w-full py-8">
+                                {topCdsLoading ? (
+                                    <div className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <p className="text-gray-500">Nenhum CD disponível para este período.</p>
+                                )}
+                            </div>
                         ) : (
                             <>
                             {topCdsAlbums.map((album, index) => (
@@ -1257,7 +1267,13 @@ const HomeImproved = () => {
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {topCdsAlbums.length === 0 ? (
-                            <p className="text-gray-500 py-4 w-full text-sm">Nenhum CD disponível para este período.</p>
+                            <div className="flex items-center justify-center w-full py-4">
+                                {topCdsLoading ? (
+                                    <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <p className="text-gray-500 text-sm">Nenhum CD disponível para este período.</p>
+                                )}
+                            </div>
                         ) : (
                             <>
                             {topCdsAlbums.map((album, index) => (
