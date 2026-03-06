@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
-import { LogOut, Image, Music, Star, Bell, MessageSquare, BarChart3, Settings, AlertCircle } from 'lucide-react';
+import { LogOut, Image, Music, Star, Bell, MessageSquare, BarChart3, Settings, AlertCircle, Users } from 'lucide-react';
 import { toast } from '../../hooks/use-toast';
 
 // Componentes Admin
@@ -15,6 +15,7 @@ import PopupManager from './PopupManager';
 import SiteStatistics from './SiteStatistics';
 import AdminSettings from './AdminSettings';
 import ReportsManager from './ReportsManager';
+import ArtistsManager from './ArtistsManager';
 
 const AdminPanel = () => {
   const { user } = useAuth();
@@ -75,6 +76,7 @@ const AdminPanel = () => {
   const menuItems = [
     { id: 'slides', label: 'Hero Slider', icon: Image },
     { id: 'albums', label: 'Gerenciar Álbuns', icon: Music },
+    { id: 'artists', label: 'Artistas', icon: Users },
     { id: 'recommended', label: 'Recomendados', icon: Star },
     { id: 'popup', label: 'Pop-up Home', icon: Bell },
     { id: 'support', label: 'Suporte', icon: MessageSquare },
@@ -89,6 +91,8 @@ const AdminPanel = () => {
         return <SlidesManager />;
       case 'albums':
         return <AlbumsManager />;
+      case 'artists':
+        return <ArtistsManager />;
       case 'recommended':
         return <RecommendedAlbumsManager />;
       case 'popup':

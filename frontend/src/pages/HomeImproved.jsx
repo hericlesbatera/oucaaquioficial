@@ -362,8 +362,64 @@ const HomeImproved = () => {
                     setAllAlbums(formattedAlbums);
                     if (formattedAlbums.length < PAGE_SIZE) setLancamentosHasMore(false);
                     
-                    // Recomendados: embaralhar os álbuns da primeira página
-                    if (formattedAlbums.length > 0) {
+                    // Recomendados: buscar álbuns fixados do painel admin primeiro
+                    try {
+                        const { data: pinnedData } = await supabase
+                            .from('recommended_albums')
+                            .select('album_id, order_index')
+                            .order('order_index', { ascending: true });
+
+                        const pinnedIds = new Set((pinnedData || []).map(r => r.album_id));
+
+                        if (pinnedData && pinnedData.length > 0) {
+                            // Buscar os álbuns fixados com dados completos
+                            const { data: pinnedAlbums } = await supabase
+                                .from('albums')
+                                .select('*')
+                                .in('id', pinnedData.map(r => r.album_id))
+                                .or('is_private.is.null,is_private.eq.false')
+                                .is('deleted_at', null);
+
+                            // Ordenar conforme order_index do painel
+                            const pinnedMap = {};
+                            (pinnedAlbums || []).forEach(a => { pinnedMap[a.id] = a; });
+                            const orderedPinned = pinnedData
+                                .map(r => pinnedMap[r.album_id])
+                                .filter(Boolean)
+                                .map(album => {
+                                    const artist = artistsMap[album.artist_id] || {};
+                                    return {
+                                        id: album.id,
+                                        slug: album.slug,
+                                        title: album.title,
+                                        artistName: artist.name || album.artist_name || 'Artista',
+                                        artistId: album.artist_id,
+                                        artistSlug: artist.slug || album.artist_id,
+                                        artistVerified: artist.is_verified || false,
+                                        collaborators: collaboratorsByAlbum[album.id] || [],
+                                        coverImage: album.cover_url || '/images/default-album.png',
+                                        releaseYear: album.release_year,
+                                        releaseDate: album.release_date,
+                                        playCount: album.play_count || 0,
+                                        downloadCount: album.download_count || 0,
+                                        isPinned: true
+                                    };
+                                });
+
+                            // Álbuns não fixados: embaralhar e adicionar depois
+                            const otherAlbums = formattedAlbums
+                                .filter(a => !pinnedIds.has(a.id))
+                                .sort(() => Math.random() - 0.5);
+
+                            setRecommendedAlbums([...orderedPinned, ...otherAlbums]);
+                        } else {
+                            // Sem fixados: embaralhar todos
+                            const shuffled = [...formattedAlbums].sort(() => Math.random() - 0.5);
+                            setRecommendedAlbums(shuffled);
+                        }
+                    } catch (pinnedError) {
+                        console.warn('Erro ao carregar recomendados fixados:', pinnedError);
+                        // Fallback: embaralhar todos
                         const shuffled = [...formattedAlbums].sort(() => Math.random() - 0.5);
                         setRecommendedAlbums(shuffled);
                     }

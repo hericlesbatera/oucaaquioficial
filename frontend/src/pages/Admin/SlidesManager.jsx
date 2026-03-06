@@ -54,12 +54,12 @@ const SlidesManager = () => {
 
     const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/slides/${fileName}`;
     
-    // Adicionar novo slide
+    // Inserir novo slide com order_index = 0 (primeiro)
     const { data: newSlide, error: insertError } = await supabase
       .from('slides')
       .insert({
         image_url: imageUrl,
-        order_index: slides.length + 1,
+        order_index: 0,
         active: true
       })
       .select()
@@ -71,13 +71,26 @@ const SlidesManager = () => {
         description: insertError.message,
         variant: 'destructive'
       });
-    } else {
-      setSlides([...slides, newSlide]);
-      toast({
-        title: 'Slide adicionado!',
-        description: 'Imagem enviada com sucesso'
-      });
+      setUploading(false);
+      return;
     }
+
+    // Reordenar todos os slides existentes (incrementar order_index de cada um)
+    const updatedSlides = slides.map((s, i) => ({ ...s, order_index: i + 1 }));
+    // Salvar nova ordem no banco
+    await Promise.all(
+      updatedSlides.map(s =>
+        supabase.from('slides').update({ order_index: s.order_index }).eq('id', s.id)
+      )
+    );
+
+    // Colocar o novo slide no início da lista local
+    setSlides([newSlide, ...updatedSlides]);
+    setHasChanges(false);
+    toast({
+      title: 'Slide adicionado!',
+      description: 'Imagem adicionada como primeiro slide'
+    });
     setUploading(false);
   };
 
