@@ -3,7 +3,9 @@ import { supabase } from '../../lib/supabaseClient';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { toast } from '../../hooks/use-toast';
-import { Search, BadgeCheck, Mail, Lock, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Search, BadgeCheck, Mail, Lock, ChevronDown, ChevronUp, X, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const PAGE_SIZE = 20;
 
 const ArtistsManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,36 +14,63 @@ const ArtistsManager = () => {
   const [expandedId, setExpandedId] = useState(null);
   const [editData, setEditData] = useState({});
   const [saving, setSaving] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [activeSearch, setActiveSearch] = useState('');
 
-  const searchArtists = useCallback(async (term) => {
+  const fetchArtists = useCallback(async (term, page) => {
     setLoading(true);
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
     let query = supabase
       .from('artists')
-      .select('id, name, slug, email, is_verified, avatar_url, created_at')
+      .select('id, name, slug, email, is_verified, avatar_url, created_at', { count: 'exact' })
       .order('name', { ascending: true })
-      .limit(50);
+      .range(from, to);
 
     if (term.trim()) {
       query = query.ilike('name', `%${term.trim()}%`);
     }
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
     if (error) {
       toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     } else {
       setArtists(data || []);
+      setTotalCount(count || 0);
     }
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    searchArtists('');
-  }, [searchArtists]);
+    fetchArtists('', 0);
+  }, [fetchArtists]);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    searchArtists(searchTerm);
+    setActiveSearch(searchTerm);
+    setCurrentPage(0);
+    setExpandedId(null);
+    fetchArtists(searchTerm, 0);
   };
+
+  const handleClear = () => {
+    setSearchTerm('');
+    setActiveSearch('');
+    setCurrentPage(0);
+    setExpandedId(null);
+    fetchArtists('', 0);
+  };
+
+  const goToPage = (page) => {
+    setCurrentPage(page);
+    setExpandedId(null);
+    fetchArtists(activeSearch, page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const toggleExpand = (artist) => {
     if (expandedId === artist.id) {
@@ -95,19 +124,14 @@ const ArtistsManager = () => {
 
     setSaving(true);
     try {
-      // Atualizar e-mail na tabela artists
-      const updates = { email: editData.email.trim() };
       const { error: artistError } = await supabase
         .from('artists')
-        .update(updates)
+        .update({ email: editData.email.trim() })
         .eq('id', artist.id);
 
       if (artistError) throw artistError;
 
-      // Atualizar e-mail no auth via função RPC (se disponível)
-      // Nota: atualização de auth requer service_role — usamos RPC admin_update_user
       const promises = [];
-
       if (editData.email.trim() !== artist.email) {
         promises.push(
           supabase.rpc('admin_update_user_email', {
@@ -116,7 +140,6 @@ const ArtistsManager = () => {
           })
         );
       }
-
       if (editData.newPassword) {
         promises.push(
           supabase.rpc('admin_update_user_password', {
@@ -126,7 +149,6 @@ const ArtistsManager = () => {
         );
       }
 
-      // Executar RPCs (podem não existir — tratamos o erro graciosamente)
       if (promises.length > 0) {
         const results = await Promise.allSettled(promises);
         const rpcErrors = results.filter(r => r.status === 'rejected' || r.value?.error);
@@ -174,16 +196,22 @@ const ArtistsManager = () => {
           <Search className="w-4 h-4 mr-2" />
           {loading ? 'Buscando...' : 'Buscar'}
         </Button>
-        {searchTerm && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => { setSearchTerm(''); searchArtists(''); }}
-          >
+        {(searchTerm || activeSearch) && (
+          <Button type="button" variant="outline" onClick={handleClear}>
             <X className="w-4 h-4" />
           </Button>
         )}
       </form>
+
+      {/* Contador */}
+      {!loading && totalCount > 0 && (
+        <div className="text-sm text-gray-500">
+          {activeSearch
+            ? `${totalCount} artista(s) encontrado(s) para "${activeSearch}"`
+            : `${totalCount} artistas cadastrados`
+          } — Página {currentPage + 1} de {totalPages}
+        </div>
+      )}
 
       {/* Lista de artistas */}
       <div className="space-y-2">
@@ -229,7 +257,6 @@ const ArtistsManager = () => {
 
               {/* Ações */}
               <div className="flex items-center gap-2 flex-shrink-0">
-                {/* Botão verificar */}
                 <button
                   onClick={() => toggleVerified(artist)}
                   title={artist.is_verified ? 'Remover verificação' : 'Verificar artista'}
@@ -243,7 +270,6 @@ const ArtistsManager = () => {
                   {artist.is_verified ? 'Verificado' : 'Verificar'}
                 </button>
 
-                {/* Botão editar */}
                 <button
                   onClick={() => toggleExpand(artist)}
                   className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
@@ -260,7 +286,6 @@ const ArtistsManager = () => {
             {/* Painel de edição expandido */}
             {expandedId === artist.id && (
               <div className="border-t border-gray-100 bg-gray-50 p-4 space-y-4">
-                {/* E-mail */}
                 <div>
                   <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
                     <Mail className="w-3.5 h-3.5" /> E-mail
@@ -274,7 +299,6 @@ const ArtistsManager = () => {
                   />
                 </div>
 
-                {/* Nova senha */}
                 <div>
                   <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
                     <Lock className="w-3.5 h-3.5" /> Nova Senha
@@ -289,7 +313,6 @@ const ArtistsManager = () => {
                   />
                 </div>
 
-                {/* Confirmar senha */}
                 {editData.newPassword && (
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-1.5 block">
@@ -302,8 +325,7 @@ const ArtistsManager = () => {
                       placeholder="Repita a nova senha"
                       className={`bg-white ${
                         editData.confirmPassword && editData.newPassword !== editData.confirmPassword
-                          ? 'border-red-400'
-                          : ''
+                          ? 'border-red-400' : ''
                       }`}
                     />
                     {editData.confirmPassword && editData.newPassword !== editData.confirmPassword && (
@@ -336,6 +358,64 @@ const ArtistsManager = () => {
           </div>
         ))}
       </div>
+
+      {/* Paginação */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+          <Button
+            variant="outline"
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage === 0 || loading}
+            className="flex items-center gap-2"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Anterior
+          </Button>
+
+          <div className="flex items-center gap-1">
+            {/* Mostrar até 7 páginas com reticências */}
+            {Array.from({ length: totalPages }, (_, i) => i).filter(i => {
+              if (totalPages <= 7) return true;
+              if (i === 0 || i === totalPages - 1) return true;
+              if (Math.abs(i - currentPage) <= 2) return true;
+              return false;
+            }).reduce((acc, i, idx, arr) => {
+              if (idx > 0 && i - arr[idx - 1] > 1) {
+                acc.push('...');
+              }
+              acc.push(i);
+              return acc;
+            }, []).map((item, idx) =>
+              item === '...' ? (
+                <span key={`dots-${idx}`} className="px-2 text-gray-400">...</span>
+              ) : (
+                <button
+                  key={item}
+                  onClick={() => goToPage(item)}
+                  disabled={loading}
+                  className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
+                    item === currentPage
+                      ? 'bg-red-600 text-white'
+                      : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {item + 1}
+                </button>
+              )
+            )}
+          </div>
+
+          <Button
+            variant="outline"
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage >= totalPages - 1 || loading}
+            className="flex items-center gap-2"
+          >
+            Próxima
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
